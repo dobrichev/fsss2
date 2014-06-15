@@ -186,6 +186,7 @@ int fsss2::uniqueHandler(void* context, char* result) {
 	solutionProcessorPrintUnique* sp = (solutionProcessorPrintUnique*)context;
 	sp->n++;
 	if(sp->n == 2)
+	//if(sp->n == 1)
 		return 1;
 	//memcpy(sp->firstSolution, result, 81);
 	//for(int i = 0; i < 81; i++) {

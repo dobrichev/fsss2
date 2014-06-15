@@ -5,14 +5,14 @@
 #include "fsss2.h"
 
 //void	printVisibleCells();
-void printTripletMasks();
+//void printTripletMasks();
 //void	printBitsForHouse();
-#include "tables.h"
+//#include "tables.h"
 
 int main(int argc, char* argv[])
 {
-	printTripletMasks();
-	return 0;
+	//printTripletMasks();
+	//return 0;
 	clock_t start, finish;
 	int ret = 0;
 	start = clock();
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 }
 
 /////////////////////////////////////////////
-
+/*
 //temporary and debug functions
 void bm128toHex(const bm128& v) {
 	printf("{0x%016.16lX,0x%016.16lX}, ", v.bitmap128.m128i_u64[0], v.bitmap128.m128i_u64[1]);
@@ -256,4 +256,4 @@ void printTripletMasks() {
 	}
 	printf("}; //tripletMasks\n");
 }
-
+*/
