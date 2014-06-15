@@ -1,3 +1,12 @@
+/*
+ * main.cpp
+ *
+ *  Created on: May 13, 2014
+ *      Author: Mladen Dobrichev
+ */
+
+//for testing fsss2 sudoku solver
+
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
