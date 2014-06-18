@@ -32,18 +32,18 @@ int main(int argc, char* argv[])
 	char p[2000];
 	char c[88];
 	fsss2 s;
+	int num[3] = {0,0,0};
 	while(fgets(p, sizeof(p), stdin)) {
 		for(int i = 0; i < 81; i++) c[i] = (p[i] <= '9' && p[i] >='0' ? p[i] - '0' : 0);
-		for(int i = 0; i < 1; i++) {
-			s.solveUnique(c, NULL);
-		}
+		//num[s.solve(c, 2, NULL)]++;
+		num[s.isIrreducible(c) ? 0 : 1]++;
 	}
 
 	//printVisibleCells();
 	//printBitsForHouse();
 
 	finish = clock();
-	fprintf(stderr, "\nTotal time %2.3f seconds.\n", (double)(finish - start) / CLOCKS_PER_SEC);
+	fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC);
 	return ret;
 }
 

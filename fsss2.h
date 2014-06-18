@@ -24,15 +24,15 @@ struct tripletMask {
 	t_128 adjacentBox;
 };
 
-struct fsss2;
+//struct fsss2;
 
-struct solutionProcessorPrintUnique {
-	int n;
-	char firstSolution[88];
-	solutionProcessorPrintUnique();
-};
-
-typedef int (*solverCallBack)(void* context, char* result);
+//struct solutionProcessorPrintUnique {
+//	int n;
+//	char firstSolution[88];
+//	solutionProcessorPrintUnique();
+//};
+//
+//typedef int (*solverCallBack)(void* context, char* result);
 
 struct fsss2 {
 private:
@@ -48,7 +48,7 @@ private:
 	void* theProcessor;
 
 	//NULL or pointer to the callback routine that notifies the processor class on each solution found
-	solverCallBack solutionHandler;
+	//solverCallBack solutionHandler;
 
 	//NULL or pointer to buffer for solved cells
 	char* sol;
@@ -56,8 +56,10 @@ private:
 	//0 = continue solving; 1 = contradiction found, backtrack and continue; 3 = all necessary solutions are found, stop
 	int mode;						//combination of the game mode flags, initial 0
 
-	//marker not to make second attempt in searching for line-box eliminations
-	int lockedCandidatesDone;
+	////marker not to make second attempt in searching for line-box eliminations
+	//int lockedCandidatesDone;
+
+	unsigned long long numSolutionsToDo;
 
 	//bits to clear when solving particular digit and cell, including the houses at bits 81+
 	static const t_128 visibleCells[81];
@@ -100,10 +102,10 @@ private:
 	//void doLockedCandidatesForCell(int d, int c);
 
 	//encapsulates the elimination logic up to T&E
-	void doDirectEliminations() __restrict;
+	void doDirectEliminations();
 
 	//does the direct eliminations, then does T&E
-	void doEliminations() __restrict;
+	void doEliminations();
 
 	//encapsulates the logic for T&E
 	void guess();
@@ -115,11 +117,13 @@ private:
 	void findBiValueCell(int& digit, int& cell, int& digit2);
 
 	//handler implementation that solves up to the second solution
-	static int uniqueHandler(void* context, char* result);
+	//static int uniqueHandler(void* context, char* result);
 public:
 
 	//solver's entry point
-	void solveUnique(const char* const __restrict in, char* __restrict out);
+	//unsigned long long solveUnique(const char* const in, unsigned long long nSolutions, char* out = NULL);
+	unsigned long long solve(const char* const in, unsigned long long nSolutions, char* out = NULL);
+	bool isIrreducible(const char* const in);
 };
 
 #endif /* SOLVER_H_ */

@@ -11,7 +11,7 @@
 #include <memory.h>
 #include "fsss2.h"
 
-solutionProcessorPrintUnique::solutionProcessorPrintUnique() : n(0) {};
+//solutionProcessorPrintUnique::solutionProcessorPrintUnique() : n(0) {};
 
 const t_128 fsss2::visibleCells[81] = { //1 for all 20 visible cells, 0 for the cell itself, 1 for the three houses
 	{0x80402010081C0FFE,0x0000000804020100},
@@ -127,131 +127,200 @@ const t_128 fsss2::bitsForHouse[27] = { //1 for the 9 cells in the house
 	{0x7000000000000000,0x000000000001C0E0},
 }; //bitsForHouse[27]
 
-const tripletMask fsss2::tripletMasks[54] = {
-	{{0x0000000000000007,0x0000000000000000}, {0x00000000000001F8,0x0000000000000000}, {0x00000000001C0E00,0x0000000000000000}, },
-	{{0x0000000000000038,0x0000000000000000}, {0x00000000000001C7,0x0000000000000000}, {0x0000000000E07000,0x0000000000000000}, },
-	{{0x00000000000001C0,0x0000000000000000}, {0x000000000000003F,0x0000000000000000}, {0x0000000007038000,0x0000000000000000}, },
-	{{0x0000000000000E00,0x0000000000000000}, {0x000000000003F000,0x0000000000000000}, {0x00000000001C0007,0x0000000000000000}, },
-	{{0x0000000000007000,0x0000000000000000}, {0x0000000000038E00,0x0000000000000000}, {0x0000000000E00038,0x0000000000000000}, },
-	{{0x0000000000038000,0x0000000000000000}, {0x0000000000007E00,0x0000000000000000}, {0x00000000070001C0,0x0000000000000000}, },
-	{{0x00000000001C0000,0x0000000000000000}, {0x0000000007E00000,0x0000000000000000}, {0x0000000000000E07,0x0000000000000000}, },
-	{{0x0000000000E00000,0x0000000000000000}, {0x00000000071C0000,0x0000000000000000}, {0x0000000000007038,0x0000000000000000}, },
-	{{0x0000000007000000,0x0000000000000000}, {0x0000000000FC0000,0x0000000000000000}, {0x00000000000381C0,0x0000000000000000}, },
-	{{0x0000000038000000,0x0000000000000000}, {0x0000000FC0000000,0x0000000000000000}, {0x0000E07000000000,0x0000000000000000}, },
-	{{0x00000001C0000000,0x0000000000000000}, {0x0000000E38000000,0x0000000000000000}, {0x0007038000000000,0x0000000000000000}, },
-	{{0x0000000E00000000,0x0000000000000000}, {0x00000001F8000000,0x0000000000000000}, {0x00381C0000000000,0x0000000000000000}, },
-	{{0x0000007000000000,0x0000000000000000}, {0x00001F8000000000,0x0000000000000000}, {0x0000E00038000000,0x0000000000000000}, },
-	{{0x0000038000000000,0x0000000000000000}, {0x00001C7000000000,0x0000000000000000}, {0x00070001C0000000,0x0000000000000000}, },
-	{{0x00001C0000000000,0x0000000000000000}, {0x000003F000000000,0x0000000000000000}, {0x0038000E00000000,0x0000000000000000}, },
-	{{0x0000E00000000000,0x0000000000000000}, {0x003F000000000000,0x0000000000000000}, {0x0000007038000000,0x0000000000000000}, },
-	{{0x0007000000000000,0x0000000000000000}, {0x0038E00000000000,0x0000000000000000}, {0x00000381C0000000,0x0000000000000000}, },
-	{{0x0038000000000000,0x0000000000000000}, {0x0007E00000000000,0x0000000000000000}, {0x00001C0E00000000,0x0000000000000000}, },
-	{{0x01C0000000000000,0x0000000000000000}, {0x7E00000000000000,0x0000000000000000}, {0x8000000000000000,0x0000000000000703}, },
-	{{0x0E00000000000000,0x0000000000000000}, {0x71C0000000000000,0x0000000000000000}, {0x0000000000000000,0x000000000000381C}, },
-	{{0x7000000000000000,0x0000000000000000}, {0x0FC0000000000000,0x0000000000000000}, {0x0000000000000000,0x000000000001C0E0}, },
-	{{0x8000000000000000,0x0000000000000003}, {0x0000000000000000,0x00000000000000FC}, {0x01C0000000000000,0x0000000000000700}, },
-	{{0x0000000000000000,0x000000000000001C}, {0x8000000000000000,0x00000000000000E3}, {0x0E00000000000000,0x0000000000003800}, },
-	{{0x0000000000000000,0x00000000000000E0}, {0x8000000000000000,0x000000000000001F}, {0x7000000000000000,0x000000000001C000}, },
-	{{0x0000000000000000,0x0000000000000700}, {0x0000000000000000,0x000000000001F800}, {0x81C0000000000000,0x0000000000000003}, },
-	{{0x0000000000000000,0x0000000000003800}, {0x0000000000000000,0x000000000001C700}, {0x0E00000000000000,0x000000000000001C}, },
-	{{0x0000000000000000,0x000000000001C000}, {0x0000000000000000,0x0000000000003F00}, {0x7000000000000000,0x00000000000000E0}, },
-	{{0x0000000000040201,0x0000000000000000}, {0x8040201008000000,0x0000000000000100}, {0x0000000000180C06,0x0000000000000000}, },
-	{{0x0000201008000000,0x0000000000000000}, {0x8040000000040201,0x0000000000000100}, {0x0000C06030000000,0x0000000000000000}, },
-	{{0x8040000000000000,0x0000000000000100}, {0x0000201008040201,0x0000000000000000}, {0x0180000000000000,0x0000000000000603}, },
-	{{0x0000000000080402,0x0000000000000000}, {0x0080402010000000,0x0000000000000201}, {0x0000000000140A05,0x0000000000000000}, },
-	{{0x0000402010000000,0x0000000000000000}, {0x0080000000080402,0x0000000000000201}, {0x0000A05028000000,0x0000000000000000}, },
-	{{0x0080000000000000,0x0000000000000201}, {0x0000402010080402,0x0000000000000000}, {0x8140000000000000,0x0000000000000502}, },
-	{{0x0000000000100804,0x0000000000000000}, {0x0100804020000000,0x0000000000000402}, {0x00000000000C0603,0x0000000000000000}, },
-	{{0x0000804020000000,0x0000000000000000}, {0x0100000000100804,0x0000000000000402}, {0x0000603018000000,0x0000000000000000}, },
-	{{0x0100000000000000,0x0000000000000402}, {0x0000804020100804,0x0000000000000000}, {0x80C0000000000000,0x0000000000000301}, },
-	{{0x0000000000201008,0x0000000000000000}, {0x0201008040000000,0x0000000000000804}, {0x0000000000C06030,0x0000000000000000}, },
-	{{0x0001008040000000,0x0000000000000000}, {0x0200000000201008,0x0000000000000804}, {0x0006030180000000,0x0000000000000000}, },
-	{{0x0200000000000000,0x0000000000000804}, {0x0001008040201008,0x0000000000000000}, {0x0C00000000000000,0x0000000000003018}, },
-	{{0x0000000000402010,0x0000000000000000}, {0x0402010080000000,0x0000000000001008}, {0x0000000000A05028,0x0000000000000000}, },
-	{{0x0002010080000000,0x0000000000000000}, {0x0400000000402010,0x0000000000001008}, {0x0005028140000000,0x0000000000000000}, },
-	{{0x0400000000000000,0x0000000000001008}, {0x0002010080402010,0x0000000000000000}, {0x0A00000000000000,0x0000000000002814}, },
-	{{0x0000000000804020,0x0000000000000000}, {0x0804020100000000,0x0000000000002010}, {0x0000000000603018,0x0000000000000000}, },
-	{{0x0004020100000000,0x0000000000000000}, {0x0800000000804020,0x0000000000002010}, {0x00030180C0000000,0x0000000000000000}, },
-	{{0x0800000000000000,0x0000000000002010}, {0x0004020100804020,0x0000000000000000}, {0x0600000000000000,0x000000000000180C}, },
-	{{0x0000000001008040,0x0000000000000000}, {0x1008040200000000,0x0000000000004020}, {0x0000000006030180,0x0000000000000000}, },
-	{{0x0008040200000000,0x0000000000000000}, {0x1000000001008040,0x0000000000004020}, {0x0030180C00000000,0x0000000000000000}, },
-	{{0x1000000000000000,0x0000000000004020}, {0x0008040201008040,0x0000000000000000}, {0x6000000000000000,0x00000000000180C0}, },
-	{{0x0000000002010080,0x0000000000000000}, {0x2010080400000000,0x0000000000008040}, {0x0000000005028140,0x0000000000000000}, },
-	{{0x0010080400000000,0x0000000000000000}, {0x2000000002010080,0x0000000000008040}, {0x0028140A00000000,0x0000000000000000}, },
-	{{0x2000000000000000,0x0000000000008040}, {0x0010080402010080,0x0000000000000000}, {0x5000000000000000,0x00000000000140A0}, },
-	{{0x0000000004020100,0x0000000000000000}, {0x4020100800000000,0x0000000000010080}, {0x00000000030180C0,0x0000000000000000}, },
-	{{0x0020100800000000,0x0000000000000000}, {0x4000000004020100,0x0000000000010080}, {0x00180C0600000000,0x0000000000000000}, },
-	{{0x4000000000000000,0x0000000000010080}, {0x0020100804020100,0x0000000000000000}, {0x3000000000000000,0x000000000000C060}, },
-}; //tripletMasks
+//const tripletMask fsss2::tripletMasks[54] = {
+//	{{0x0000000000000007,0x0000000000000000}, {0x00000000000001F8,0x0000000000000000}, {0x00000000001C0E00,0x0000000000000000}, },
+//	{{0x0000000000000038,0x0000000000000000}, {0x00000000000001C7,0x0000000000000000}, {0x0000000000E07000,0x0000000000000000}, },
+//	{{0x00000000000001C0,0x0000000000000000}, {0x000000000000003F,0x0000000000000000}, {0x0000000007038000,0x0000000000000000}, },
+//	{{0x0000000000000E00,0x0000000000000000}, {0x000000000003F000,0x0000000000000000}, {0x00000000001C0007,0x0000000000000000}, },
+//	{{0x0000000000007000,0x0000000000000000}, {0x0000000000038E00,0x0000000000000000}, {0x0000000000E00038,0x0000000000000000}, },
+//	{{0x0000000000038000,0x0000000000000000}, {0x0000000000007E00,0x0000000000000000}, {0x00000000070001C0,0x0000000000000000}, },
+//	{{0x00000000001C0000,0x0000000000000000}, {0x0000000007E00000,0x0000000000000000}, {0x0000000000000E07,0x0000000000000000}, },
+//	{{0x0000000000E00000,0x0000000000000000}, {0x00000000071C0000,0x0000000000000000}, {0x0000000000007038,0x0000000000000000}, },
+//	{{0x0000000007000000,0x0000000000000000}, {0x0000000000FC0000,0x0000000000000000}, {0x00000000000381C0,0x0000000000000000}, },
+//	{{0x0000000038000000,0x0000000000000000}, {0x0000000FC0000000,0x0000000000000000}, {0x0000E07000000000,0x0000000000000000}, },
+//	{{0x00000001C0000000,0x0000000000000000}, {0x0000000E38000000,0x0000000000000000}, {0x0007038000000000,0x0000000000000000}, },
+//	{{0x0000000E00000000,0x0000000000000000}, {0x00000001F8000000,0x0000000000000000}, {0x00381C0000000000,0x0000000000000000}, },
+//	{{0x0000007000000000,0x0000000000000000}, {0x00001F8000000000,0x0000000000000000}, {0x0000E00038000000,0x0000000000000000}, },
+//	{{0x0000038000000000,0x0000000000000000}, {0x00001C7000000000,0x0000000000000000}, {0x00070001C0000000,0x0000000000000000}, },
+//	{{0x00001C0000000000,0x0000000000000000}, {0x000003F000000000,0x0000000000000000}, {0x0038000E00000000,0x0000000000000000}, },
+//	{{0x0000E00000000000,0x0000000000000000}, {0x003F000000000000,0x0000000000000000}, {0x0000007038000000,0x0000000000000000}, },
+//	{{0x0007000000000000,0x0000000000000000}, {0x0038E00000000000,0x0000000000000000}, {0x00000381C0000000,0x0000000000000000}, },
+//	{{0x0038000000000000,0x0000000000000000}, {0x0007E00000000000,0x0000000000000000}, {0x00001C0E00000000,0x0000000000000000}, },
+//	{{0x01C0000000000000,0x0000000000000000}, {0x7E00000000000000,0x0000000000000000}, {0x8000000000000000,0x0000000000000703}, },
+//	{{0x0E00000000000000,0x0000000000000000}, {0x71C0000000000000,0x0000000000000000}, {0x0000000000000000,0x000000000000381C}, },
+//	{{0x7000000000000000,0x0000000000000000}, {0x0FC0000000000000,0x0000000000000000}, {0x0000000000000000,0x000000000001C0E0}, },
+//	{{0x8000000000000000,0x0000000000000003}, {0x0000000000000000,0x00000000000000FC}, {0x01C0000000000000,0x0000000000000700}, },
+//	{{0x0000000000000000,0x000000000000001C}, {0x8000000000000000,0x00000000000000E3}, {0x0E00000000000000,0x0000000000003800}, },
+//	{{0x0000000000000000,0x00000000000000E0}, {0x8000000000000000,0x000000000000001F}, {0x7000000000000000,0x000000000001C000}, },
+//	{{0x0000000000000000,0x0000000000000700}, {0x0000000000000000,0x000000000001F800}, {0x81C0000000000000,0x0000000000000003}, },
+//	{{0x0000000000000000,0x0000000000003800}, {0x0000000000000000,0x000000000001C700}, {0x0E00000000000000,0x000000000000001C}, },
+//	{{0x0000000000000000,0x000000000001C000}, {0x0000000000000000,0x0000000000003F00}, {0x7000000000000000,0x00000000000000E0}, },
+//	{{0x0000000000040201,0x0000000000000000}, {0x8040201008000000,0x0000000000000100}, {0x0000000000180C06,0x0000000000000000}, },
+//	{{0x0000201008000000,0x0000000000000000}, {0x8040000000040201,0x0000000000000100}, {0x0000C06030000000,0x0000000000000000}, },
+//	{{0x8040000000000000,0x0000000000000100}, {0x0000201008040201,0x0000000000000000}, {0x0180000000000000,0x0000000000000603}, },
+//	{{0x0000000000080402,0x0000000000000000}, {0x0080402010000000,0x0000000000000201}, {0x0000000000140A05,0x0000000000000000}, },
+//	{{0x0000402010000000,0x0000000000000000}, {0x0080000000080402,0x0000000000000201}, {0x0000A05028000000,0x0000000000000000}, },
+//	{{0x0080000000000000,0x0000000000000201}, {0x0000402010080402,0x0000000000000000}, {0x8140000000000000,0x0000000000000502}, },
+//	{{0x0000000000100804,0x0000000000000000}, {0x0100804020000000,0x0000000000000402}, {0x00000000000C0603,0x0000000000000000}, },
+//	{{0x0000804020000000,0x0000000000000000}, {0x0100000000100804,0x0000000000000402}, {0x0000603018000000,0x0000000000000000}, },
+//	{{0x0100000000000000,0x0000000000000402}, {0x0000804020100804,0x0000000000000000}, {0x80C0000000000000,0x0000000000000301}, },
+//	{{0x0000000000201008,0x0000000000000000}, {0x0201008040000000,0x0000000000000804}, {0x0000000000C06030,0x0000000000000000}, },
+//	{{0x0001008040000000,0x0000000000000000}, {0x0200000000201008,0x0000000000000804}, {0x0006030180000000,0x0000000000000000}, },
+//	{{0x0200000000000000,0x0000000000000804}, {0x0001008040201008,0x0000000000000000}, {0x0C00000000000000,0x0000000000003018}, },
+//	{{0x0000000000402010,0x0000000000000000}, {0x0402010080000000,0x0000000000001008}, {0x0000000000A05028,0x0000000000000000}, },
+//	{{0x0002010080000000,0x0000000000000000}, {0x0400000000402010,0x0000000000001008}, {0x0005028140000000,0x0000000000000000}, },
+//	{{0x0400000000000000,0x0000000000001008}, {0x0002010080402010,0x0000000000000000}, {0x0A00000000000000,0x0000000000002814}, },
+//	{{0x0000000000804020,0x0000000000000000}, {0x0804020100000000,0x0000000000002010}, {0x0000000000603018,0x0000000000000000}, },
+//	{{0x0004020100000000,0x0000000000000000}, {0x0800000000804020,0x0000000000002010}, {0x00030180C0000000,0x0000000000000000}, },
+//	{{0x0800000000000000,0x0000000000002010}, {0x0004020100804020,0x0000000000000000}, {0x0600000000000000,0x000000000000180C}, },
+//	{{0x0000000001008040,0x0000000000000000}, {0x1008040200000000,0x0000000000004020}, {0x0000000006030180,0x0000000000000000}, },
+//	{{0x0008040200000000,0x0000000000000000}, {0x1000000001008040,0x0000000000004020}, {0x0030180C00000000,0x0000000000000000}, },
+//	{{0x1000000000000000,0x0000000000004020}, {0x0008040201008040,0x0000000000000000}, {0x6000000000000000,0x00000000000180C0}, },
+//	{{0x0000000002010080,0x0000000000000000}, {0x2010080400000000,0x0000000000008040}, {0x0000000005028140,0x0000000000000000}, },
+//	{{0x0010080400000000,0x0000000000000000}, {0x2000000002010080,0x0000000000008040}, {0x0028140A00000000,0x0000000000000000}, },
+//	{{0x2000000000000000,0x0000000000008040}, {0x0010080402010080,0x0000000000000000}, {0x5000000000000000,0x00000000000140A0}, },
+//	{{0x0000000004020100,0x0000000000000000}, {0x4020100800000000,0x0000000000010080}, {0x00000000030180C0,0x0000000000000000}, },
+//	{{0x0020100800000000,0x0000000000000000}, {0x4000000004020100,0x0000000000010080}, {0x00180C0600000000,0x0000000000000000}, },
+//	{{0x4000000000000000,0x0000000000010080}, {0x0020100804020100,0x0000000000000000}, {0x3000000000000000,0x000000000000C060}, },
+//}; //tripletMasks
 
-int fsss2::uniqueHandler(void* context, char* result) {
-	//get solutions' context
-	solutionProcessorPrintUnique* sp = (solutionProcessorPrintUnique*)context;
+//int fsss2::uniqueHandler(void* context, char* result) {
+//	//get solutions' context
+//	solutionProcessorPrintUnique* sp = (solutionProcessorPrintUnique*)context;
+//
+//	//increment the solution counter
+//	sp->n++;
+//
+//	//stop after second solution
+//	//if(sp->n == 2)
+//	if(sp->n == 1)
+//		return 1;
+//
+//	//store the first solution
+//	//memcpy(sp->firstSolution, result, 81);
+//	//for(int i = 0; i < 81; i++) {
+//	//	sp->firstSolution[i] = result[i] + '1';
+//	//}
+//	return 0;
+//}
 
-	//increment the solution counter
-	sp->n++;
-
-	//stop after second solution
-	if(sp->n == 2)
-	//if(sp->n == 1)
-		return 1;
-
-	//store the first solution
-	//memcpy(sp->firstSolution, result, 81);
-	//for(int i = 0; i < 81; i++) {
-	//	sp->firstSolution[i] = result[i] + '1';
-	//}
-	return 0;
+bool fsss2::isIrreducible(const char* const in) {
+	int pos[81], val[81], nGivens = 0;
+	for(int c = 0; c < 81; c++) {
+		if(in[c] == 0)
+			continue;
+		pos[nGivens] = c;
+		val[nGivens++] = in[c] - 1;
+	}
+	sol = NULL;
+	for(int skip = 0; skip < nGivens; skip++) {
+	//for(int skip = nGivens - 1; skip >= 0; skip--) { //slower
+		initEmpty();
+		numSolutionsToDo = 1;
+		//set the givens except for the tested cell
+		for(int n = 0; n < nGivens; n++) {
+			if(n != skip) {
+				if(!grid[val[n]].isBitSet(pos[n])) {
+					//direct contradiction within the initial givens
+					mode = MODE_STOP_PROCESSING;
+					return false;
+				}
+				solved.setBit(pos[n]); //mark cell as "solved"
+				grid[val[n]].clearBits(visibleCells[pos[n]]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
+			}
+		}
+		//forbid the given for the tested cell
+		grid[val[skip]].clearBit(pos[skip]);
+		//update the candidates
+		grid[0].clearBits(solved);
+		grid[1].clearBits(solved);
+		grid[2].clearBits(solved);
+		grid[3].clearBits(solved);
+		grid[4].clearBits(solved);
+		grid[5].clearBits(solved);
+		grid[6].clearBits(solved);
+		grid[7].clearBits(solved);
+		grid[8].clearBits(solved);
+		//check whether there is at least one solution with the different value for the tested cell
+		doEliminations();
+		if(numSolutionsToDo) {
+			//no solution with different value for the tested cell exists, therefore the given at pos[skip] is redundant
+			return false;
+		}
+	}
+	//all tests passed
+	return true;
 }
 
-void fsss2::solveUnique(const char* const __restrict in, char* __restrict out) {
-	//buffer for solved cells
-	char s[81];
-
-	//an instance of the class that holds all solutions
-	solutionProcessorPrintUnique sp;
-
+unsigned long long fsss2::solve(const char* const in, unsigned long long nSolutions, char* out) {
 	//start from clean solver context
 	initEmpty();
-
-	//assign the instance to the solver
-	theProcessor = &sp;
-
-	//tell the solver to use this buffer for solved cells
-	sol = s;
-
-	//tell the solver to call this static method on each solution found
-	solutionHandler = uniqueHandler;
-
+	sol = out;
+	numSolutionsToDo = nSolutions;
 	//perform optimized setup with the initial givens, then solve
 	initGivens(in);
-
-	//read from the accumulated context how many solutions were found
-	if(sp.n == 1) {
-		//do nothing for the solvable single-solution puzzles
-		//printf("Unique\n");
-		//printf("%81.81s\n", sp.firstSolution);
-	}
-	else if(sp.n == 0) {
-		//notify for the unsolvable puzzles
-		printf("Invalid\n");
-	}
-	else {
-		//notify for the multiple-solutions solvable puzzles
-		printf("Multiple\n");
-	}
+	return nSolutions - numSolutionsToDo;
 }
 
 void fsss2::solutionFound() {
-	if(solutionHandler) {
-		if((*solutionHandler)(theProcessor, sol)) {
-			//forced end
-			mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
-			return;
+	if(--numSolutionsToDo) {
+		if(sol) {
+			sol += 81;
 		}
+		mode = MODE_STOP_PROCESSING;
+		return;
 	}
-	mode = MODE_STOP_PROCESSING;
+	mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
 }
+
+//void fsss2::solveUnique(const char* const in, char* out) {
+//	//buffer for solved cells
+//	char s[81];
+//
+//	//an instance of the class that holds all solutions
+//	solutionProcessorPrintUnique sp;
+//
+//	//start from clean solver context
+//	initEmpty();
+//
+//	//assign the instance to the solver
+//	theProcessor = &sp;
+//
+//	//tell the solver to use this buffer for solved cells
+//	sol = s;
+//
+//	//tell the solver to call this static method on each solution found
+//	solutionHandler = uniqueHandler;
+//
+//	//perform optimized setup with the initial givens, then solve
+//	initGivens(in);
+//
+//	//read from the accumulated context how many solutions were found
+//	if(sp.n == 1) {
+//		//do nothing for the solvable single-solution puzzles
+//		//printf("Unique\n");
+//		//printf("%81.81s\n", sp.firstSolution);
+//	}
+//	else if(sp.n == 0) {
+//		//notify for the unsolvable puzzles
+//		printf("Invalid\n");
+//	}
+//	else {
+//		//notify for the multiple-solutions solvable puzzles
+//		printf("Multiple\n");
+//	}
+//}
+
+//void fsss2::solutionFound() {
+//	if(solutionHandler) {
+//		if((*solutionHandler)(theProcessor, sol)) {
+//			//forced end
+//			mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
+//			return;
+//		}
+//	}
+//	mode = MODE_STOP_PROCESSING;
+//}
 
 void fsss2::initEmpty() {
 	//set all cells and houses as "unsolved"
@@ -269,11 +338,11 @@ void fsss2::initEmpty() {
 	//should solve
 	mode = 0;
 	//default context
-	theProcessor = NULL;
+	//theProcessor = NULL;
 	//default buffer
-	sol = NULL;
+	//sol = NULL;
 	//do locked candidates
-	lockedCandidatesDone = 0;
+	//lockedCandidatesDone = 0;
 }
 
 void fsss2::initGivens(const char* const in) {
@@ -290,7 +359,7 @@ void fsss2::initGivens(const char* const in) {
 		}
 		if(sol) {
 			//if buffer for the solution is given, store the digit
-			sol[c] = d;
+			sol[c] = d + 1;
 		}
 		solved.setBit(c); //mark cell as "solved"
 		grid[d].clearBits(visibleCells[c]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
@@ -333,7 +402,7 @@ void fsss2::setDigit(int d, int c) {
 //	}
 
 	if(sol)
-		sol[c] = d; //store the digit if solution buffer is given
+		sol[c] = d + 1; //store the digit if solution buffer is given
 	solved.setBit(c); //mark cell as "solved"
 	//clear all digit candidates for this cell
 	grid[0].clearBit(c);
@@ -403,7 +472,7 @@ void fsss2::doNakedSingles() { //cells with only one remaining candidate
 			for(int d = 0; d < 9; d++) {
 				if(grid[d].isBitSet(pos[c])) {
 					if(sol)
-						sol[pos[c]] = d;
+						sol[pos[c]] = d + 1;
 					grid[d].clearBits(visibleCells[pos[c]]);
 					goto next_pos;
 				}
@@ -440,23 +509,6 @@ void fsss2::doHiddenSingles() { //digits with only one occurrence in a house
 		doHiddenSinglesForDigit(d);
 		if(mode) return;
 	}
-//	doHiddenSinglesForDigit(0);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(1);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(2);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(3);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(4);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(5);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(6);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(7);
-//	if(mode) return;
-//	doHiddenSinglesForDigit(8);
 }
 
 void fsss2::doHiddenSinglesForDigit(int d) { //digits with only one occurrence in a house
@@ -487,100 +539,67 @@ void fsss2::doHiddenSinglesForDigit(int d) { //digits with only one occurrence i
 	}
 }
 
-void fsss2::doHiddenSinglesForDigitCell(int d, int c) { //digits with only one occurrence in a house
-	static const int affectedGroups[81][3] =
-	{
-		{0, 9,18},{0,10,18},{0,11,18},{0,12,19},{0,13,19},{0,14,19},{0,15,20},{0,16,20},{0,17,20},
-		{1, 9,18},{1,10,18},{1,11,18},{1,12,19},{1,13,19},{1,14,19},{1,15,20},{1,16,20},{1,17,20},
-		{2, 9,18},{2,10,18},{2,11,18},{2,12,19},{2,13,19},{2,14,19},{2,15,20},{2,16,20},{2,17,20},
-		{3, 9,21},{3,10,21},{3,11,21},{3,12,22},{3,13,22},{3,14,22},{3,15,23},{3,16,23},{3,17,23},
-		{4, 9,21},{4,10,21},{4,11,21},{4,12,22},{4,13,22},{4,14,22},{4,15,23},{4,16,23},{4,17,23},
-		{5, 9,21},{5,10,21},{5,11,21},{5,12,22},{5,13,22},{5,14,22},{5,15,23},{5,16,23},{5,17,23},
-		{6, 9,24},{6,10,24},{6,11,24},{6,12,25},{6,13,25},{6,14,25},{6,15,26},{6,16,26},{6,17,26},
-		{7, 9,24},{7,10,24},{7,11,24},{7,12,25},{7,13,25},{7,14,25},{7,15,26},{7,16,26},{7,17,26},
-		{8, 9,24},{8,10,24},{8,11,24},{8,12,25},{8,13,25},{8,14,25},{8,15,26},{8,16,26},{8,17,26}
-	};
-	for(int h = 0; h < 3; h++) {
-		bm128 tmp = grid[d];
-		if(!tmp.isBitSet(81 + affectedGroups[c][h]))
-			continue;
-		tmp &= bitsForHouse[affectedGroups[c][h]];
-		int n = tmp.findSingleBitIndex96();
-		if(n == -1) // 2+ bits
-			continue;
-		if(n == -2) { // 0 bits
-			mode = MODE_STOP_PROCESSING;
-			return;
-		}
-		setDigit(d, n);
-		if(mode) return;
-		//doNakedSingles(); //parallel version looks fast enough even for checking a single cell
-		//if(mode) return;
-	}
-}
-
-
-void fsss2::doLockedCandidatesForDigit(bm128& tmp) {
-	int houses = 0x03FFFF & ((tmp.toInt64_1()) >> (81 - 64));
-	for(int hbm = houses & -houses; houses; hbm = houses & -houses) {
-		houses ^= hbm;
-		unsigned int rc = 3U * __builtin_ctz(hbm);
-		//process the 3 triplets in the row/col
-		//at least one of them is joint to grid[d], i.e. is not solved
-		if(!tmp.isDisjoint(tripletMasks[rc + 0].self)) {
-			if(tmp.isDisjoint(tripletMasks[rc + 0].adjacentLine)) {
-				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
-				tmp.clearBits(tripletMasks[rc + 0].adjacentBox);
-			}
-			else if(tmp.isDisjoint(tripletMasks[rc + 0].adjacentBox)) {
-				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
-				tmp.clearBits(tripletMasks[rc + 0].adjacentLine);
-			}
-		}
-		if(!tmp.isDisjoint(tripletMasks[rc + 1].self)) {
-			if(tmp.isDisjoint(tripletMasks[rc + 1].adjacentLine)) {
-				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
-				tmp.clearBits(tripletMasks[rc + 1].adjacentBox);
-			}
-			else if(tmp.isDisjoint(tripletMasks[rc + 1].adjacentBox)) {
-				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
-				tmp.clearBits(tripletMasks[rc + 1].adjacentLine);
-			}
-		}
-		if(!tmp.isDisjoint(tripletMasks[rc + 2].self)) {
-			if(tmp.isDisjoint(tripletMasks[rc + 2].adjacentLine)) {
-				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
-				tmp.clearBits(tripletMasks[rc + 2].adjacentBox);
-			}
-			else if(tmp.isDisjoint(tripletMasks[rc + 2].adjacentBox)) {
-				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
-				tmp.clearBits(tripletMasks[rc + 2].adjacentLine);
-			}
-		}
-	} //houses loop
-}
-
-void fsss2::doLockedCandidates() { //if a digit in a row is within a single triplet, then remove digit from the box triplets and vice versa
-	if(lockedCandidatesDone) return;
-again:
-//#pragma forceinline recursive
-	for(int d = 0; d < 9; d++) {
-		bm128 tmp = grid[d];
-		doLockedCandidatesForDigit(grid[d]);
-		if(tmp.isSubsetOf(grid[d]))
-			continue;
-		//some eliminations are done for this digit
-		doNakedSingles();
-		if(mode) return;
-		doHiddenSinglesForDigit(d);
-		if(mode) return;
-		//goto again;
-		//lockedCandidatesDone = 1;
-	}
-	//if(lockedCandidatesDone)
-	//	doHiddenSingles();
-	lockedCandidatesDone = 1;
-}
+//void fsss2::doLockedCandidatesForDigit(bm128& tmp) {
+//	int houses = 0x03FFFF & ((tmp.toInt64_1()) >> (81 - 64));
+//	for(int hbm = houses & -houses; houses; hbm = houses & -houses) {
+//		houses ^= hbm;
+//		unsigned int rc = 3U * __builtin_ctz(hbm);
+//		//process the 3 triplets in the row/col
+//		//at least one of them is joint to grid[d], i.e. is not solved
+//		if(!tmp.isDisjoint(tripletMasks[rc + 0].self)) {
+//			if(tmp.isDisjoint(tripletMasks[rc + 0].adjacentLine)) {
+//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
+//				tmp.clearBits(tripletMasks[rc + 0].adjacentBox);
+//			}
+//			else if(tmp.isDisjoint(tripletMasks[rc + 0].adjacentBox)) {
+//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
+//				tmp.clearBits(tripletMasks[rc + 0].adjacentLine);
+//			}
+//		}
+//		if(!tmp.isDisjoint(tripletMasks[rc + 1].self)) {
+//			if(tmp.isDisjoint(tripletMasks[rc + 1].adjacentLine)) {
+//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
+//				tmp.clearBits(tripletMasks[rc + 1].adjacentBox);
+//			}
+//			else if(tmp.isDisjoint(tripletMasks[rc + 1].adjacentBox)) {
+//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
+//				tmp.clearBits(tripletMasks[rc + 1].adjacentLine);
+//			}
+//		}
+//		if(!tmp.isDisjoint(tripletMasks[rc + 2].self)) {
+//			if(tmp.isDisjoint(tripletMasks[rc + 2].adjacentLine)) {
+//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
+//				tmp.clearBits(tripletMasks[rc + 2].adjacentBox);
+//			}
+//			else if(tmp.isDisjoint(tripletMasks[rc + 2].adjacentBox)) {
+//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
+//				tmp.clearBits(tripletMasks[rc + 2].adjacentLine);
+//			}
+//		}
+//	} //houses loop
+//}
+//
+//void fsss2::doLockedCandidates() { //if a digit in a row is within a single triplet, then remove digit from the box triplets and vice versa
+//	if(lockedCandidatesDone) return;
+//again:
+////#pragma forceinline recursive
+//	for(int d = 0; d < 9; d++) {
+//		bm128 tmp = grid[d];
+//		doLockedCandidatesForDigit(grid[d]);
+//		if(tmp.isSubsetOf(grid[d]))
+//			continue;
+//		//some eliminations are done for this digit
+//		doNakedSingles();
+//		if(mode) return;
+//		doHiddenSinglesForDigit(d);
+//		if(mode) return;
+//		//goto again;
+//		//lockedCandidatesDone = 1;
+//	}
+//	//if(lockedCandidatesDone)
+//	//	doHiddenSingles();
+//	lockedCandidatesDone = 1;
+//}
 
 void fsss2::doDirectEliminations() {
 again:
