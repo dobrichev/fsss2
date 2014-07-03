@@ -18,6 +18,8 @@
 //void	printBitsForHouse();
 //#include "tables.h"
 
+//int nNaked[81]; //debug
+
 int main(int argc, char* argv[])
 {
 	//printTripletMasks();
@@ -26,17 +28,18 @@ int main(int argc, char* argv[])
 	int ret = 0;
 	start = clock();
 
-	//const char * const c = "980700000700000600006050000040005030007900500000020001008500900000010004000003020"; //hard
-	//const char * const c = "000000010000002034005060000000300020001000700040001000000050600230800000010000000"; //18
-	//const char * const c = "000001002003040050040060107000400080012000060900003200004007006080230000205000700"; //easy
 	char p[2000];
 	char c[88];
 	fsss2 s;
+	//char r[10000][81];
+	//int z = s.solve("000000001002345067038017250000008700027534608803070000000053106001000000300081502", 10000, r[0]);
+	//printf("z=%d\n", z);
+	//return 0;
 	int num[3] = {0,0,0};
 	while(fgets(p, sizeof(p), stdin)) {
 		for(int i = 0; i < 81; i++) c[i] = (p[i] <= '9' && p[i] >='0' ? p[i] - '0' : 0);
-		//num[s.solve(c, 2, NULL)]++;
-		num[s.isIrreducible(c) ? 0 : 1]++;
+		num[s.solve(c, 2, NULL)]++;
+		//num[s.isIrreducible(c) ? 0 : 1]++;
 	}
 
 	//printVisibleCells();
@@ -44,6 +47,8 @@ int main(int argc, char* argv[])
 
 	finish = clock();
 	fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC);
+	//for(int n = 0; n < 20; n++)
+	//	fprintf(stderr, "naked%d = %d\n", n, nNaked[n]);
 	return ret;
 }
 

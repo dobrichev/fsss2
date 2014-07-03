@@ -42,7 +42,10 @@ typedef union t_128 {
 } t_128;
 
 extern const t_128 bitSet[128];
-extern const t_128 maskLSB[129];
+//extern const t_128 maskLSB[129];
+extern const t_128 mask81;
+extern const t_128 mask108;
+//extern const t_128 mask109;
 
 struct bm128 {
 	t_128 bitmap128;
@@ -50,7 +53,7 @@ struct bm128 {
 	bm128(const bm128 &v) {bitmap128.m128i_m128i = v.bitmap128.m128i_m128i;};
 	bm128(const __m128i &v) {bitmap128.m128i_m128i = v;};
 	bm128(const t_128 &v) {bitmap128.m128i_m128i = v.m128i_m128i;};
-	//inline bool operator== (const bm128& r) const {return 0xFFFF == _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i));};
+	inline bool operator== (const bm128& r) const {return 0xFFFF == _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i));};
 	inline void operator&= (const bm128& r) {bitmap128.m128i_m128i = _mm_and_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);};
 	inline void operator|= (const bm128& r) {bitmap128.m128i_m128i = _mm_or_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);};
 	//inline bool isDisjoint(const bm128& r) const {return equals(andnot(r.bitmap128.m128i_m128i, bitmap128.m128i_m128i), bitmap128.m128i_m128i);};
@@ -80,7 +83,7 @@ struct bm128 {
 	}
     inline unsigned int nonzeroOctets() const {return 0x0000ffff ^ _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, _mm_setzero_si128()));}
     inline unsigned int diffOctets(const bm128 &rhs) const {return 0x0000ffff ^ _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, rhs.bitmap128.m128i_m128i));}
-	int getFirstBit1Index96() const {
+	inline int getFirstBit1Index96() const {
 		uint32_t i;
 		bm128 xmm = bitmap128.m128i_m128i;
 		i = _mm_cvtsi128_si32(xmm.bitmap128.m128i_m128i);
@@ -122,7 +125,7 @@ struct bm128 {
 		}
 		return n;
 	}
-	int findSingleBitIndex96() const {
+	inline int findSingleBitIndex96() const {
 		//if (x & (x-1)) == 0 then x has 0 or 1 bit set
 		t_128 one = {1,1};
 		if(0 == _mm_testz_si128(bitmap128.m128i_m128i, _mm_sub_epi64(bitmap128.m128i_m128i, one.m128i_m128i)))

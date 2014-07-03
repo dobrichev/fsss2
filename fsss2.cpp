@@ -11,7 +11,10 @@
 #include <memory.h>
 #include "fsss2.h"
 
-//solutionProcessorPrintUnique::solutionProcessorPrintUnique() : n(0) {};
+//game mode flags
+#define MODE_SOLVING			0	//unused, keep solving
+#define MODE_STOP_PROCESSING	1	//solved or error
+#define MODE_STOP_GUESSING		2	//necessary solutions found
 
 const t_128 fsss2::visibleCells[81] = { //1 for all 20 visible cells, 0 for the cell itself, 1 for the three houses
 	{0x80402010081C0FFE,0x0000000804020100},
@@ -127,90 +130,16 @@ const t_128 fsss2::bitsForHouse[27] = { //1 for the 9 cells in the house
 	{0x7000000000000000,0x000000000001C0E0},
 }; //bitsForHouse[27]
 
-//const tripletMask fsss2::tripletMasks[54] = {
-//	{{0x0000000000000007,0x0000000000000000}, {0x00000000000001F8,0x0000000000000000}, {0x00000000001C0E00,0x0000000000000000}, },
-//	{{0x0000000000000038,0x0000000000000000}, {0x00000000000001C7,0x0000000000000000}, {0x0000000000E07000,0x0000000000000000}, },
-//	{{0x00000000000001C0,0x0000000000000000}, {0x000000000000003F,0x0000000000000000}, {0x0000000007038000,0x0000000000000000}, },
-//	{{0x0000000000000E00,0x0000000000000000}, {0x000000000003F000,0x0000000000000000}, {0x00000000001C0007,0x0000000000000000}, },
-//	{{0x0000000000007000,0x0000000000000000}, {0x0000000000038E00,0x0000000000000000}, {0x0000000000E00038,0x0000000000000000}, },
-//	{{0x0000000000038000,0x0000000000000000}, {0x0000000000007E00,0x0000000000000000}, {0x00000000070001C0,0x0000000000000000}, },
-//	{{0x00000000001C0000,0x0000000000000000}, {0x0000000007E00000,0x0000000000000000}, {0x0000000000000E07,0x0000000000000000}, },
-//	{{0x0000000000E00000,0x0000000000000000}, {0x00000000071C0000,0x0000000000000000}, {0x0000000000007038,0x0000000000000000}, },
-//	{{0x0000000007000000,0x0000000000000000}, {0x0000000000FC0000,0x0000000000000000}, {0x00000000000381C0,0x0000000000000000}, },
-//	{{0x0000000038000000,0x0000000000000000}, {0x0000000FC0000000,0x0000000000000000}, {0x0000E07000000000,0x0000000000000000}, },
-//	{{0x00000001C0000000,0x0000000000000000}, {0x0000000E38000000,0x0000000000000000}, {0x0007038000000000,0x0000000000000000}, },
-//	{{0x0000000E00000000,0x0000000000000000}, {0x00000001F8000000,0x0000000000000000}, {0x00381C0000000000,0x0000000000000000}, },
-//	{{0x0000007000000000,0x0000000000000000}, {0x00001F8000000000,0x0000000000000000}, {0x0000E00038000000,0x0000000000000000}, },
-//	{{0x0000038000000000,0x0000000000000000}, {0x00001C7000000000,0x0000000000000000}, {0x00070001C0000000,0x0000000000000000}, },
-//	{{0x00001C0000000000,0x0000000000000000}, {0x000003F000000000,0x0000000000000000}, {0x0038000E00000000,0x0000000000000000}, },
-//	{{0x0000E00000000000,0x0000000000000000}, {0x003F000000000000,0x0000000000000000}, {0x0000007038000000,0x0000000000000000}, },
-//	{{0x0007000000000000,0x0000000000000000}, {0x0038E00000000000,0x0000000000000000}, {0x00000381C0000000,0x0000000000000000}, },
-//	{{0x0038000000000000,0x0000000000000000}, {0x0007E00000000000,0x0000000000000000}, {0x00001C0E00000000,0x0000000000000000}, },
-//	{{0x01C0000000000000,0x0000000000000000}, {0x7E00000000000000,0x0000000000000000}, {0x8000000000000000,0x0000000000000703}, },
-//	{{0x0E00000000000000,0x0000000000000000}, {0x71C0000000000000,0x0000000000000000}, {0x0000000000000000,0x000000000000381C}, },
-//	{{0x7000000000000000,0x0000000000000000}, {0x0FC0000000000000,0x0000000000000000}, {0x0000000000000000,0x000000000001C0E0}, },
-//	{{0x8000000000000000,0x0000000000000003}, {0x0000000000000000,0x00000000000000FC}, {0x01C0000000000000,0x0000000000000700}, },
-//	{{0x0000000000000000,0x000000000000001C}, {0x8000000000000000,0x00000000000000E3}, {0x0E00000000000000,0x0000000000003800}, },
-//	{{0x0000000000000000,0x00000000000000E0}, {0x8000000000000000,0x000000000000001F}, {0x7000000000000000,0x000000000001C000}, },
-//	{{0x0000000000000000,0x0000000000000700}, {0x0000000000000000,0x000000000001F800}, {0x81C0000000000000,0x0000000000000003}, },
-//	{{0x0000000000000000,0x0000000000003800}, {0x0000000000000000,0x000000000001C700}, {0x0E00000000000000,0x000000000000001C}, },
-//	{{0x0000000000000000,0x000000000001C000}, {0x0000000000000000,0x0000000000003F00}, {0x7000000000000000,0x00000000000000E0}, },
-//	{{0x0000000000040201,0x0000000000000000}, {0x8040201008000000,0x0000000000000100}, {0x0000000000180C06,0x0000000000000000}, },
-//	{{0x0000201008000000,0x0000000000000000}, {0x8040000000040201,0x0000000000000100}, {0x0000C06030000000,0x0000000000000000}, },
-//	{{0x8040000000000000,0x0000000000000100}, {0x0000201008040201,0x0000000000000000}, {0x0180000000000000,0x0000000000000603}, },
-//	{{0x0000000000080402,0x0000000000000000}, {0x0080402010000000,0x0000000000000201}, {0x0000000000140A05,0x0000000000000000}, },
-//	{{0x0000402010000000,0x0000000000000000}, {0x0080000000080402,0x0000000000000201}, {0x0000A05028000000,0x0000000000000000}, },
-//	{{0x0080000000000000,0x0000000000000201}, {0x0000402010080402,0x0000000000000000}, {0x8140000000000000,0x0000000000000502}, },
-//	{{0x0000000000100804,0x0000000000000000}, {0x0100804020000000,0x0000000000000402}, {0x00000000000C0603,0x0000000000000000}, },
-//	{{0x0000804020000000,0x0000000000000000}, {0x0100000000100804,0x0000000000000402}, {0x0000603018000000,0x0000000000000000}, },
-//	{{0x0100000000000000,0x0000000000000402}, {0x0000804020100804,0x0000000000000000}, {0x80C0000000000000,0x0000000000000301}, },
-//	{{0x0000000000201008,0x0000000000000000}, {0x0201008040000000,0x0000000000000804}, {0x0000000000C06030,0x0000000000000000}, },
-//	{{0x0001008040000000,0x0000000000000000}, {0x0200000000201008,0x0000000000000804}, {0x0006030180000000,0x0000000000000000}, },
-//	{{0x0200000000000000,0x0000000000000804}, {0x0001008040201008,0x0000000000000000}, {0x0C00000000000000,0x0000000000003018}, },
-//	{{0x0000000000402010,0x0000000000000000}, {0x0402010080000000,0x0000000000001008}, {0x0000000000A05028,0x0000000000000000}, },
-//	{{0x0002010080000000,0x0000000000000000}, {0x0400000000402010,0x0000000000001008}, {0x0005028140000000,0x0000000000000000}, },
-//	{{0x0400000000000000,0x0000000000001008}, {0x0002010080402010,0x0000000000000000}, {0x0A00000000000000,0x0000000000002814}, },
-//	{{0x0000000000804020,0x0000000000000000}, {0x0804020100000000,0x0000000000002010}, {0x0000000000603018,0x0000000000000000}, },
-//	{{0x0004020100000000,0x0000000000000000}, {0x0800000000804020,0x0000000000002010}, {0x00030180C0000000,0x0000000000000000}, },
-//	{{0x0800000000000000,0x0000000000002010}, {0x0004020100804020,0x0000000000000000}, {0x0600000000000000,0x000000000000180C}, },
-//	{{0x0000000001008040,0x0000000000000000}, {0x1008040200000000,0x0000000000004020}, {0x0000000006030180,0x0000000000000000}, },
-//	{{0x0008040200000000,0x0000000000000000}, {0x1000000001008040,0x0000000000004020}, {0x0030180C00000000,0x0000000000000000}, },
-//	{{0x1000000000000000,0x0000000000004020}, {0x0008040201008040,0x0000000000000000}, {0x6000000000000000,0x00000000000180C0}, },
-//	{{0x0000000002010080,0x0000000000000000}, {0x2010080400000000,0x0000000000008040}, {0x0000000005028140,0x0000000000000000}, },
-//	{{0x0010080400000000,0x0000000000000000}, {0x2000000002010080,0x0000000000008040}, {0x0028140A00000000,0x0000000000000000}, },
-//	{{0x2000000000000000,0x0000000000008040}, {0x0010080402010080,0x0000000000000000}, {0x5000000000000000,0x00000000000140A0}, },
-//	{{0x0000000004020100,0x0000000000000000}, {0x4020100800000000,0x0000000000010080}, {0x00000000030180C0,0x0000000000000000}, },
-//	{{0x0020100800000000,0x0000000000000000}, {0x4000000004020100,0x0000000000010080}, {0x00180C0600000000,0x0000000000000000}, },
-//	{{0x4000000000000000,0x0000000000010080}, {0x0020100804020100,0x0000000000000000}, {0x3000000000000000,0x000000000000C060}, },
-//}; //tripletMasks
-
-//int fsss2::uniqueHandler(void* context, char* result) {
-//	//get solutions' context
-//	solutionProcessorPrintUnique* sp = (solutionProcessorPrintUnique*)context;
-//
-//	//increment the solution counter
-//	sp->n++;
-//
-//	//stop after second solution
-//	//if(sp->n == 2)
-//	if(sp->n == 1)
-//		return 1;
-//
-//	//store the first solution
-//	//memcpy(sp->firstSolution, result, 81);
-//	//for(int i = 0; i < 81; i++) {
-//	//	sp->firstSolution[i] = result[i] + '1';
-//	//}
-//	return 0;
-//}
-
 bool fsss2::isIrreducible(const char* const in) {
 	int pos[81], val[81], nGivens = 0;
+	int dc[9] = {0,0,0,0,0,0,0,0,0};
 	for(int c = 0; c < 81; c++) {
 		if(in[c] == 0)
 			continue;
 		pos[nGivens] = c;
 		val[nGivens++] = in[c] - 1;
+		if(++dc[in[c] - 1] > 6)
+			return false; //this works for 36+ givens
 	}
 	sol = NULL;
 	for(int skip = 0; skip < nGivens; skip++) {
@@ -219,6 +148,7 @@ bool fsss2::isIrreducible(const char* const in) {
 		numSolutionsToDo = 1;
 		//set the givens except for the tested cell
 		for(int n = 0; n < nGivens; n++) {
+		//for(int n = nGivens - 1; n >= 0; n--) { //slower
 			if(n != skip) {
 				if(!grid[val[n]].isBitSet(pos[n])) {
 					//direct contradiction within the initial givens
@@ -252,100 +182,12 @@ bool fsss2::isIrreducible(const char* const in) {
 	return true;
 }
 
-unsigned long long fsss2::solve(const char* const in, unsigned long long nSolutions, char* out) {
+unsigned long long fsss2::solve(const char* const in, const unsigned long long nSolutions, char* const out) {
 	//start from clean solver context
 	initEmpty();
 	sol = out;
 	numSolutionsToDo = nSolutions;
-	//perform optimized setup with the initial givens, then solve
-	initGivens(in);
-	return nSolutions - numSolutionsToDo;
-}
-
-void fsss2::solutionFound() {
-	if(--numSolutionsToDo) {
-		if(sol) {
-			sol += 81;
-		}
-		mode = MODE_STOP_PROCESSING;
-		return;
-	}
-	mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
-}
-
-//void fsss2::solveUnique(const char* const in, char* out) {
-//	//buffer for solved cells
-//	char s[81];
-//
-//	//an instance of the class that holds all solutions
-//	solutionProcessorPrintUnique sp;
-//
-//	//start from clean solver context
-//	initEmpty();
-//
-//	//assign the instance to the solver
-//	theProcessor = &sp;
-//
-//	//tell the solver to use this buffer for solved cells
-//	sol = s;
-//
-//	//tell the solver to call this static method on each solution found
-//	solutionHandler = uniqueHandler;
-//
-//	//perform optimized setup with the initial givens, then solve
-//	initGivens(in);
-//
-//	//read from the accumulated context how many solutions were found
-//	if(sp.n == 1) {
-//		//do nothing for the solvable single-solution puzzles
-//		//printf("Unique\n");
-//		//printf("%81.81s\n", sp.firstSolution);
-//	}
-//	else if(sp.n == 0) {
-//		//notify for the unsolvable puzzles
-//		printf("Invalid\n");
-//	}
-//	else {
-//		//notify for the multiple-solutions solvable puzzles
-//		printf("Multiple\n");
-//	}
-//}
-
-//void fsss2::solutionFound() {
-//	if(solutionHandler) {
-//		if((*solutionHandler)(theProcessor, sol)) {
-//			//forced end
-//			mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
-//			return;
-//		}
-//	}
-//	mode = MODE_STOP_PROCESSING;
-//}
-
-void fsss2::initEmpty() {
-	//set all cells and houses as "unsolved"
-	grid[0] = maskLSB[81 + 27];
-	grid[1] = maskLSB[81 + 27];
-	grid[2] = maskLSB[81 + 27];
-	grid[3] = maskLSB[81 + 27];
-	grid[4] = maskLSB[81 + 27];
-	grid[5] = maskLSB[81 + 27];
-	grid[6] = maskLSB[81 + 27];
-	grid[7] = maskLSB[81 + 27];
-	grid[8] = maskLSB[81 + 27];
-	//no solved cells yet
-	solved.clear();
-	//should solve
-	mode = 0;
-	//default context
-	//theProcessor = NULL;
-	//default buffer
-	//sol = NULL;
-	//do locked candidates
-	//lockedCandidatesDone = 0;
-}
-
-void fsss2::initGivens(const char* const in) {
+	//perform optimized setup with the initial givens
 	for(int c = 0; c < 81; c++) {
 		int d = in[c];
 		if(d == 0) {
@@ -355,7 +197,7 @@ void fsss2::initGivens(const char* const in) {
 		if(!grid[--d].isBitSet(c)) {
 			//direct contradiction within the initial givens
 			mode = MODE_STOP_PROCESSING;
-			return;
+			return 0;
 		}
 		if(sol) {
 			//if buffer for the solution is given, store the digit
@@ -374,36 +216,63 @@ void fsss2::initGivens(const char* const in) {
 	grid[6].clearBits(solved);
 	grid[7].clearBits(solved);
 	grid[8].clearBits(solved);
-	if(((bm128)maskLSB[81]).isSubsetOf(solved)) {
+	if(((bm128)mask81).isSubsetOf(solved)) {
 		//all givens :)
 		solutionFound();
-		return;
+		return 1;
 	}
 	//now do the entire solving process
 	doEliminations();
+	return nSolutions - numSolutionsToDo;
 }
 
-void fsss2::setDigit(int d, int c) {
-//	//debug
-//	if(!grid[d].isBitSet(c)) {
-//		mode = MODE_STOP_PROCESSING;
-//		printf(".");
-//		return;
-//	}
+void fsss2::solutionFound() {
+	if(--numSolutionsToDo) {
+		if(sol) {
+			memcpy(sol + 81, sol, 81);
+			sol += 81;
+		}
+		mode = MODE_STOP_PROCESSING;
+		return;
+	}
+	mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
+}
 
-//	//debug
-//	bm128 tmp = grid[d];
-//	tmp.clearBits(maskLSB[81]);
-//	tmp &= visibleCells[c];
-//	if(tmp.popcount_128() != 3) {
-//		mode = MODE_STOP_PROCESSING;
-//		printf(".");
-//		return;
-//	}
+void fsss2::initEmpty() {
+	//set all cells and houses as "unsolved"
+	grid[0] = mask108;
+	grid[1] = mask108;
+	grid[2] = mask108;
+	grid[3] = mask108;
+	grid[4] = mask108;
+	grid[5] = mask108;
+	grid[6] = mask108;
+	grid[7] = mask108;
+	grid[8] = mask108;
+	//no solved cells yet
+	solved.clear();
+	//no processed digits for hidden singles yet
+	knownNoHiddenSingles[0].clear();
+	knownNoHiddenSingles[1].clear();
+	knownNoHiddenSingles[2].clear();
+	knownNoHiddenSingles[3].clear();
+	knownNoHiddenSingles[4].clear();
+	knownNoHiddenSingles[5].clear();
+	knownNoHiddenSingles[6].clear();
+	knownNoHiddenSingles[7].clear();
+	knownNoHiddenSingles[8].clear();
+	//should solve
+	mode = 0;
+}
 
+void fsss2::setDigit(const int d, const int c) {
 	if(sol)
 		sol[c] = d + 1; //store the digit if solution buffer is given
 	solved.setBit(c); //mark cell as "solved"
+	if(((bm128)mask81).isSubsetOf(solved)) {
+		solutionFound();
+		return;
+	}
 	//clear all digit candidates for this cell
 	grid[0].clearBit(c);
 	grid[1].clearBit(c);
@@ -415,199 +284,133 @@ void fsss2::setDigit(int d, int c) {
 	grid[7].clearBit(c);
 	grid[8].clearBit(c);
 	grid[d].clearBits(visibleCells[c]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
-	if(((bm128)maskLSB[81]).isSubsetOf(solved)) {
-		solutionFound();
-		//return;
-	}
-	//doHiddenSinglesForDigitCell(d, c);
-	//if(mode) return;
 }
 
-//void fsss2::findNakedSingles(bm128& all) { //cells with only one remaining candidate
-//	bm128 duplicates = solved;
-//	for(int d = 0; d < 9; d++) {
-//		bm128 tmp = grid[d];
-//		tmp &= all;
-//		duplicates |= tmp;
-//		all |= grid[d];
-//	}
-//	if(((bm128)maskLSB[81]).isSubsetOf(all)) {
-//		mode = MODE_STOP_PROCESSING;
-//		return;
-//	}
-//	all &= maskLSB[81]; //clear other bits
-////	if(all != maskLSB[81]) { //unsolved cells w/o any candidate
-////		mode = MODE_STOP_PROCESSING;
-////		return;
-////	}
-//	all.clearBits(duplicates);
-//}
-
-void fsss2::doNakedSingles() { //cells with only one remaining candidate
-	do {
-		bm128 all = solved;
-		bm128 duplicates = solved;
+inline void fsss2::doNakedSingles() { //cells with only one remaining candidate
+again:
+	bm128 all = solved;
+	bm128 duplicates = solved; //cells with 2 or more candidates
+	for(int d = 0; d < 9; d++) {
+		bm128 tmp = grid[d];
+		tmp &= all;
+		duplicates |= tmp;
+		all |= grid[d];
+	}
+	if(!((bm128)mask81).isSubsetOf(all)) {
+		//there is at least one unsolved cell without any candidate
+		mode = MODE_STOP_PROCESSING;
+		return;
+	}
+	if(((bm128)mask81).isSubsetOf(duplicates)) {
+		//sorry, no naked singles
+		return;
+	}
+	all = mask81;
+	all.clearBits(duplicates);
+	//now find which unique where came from
+	unsigned char pos[88];
+	int n;
+	n = all.getPositions96(pos);
+	for(int c = 0; c < n; c++) {
+		const bm128& theBit = bitSet[pos[c]];
+		const bm128& theCells = visibleCells[pos[c]];
 		for(int d = 0; d < 9; d++) {
-			bm128 tmp = grid[d];
-			tmp &= all;
-			duplicates |= tmp;
-			all |= grid[d];
+			if(!theBit.isSubsetOf(grid[d]))
+				continue;
+			grid[d].clearBits(theCells);
+			if(sol)
+				sol[pos[c]] = d + 1;
+			goto next_pos;
 		}
-		if(!((bm128)maskLSB[81]).isSubsetOf(all)) {
-			//there is no any candidate for some unsolved cells
-			mode = MODE_STOP_PROCESSING;
-			return;
-		}
-		if(((bm128)maskLSB[81]).isSubsetOf(duplicates)) {
-			//sorry, no naked singles
-			return;
-		}
-		all = maskLSB[81];
-		all.clearBits(duplicates);
-		//now find which unique where came from
-		unsigned char pos[88];
-		int n;
-		n = all.getPositions96(pos);
-		for(int c = 0; c < n; c++) {
-			for(int d = 0; d < 9; d++) {
-				if(grid[d].isBitSet(pos[c])) {
-					if(sol)
-						sol[pos[c]] = d + 1;
-					grid[d].clearBits(visibleCells[pos[c]]);
-					goto next_pos;
-				}
-			}
-			//this cell has been just cleared by setting other naked single
-			//now the cell has no candidates which is a contradiction
-			mode = MODE_STOP_PROCESSING;
-			return;
+		//this cell has been just cleared by setting other naked single (2 naked in a house for the same digit)
+		//now this cell has no candidates which is a contradiction
+		mode = MODE_STOP_PROCESSING;
+		return;
 next_pos:
-			;
-		}
-		//remove all candidates for the solved cells
-		grid[0].clearBits(all);
-		grid[1].clearBits(all);
-		grid[2].clearBits(all);
-		grid[3].clearBits(all);
-		grid[4].clearBits(all);
-		grid[5].clearBits(all);
-		grid[6].clearBits(all);
-		grid[7].clearBits(all);
-		grid[8].clearBits(all);
-		solved |= all; //mark cells as solved
-		if(((bm128)maskLSB[81]).isSubsetOf(solved)) {
-			//finally all 81 cells are solved
-			solutionFound();
-			return;
-		}
-	} while(1);
+		;
+	}
+	//remove all candidates for the solved cells
+	grid[0].clearBits(all);
+	grid[1].clearBits(all);
+	grid[2].clearBits(all);
+	grid[3].clearBits(all);
+	grid[4].clearBits(all);
+	grid[5].clearBits(all);
+	grid[6].clearBits(all);
+	grid[7].clearBits(all);
+	grid[8].clearBits(all);
+	solved |= all; //mark cells as solved
+	if(((bm128)mask81).isSubsetOf(solved)) {
+		//finally all 81 cells are solved
+		solutionFound();
+		return;
+	}
+	goto again;
 }
 
 void fsss2::doHiddenSingles() { //digits with only one occurrence in a house
+	restart:
+	int found = 0;
 #pragma forceinline recursive
 	for(int d = 0; d < 9; d++) { //for each digit
-		doHiddenSinglesForDigit(d);
-		if(mode) return;
-	}
-}
+		if(knownNoHiddenSingles[d] == grid[d]) {
+			continue;
+		}
+		again:
+		//get only the unsolved houses and iterate them
+		//uint32_t houses = ((1 << 27) - 1) & ((grid[d].toInt64_1()) >> (81 - 64)); //if the bits after 81+27 are used and not 0
+		uint32_t houses = (grid[d].toInt64_1()) >> (81 - 64); //get bits 64..127 and shift
+		while(houses) {
+			uint32_t hbm = houses & -houses; //first unsolved house
+			houses ^= hbm; //clear this house marking it as processed
+			unsigned int h = __builtin_ctz(hbm); //house index
+			bm128 tmp = grid[d];
+			tmp &= bitsForHouse[h]; //mask other candidates and leave only these from the current house
+			//find whether the house has a single candidate and obtain its position
+			int cell;
+			//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bit set
+			const t_128 one = {1,1};
+			if(0 == _mm_testz_si128(tmp.bitmap128.m128i_m128i, _mm_sub_epi64(tmp.bitmap128.m128i_m128i, one.m128i_m128i)))
+				continue; //too many candidates
 
-void fsss2::doHiddenSinglesForDigit(int d) { //digits with only one occurrence in a house
-	again:
-	//get only the unsolved houses and iterate them
-	//int houses = ((1 << 27) - 1) & (grid[d].toInt64_1()) >> (81 - 64); //if the bits after 81+27 are used and not 0
-	int houses = (grid[d].toInt64_1()) >> (81 - 64); //get bits 64..127 and shift
-	for(int hbm = houses & -houses; houses; hbm = houses & -houses) {
-		houses ^= hbm; //clear this house
-		unsigned int h = __builtin_ctz(hbm); //find the position of the first (rightmost) and only bit
-		bm128 tmp = grid[d];
-		tmp &= bitsForHouse[h]; //mask other candidates and leave only these from the processed house
-		int n = tmp.findSingleBitIndex96(); //is there a single candidate?
-		if(n == -1) // 2+ bits
-			continue; //do nothing
-		if(n == -2) { // 0 bits
-			//an unsolved house w/o any candidate is a contradiction
+			unsigned long long low64; //low 64-bits
+			uint32_t high17; //high 81-64=17 bits
+			low64 = _mm_cvtsi128_si64(tmp.bitmap128.m128i_m128i);
+			high17 = _mm_cvtsi128_si32(_mm_srli_si128(tmp.bitmap128.m128i_m128i, 8));
+			if(low64) {
+				if(high17) continue; //candidates in both low and high part of the house
+				//get the position of the single candidate in the low part of the house
+				cell = __builtin_ctzll(low64);
+				goto single_found;
+			}
+			if(high17) {
+				//get the position of the single candidate in the high part of the house
+				cell = 64 + __builtin_ctz(high17);
+				goto single_found;
+			}
+			//no any candidate for this digit in this unsolved house
 			mode = MODE_STOP_PROCESSING;
 			return;
+single_found:
+			;
+			setDigit(d, cell); //store the digit and clear the houses
+			if(mode) return;
+			doNakedSingles(); //checking a single cell, possible eliminations in other digits
+			if(mode) return;
+			found = 1;
+			//checking again the same digit leads to faster contradiction detection
+			goto again;
 		}
-		setDigit(d, n); //store the digit and clear the houses
-		if(mode) return;
-		//found = true;
-		doNakedSingles(); //parallel version looks fast enough even for checking a single cell
-		if(mode) return;
-		//check again the same digit
-		goto again;
+		knownNoHiddenSingles[d] = grid[d];
 	}
+	if(found) goto restart;
 }
-
-//void fsss2::doLockedCandidatesForDigit(bm128& tmp) {
-//	int houses = 0x03FFFF & ((tmp.toInt64_1()) >> (81 - 64));
-//	for(int hbm = houses & -houses; houses; hbm = houses & -houses) {
-//		houses ^= hbm;
-//		unsigned int rc = 3U * __builtin_ctz(hbm);
-//		//process the 3 triplets in the row/col
-//		//at least one of them is joint to grid[d], i.e. is not solved
-//		if(!tmp.isDisjoint(tripletMasks[rc + 0].self)) {
-//			if(tmp.isDisjoint(tripletMasks[rc + 0].adjacentLine)) {
-//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
-//				tmp.clearBits(tripletMasks[rc + 0].adjacentBox);
-//			}
-//			else if(tmp.isDisjoint(tripletMasks[rc + 0].adjacentBox)) {
-//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
-//				tmp.clearBits(tripletMasks[rc + 0].adjacentLine);
-//			}
-//		}
-//		if(!tmp.isDisjoint(tripletMasks[rc + 1].self)) {
-//			if(tmp.isDisjoint(tripletMasks[rc + 1].adjacentLine)) {
-//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
-//				tmp.clearBits(tripletMasks[rc + 1].adjacentBox);
-//			}
-//			else if(tmp.isDisjoint(tripletMasks[rc + 1].adjacentBox)) {
-//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
-//				tmp.clearBits(tripletMasks[rc + 1].adjacentLine);
-//			}
-//		}
-//		if(!tmp.isDisjoint(tripletMasks[rc + 2].self)) {
-//			if(tmp.isDisjoint(tripletMasks[rc + 2].adjacentLine)) {
-//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the box
-//				tmp.clearBits(tripletMasks[rc + 2].adjacentBox);
-//			}
-//			else if(tmp.isDisjoint(tripletMasks[rc + 2].adjacentBox)) {
-//				//value is within this triplet, therefore it isn't in the rest 2 triplets in the row/col
-//				tmp.clearBits(tripletMasks[rc + 2].adjacentLine);
-//			}
-//		}
-//	} //houses loop
-//}
-//
-//void fsss2::doLockedCandidates() { //if a digit in a row is within a single triplet, then remove digit from the box triplets and vice versa
-//	if(lockedCandidatesDone) return;
-//again:
-////#pragma forceinline recursive
-//	for(int d = 0; d < 9; d++) {
-//		bm128 tmp = grid[d];
-//		doLockedCandidatesForDigit(grid[d]);
-//		if(tmp.isSubsetOf(grid[d]))
-//			continue;
-//		//some eliminations are done for this digit
-//		doNakedSingles();
-//		if(mode) return;
-//		doHiddenSinglesForDigit(d);
-//		if(mode) return;
-//		//goto again;
-//		//lockedCandidatesDone = 1;
-//	}
-//	//if(lockedCandidatesDone)
-//	//	doHiddenSingles();
-//	lockedCandidatesDone = 1;
-//}
 
 void fsss2::doDirectEliminations() {
 again:
 	doNakedSingles();
 	if(mode) return;
 	doHiddenSingles();
-	//if(mode) return;
-	//doLockedCandidates();
 }
 
 void fsss2::doEliminations() {
@@ -630,7 +433,7 @@ void fsss2::findBiValueCell(int& digit, int& cell, int& digit2) { //cells with 2
 		duplicates |= tmp;
 		all |= grid[d];
 	}
-	all &= maskLSB[81]; //clear other bits
+	all &= mask81; //clear other bits
 	all.clearBits(triplicates);
 	if(all.isZero()) {
 		digit = -1;
@@ -694,7 +497,7 @@ again:
 				if(tmp.isZero()) {
 					continue;
 				}
-				tmp &= maskLSB[81];
+				tmp &= mask81;
 				n = tmp.popcount_128();
 				if(n < minCells) {
 					optDigit = d;
@@ -708,21 +511,10 @@ again:
 				}
 			}
 		}
-//		if(optDigit == -1) {
-//			mode = MODE_STOP_PROCESSING;
-//			return; //shouldn't happen
-//		}
 		guess1(optDigit, optCell);
 		if(mode) return;
 		//clear the candidate from further processing
 		grid[optDigit].clearBit(optCell);
-		//at this point it would be optimal(?) to jump directly to examine the hidden singles for the known digit and eventually house
-		//doHiddenSinglesForDigit(optDigit);
-		//doHiddenSinglesForDigitCell(optDigit, optCell);
-		//if(mode) return;
-		//doLockedCandidatesForCell(digit, cell);
-		//doLockedCandidatesForDigit(grid[optDigit]);
-		//if(mode) return;
 	}
 	//continue after this elimination
 	doDirectEliminations(); //don't recurse with doEliminations but loop here with doDirectEliminations
@@ -731,7 +523,6 @@ again:
 }
 
 void fsss2::guess1(int digit, int cell) {
-	//fsss2 gg = *this; //copy the solution context
 	bm128 gg[10];
 	gg[0] = grid[0];
 	gg[1] = grid[1];
@@ -745,7 +536,7 @@ void fsss2::guess1(int digit, int cell) {
 	gg[9] = solved;
 
 	setDigit(digit, cell);
-	if(mode) return;
+	if(mode) return; //on contradiction return w/o consequences
 	doEliminations();
 	if(mode & MODE_STOP_GUESSING) {
 		return;
@@ -753,7 +544,6 @@ void fsss2::guess1(int digit, int cell) {
 	//We are done with the guess.
 	//The caller is notified for each of the the possible solutions found so far
 	//Now restore the context and later in the caller remove this candidate from the further solutions or set the only remaining candidate
-	//*this = gg;
 	grid[0] = gg[0];
 	grid[1] = gg[1];
 	grid[2] = gg[2];
