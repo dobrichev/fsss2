@@ -51,9 +51,6 @@ private:
 	//resolves cells with a single candidate for a cell
 	void doNakedSingles();
 
-	//resolves cells with single candidate for a house
-	void doHiddenSingles();
-
 	//encapsulates the elimination logic up to T&E
 	void doDirectEliminations();
 

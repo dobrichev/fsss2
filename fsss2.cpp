@@ -265,7 +265,7 @@ void fsss2::initEmpty() {
 	mode = 0;
 }
 
-void fsss2::setDigit(const int d, const int c) {
+inline void fsss2::setDigit(const int d, const int c) {
 	if(sol)
 		sol[c] = d + 1; //store the digit if solution buffer is given
 	solved.setBit(c); //mark cell as "solved"
@@ -287,7 +287,7 @@ void fsss2::setDigit(const int d, const int c) {
 }
 
 inline void fsss2::doNakedSingles() { //cells with only one remaining candidate
-again:
+againNaked:
 	bm128 all = solved;
 	bm128 duplicates = solved; //cells with 2 or more candidates
 	for(int d = 0; d < 9; d++) {
@@ -311,6 +311,7 @@ again:
 	unsigned char pos[88];
 	int n;
 	n = all.getPositions96(pos);
+	char* const s = sol;
 	for(int c = 0; c < n; c++) {
 		const bm128& theBit = bitSet[pos[c]];
 		const bm128& theCells = visibleCells[pos[c]];
@@ -318,8 +319,8 @@ again:
 			if(!theBit.isSubsetOf(grid[d]))
 				continue;
 			grid[d].clearBits(theCells);
-			if(sol)
-				sol[pos[c]] = d + 1;
+			if(s)
+				s[pos[c]] = d + 1;
 			goto next_pos;
 		}
 		//this cell has been just cleared by setting other naked single (2 naked in a house for the same digit)
@@ -345,18 +346,20 @@ next_pos:
 		solutionFound();
 		return;
 	}
-	goto again;
+	goto againNaked;
 }
 
-void fsss2::doHiddenSingles() { //digits with only one occurrence in a house
-	restart:
+inline void fsss2::doDirectEliminations() {
+	doNakedSingles();
+	if(mode) return;
+	AgainAllHidden:
 	int found = 0;
-#pragma forceinline recursive
+//#pragma forceinline recursive
 	for(int d = 0; d < 9; d++) { //for each digit
 		if(knownNoHiddenSingles[d] == grid[d]) {
 			continue;
 		}
-		again:
+		againSameHidden:
 		//get only the unsolved houses and iterate them
 		//uint32_t houses = ((1 << 27) - 1) & ((grid[d].toInt64_1()) >> (81 - 64)); //if the bits after 81+27 are used and not 0
 		uint32_t houses = (grid[d].toInt64_1()) >> (81 - 64); //get bits 64..127 and shift
@@ -399,18 +402,11 @@ single_found:
 			if(mode) return;
 			found = 1;
 			//checking again the same digit leads to faster contradiction detection
-			goto again;
+			goto againSameHidden;
 		}
 		knownNoHiddenSingles[d] = grid[d];
 	}
-	if(found) goto restart;
-}
-
-void fsss2::doDirectEliminations() {
-again:
-	doNakedSingles();
-	if(mode) return;
-	doHiddenSingles();
+	if(found) goto AgainAllHidden;
 }
 
 void fsss2::doEliminations() {
