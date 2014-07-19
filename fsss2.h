@@ -42,17 +42,22 @@ private:
 	//clear the context
 	void initEmpty();
 
+	//when synchronization of digit masks with solved cells is postponed use this to sync
+	inline void clearSolved();
+
 	//called when each valid solution is found. Can manipulate "mode" value to consider whether to continue with next solutions or stop.
 	void solutionFound();
 
-	//updates the context by marking the given digit/cell as solved
-	void setDigit(const int digit, const int cell);
+//	//updates the context by marking the given digit/cell as solved
+//	void setDigit(const int digit, const int cell);
 
 	//resolves cells with a single candidate for a cell
-	void doNakedSingles();
+	//returns nonzero if found
+	int doNakedSingles();
+	//inline void doNakedSingles(bm128& g0, bm128& g1, bm128& g2, bm128& g3, bm128& g4, bm128& g5, bm128& g6, bm128& g7, bm128& g8, bm128& slv);
 
-	//encapsulates the elimination logic up to T&E
-	void doDirectEliminations();
+	//resolves cells with a single candidate for a digit in a house
+	void doHiddenSingles();
 
 	//does the direct eliminations, then does T&E
 	void doEliminations();
@@ -64,7 +69,7 @@ private:
 	void guess1(int digit, int cell);
 
 	//used by T&E for optimal digit/cell selection
-	void findBiValueCell(int& digit, int& cell, int& digit2);
+	void findBiValueCell(int& digit, int& cell, int& digit2, bm128& biValues);
 
 public:
 	//solver's entry points
