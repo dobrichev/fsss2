@@ -466,26 +466,20 @@ inline void fsss2::doHiddenSingles() {
 			continue;
 		}
 		againSameHidden:
-		//get only the unsolved houses and iterate them
-		//uint32_t houses = ((1 << 27) - 1) & ((grid[d].toInt64_1()) >> (81 - 64)); //if the bits after 81+27 are used and not 0
-		uint32_t houses = (grid[d].toInt64_1()) >> (81 - 64); //get bits 64..127 and shift
-		//while(houses) {
-		for(; houses; houses &= (houses - 1)) {
-			//uint32_t hbm = houses & -houses; //first unsolved house
-			//houses ^= hbm; //clear this house marking it as processed
-			unsigned int h = __builtin_ctz(houses); //house index
+		//iterate unsolved houses
+		for(uint32_t houses = /*((1 << 27) - 1) &*/(grid[d].toInt64_1()) >> (81 - 64); houses; houses &= (houses - 1)) {
 			bm128 tmp = grid[d];
-			tmp &= bitsForHouse[h]; //mask other candidates and leave only these from the current house
+			tmp &= bitsForHouse[bm128::FindLSBIndex32(houses)]; //mask other candidates and leave only these from the current house
 			//find whether the house has a single candidate and obtain its position
 			int cell;
 			//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bit set
-			const t_128 one = {1,1};
-			if(0 == _mm_testz_si128(tmp.bitmap128.m128i_m128i, _mm_sub_epi64(tmp.bitmap128.m128i_m128i, one.m128i_m128i)))
+			const t_128 one = {-1,-1};
+			if(0 == _mm_testz_si128(tmp.bitmap128.m128i_m128i, _mm_add_epi64(tmp.bitmap128.m128i_m128i, one.m128i_m128i)))
 				continue; //too many candidates
 			//find the bit
 			{
-				uint64_t low64 = _mm_cvtsi128_si64(tmp.bitmap128.m128i_m128i); //first 64 bits
-				uint32_t high17 = _mm_cvtsi128_si32(_mm_srli_si128(tmp.bitmap128.m128i_m128i, 8)); //next 17 bits
+				uint64_t low64 = tmp.toInt64();
+				uint32_t high17 = tmp.toInt32_2();
 				if(low64) {
 					if(high17) continue; //candidates in both low and high part of the house
 					//get the position of the single candidate in the low part of the house
@@ -494,7 +488,7 @@ inline void fsss2::doHiddenSingles() {
 				}
 				if(high17) {
 					//get the position of the single candidate in the high part of the house
-					cell = 64 + __builtin_ctz(high17);
+					cell = 64 + bm128::FindLSBIndex32(high17);
 					goto single_found;
 				}
 			}
@@ -554,7 +548,7 @@ void fsss2::doEliminations() {
 	guess(); //this calls recursively doEliminations
 }
 
-inline void fsss2::findBiValueCell(int& digit, int& cell, int& digit2, bm128& all) { //cells with 2 remaining candidates
+inline void fsss2::findBiValueCells(bm128& all) const { //cells with 2 remaining candidates
 	//bm128 all;
 	all = solved;
 	bm128 duplicates = solved;
@@ -570,6 +564,11 @@ inline void fsss2::findBiValueCell(int& digit, int& cell, int& digit2, bm128& al
 	}
 	all &= mask81; //clear other bits
 	all.clearBits(triplicates);
+}
+
+inline void fsss2::findBiValueCell(int& digit, int& cell, int& digit2, bm128& all) { //cells with 2 remaining candidates
+	//bm128 all;
+	findBiValueCells(all);
 	if(all.isZero()) {
 		digit = -1;
 		return;
@@ -587,6 +586,7 @@ inline void fsss2::findBiValueCell(int& digit, int& cell, int& digit2, bm128& al
 			}
 		}
 	}
+}
 //	//debug
 //	char p[88];
 //	p[81] = 0;
@@ -599,7 +599,6 @@ inline void fsss2::findBiValueCell(int& digit, int& cell, int& digit2, bm128& al
 //	biValues.toMask81(p);
 //	printf("\n%s\n", p);
 //	printf("*********\n");
-}
 
 void fsss2::guess() {
 	//Prepare a guess

@@ -70,6 +70,7 @@ private:
 
 	//used by T&E for optimal digit/cell selection
 	void findBiValueCell(int& digit, int& cell, int& digit2, bm128& biValues);
+	inline void findBiValueCells(bm128& bivalues) const;
 
 public:
 	//solver's entry points

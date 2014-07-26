@@ -62,6 +62,8 @@ struct bm128 {
 	//inline int toInt32() const {return _mm_cvtsi128_si32(bitmap128.m128i_m128i);}
 	inline uint64_t toInt64() const {return _mm_cvtsi128_si64(bitmap128.m128i_m128i);}
 	inline uint64_t toInt64_1() const {return _mm_extract_epi64(bitmap128.m128i_m128i, 1);}
+	//inline int toInt32_2() const {return _mm_extract_epi32(bitmap128.m128i_m128i, 2);}
+	inline int toInt32_2() const {return _mm_cvtsi128_si32(_mm_srli_si128(bitmap128.m128i_m128i, 8));}
 	inline bool isBitSet(const int theBit) const {return !_mm_testz_si128(this->bitmap128.m128i_m128i, bitSet[theBit].m128i_m128i);};
 	inline void setBit(const int theBit) {*this |= bitSet[theBit].m128i_m128i;};
 	inline void clearBit(const int theBit) {bitmap128.m128i_m128i = _mm_andnot_si128(bitSet[theBit].m128i_m128i, bitmap128.m128i_m128i);};
@@ -101,7 +103,7 @@ struct bm128 {
 		}
 		return -1;
 	}
-    inline static uint64_t FindLSBIndex64(uint64_t Mask) {
+    inline static uint64_t FindLSBIndex64(const uint64_t Mask) {
     	uint64_t Ret;
         __asm__
         (
@@ -111,6 +113,9 @@ struct bm128 {
         );
         return Ret;
         //return __builtin_ctzll(Mask);
+    }
+    inline static unsigned int FindLSBIndex32(const uint32_t Mask) {
+        return __builtin_ctz(Mask);
     }
 };
 
