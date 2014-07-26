@@ -33,6 +33,9 @@ private:
 
 	unsigned long long numSolutionsToDo;
 
+	int guessDepth;
+	bm128 contexts[40][10];
+
 	//bits to clear when solving particular digit and cell, including the houses at bits 81+
 	static const t_128 visibleCells[81];
 
@@ -52,24 +55,18 @@ private:
 //	void setDigit(const int digit, const int cell);
 
 	//resolves cells with a single candidate for a cell
-	//returns nonzero if found
-	int doNakedSingles();
+	void doNakedSingles();
 	//inline void doNakedSingles(bm128& g0, bm128& g1, bm128& g2, bm128& g3, bm128& g4, bm128& g5, bm128& g6, bm128& g7, bm128& g8, bm128& slv);
 
 	//resolves cells with a single candidate for a digit in a house
-	void doHiddenSingles();
+	//void doHiddenSingles();
 
 	//does the direct eliminations, then does T&E
 	void doEliminations();
 
-	//encapsulates the logic for T&E
-	void guess();
-
-	//does a try, then restores the context
-	void guess1(int digit, int cell);
-
 	//used by T&E for optimal digit/cell selection
-	void findBiValueCell(int& digit, int& cell, int& digit2, bm128& biValues);
+	//void findBiValueCell(int& digit, int& cell, int& digit2, bm128& biValues) const;
+	void findBiValueCell(int& digit, int& cell) const;
 	inline void findBiValueCells(bm128& bivalues) const;
 
 public:

@@ -22,7 +22,7 @@
 
 int main(int argc, char* argv[])
 {
-	//printTripletMasks();
+	//printVisibleCells();
 	//return 0;
 	clock_t start, finish;
 	int ret = 0;
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 /*
 //temporary and debug functions
 void bm128toHex(const bm128& v) {
-	printf("{0x%016.16lX,0x%016.16lX}, ", v.bitmap128.m128i_u64[0], v.bitmap128.m128i_u64[1]);
+	printf("{0x%016.16lX,0x%016.16lX},\n", v.bitmap128.m128i_u64[0], v.bitmap128.m128i_u64[1]);
 }
 
 extern const int affectedCells[81][20] =
@@ -212,34 +212,37 @@ static const int tripletAffectedCells[6][9][12] =
 	{35,44,53,62,71,80, 6,15,24, 7,16,25},{ 8,17,26,62,71,80,33,42,51,34,43,52},{ 8,17,26,35,44,53,60,69,78,61,70,79}
 	}
 };
-//void printVisibleCells() {
-//	printf("bm128 visibleCells[81] = {\n");
-//	for(int i = 0; i < 81; i++) {
-//		bm128 b;
-//		b.clear();
-//		for(int j = 0; j < 20; j++) {
-//			b.setBit(affectedCells[i][j]);
-//		}
-//		b.setBit(81 + affectedGroups[i][0]);
-//		b.setBit(81 + affectedGroups[i][1]);
-//		b.setBit(81 + affectedGroups[i][2]);
-//		bm128toHex(b);
-//	}
-//	printf("}; //bm128 visibleCells[81]\n");
-//}
-//
-//void printBitsForHouse() {
-//	printf("bm128 bitsForHouse[27] = {\n");
-//	for(int i = 0; i < 27; i++) {
-//		bm128 b;
-//		b.clear();
-//		for(int j = 0; j < 9; j++) {
-//			b.setBit(cellsInGroup[i][j]);
-//		}
-//		bm128toHex(b);
-//	}
-//	printf("}; //bm128 bitsForHouse[27]\n");
-//}
+void printVisibleCells() {
+	printf("bm128 visibleCells[81] = {\n");
+	for(int i = 0; i < 81; i++) {
+		bm128 b;
+		b.clear();
+		for(int j = 0; j < 20; j++) {
+			b.setBit(affectedCells[i][j]);
+		}
+		b.setBit(i);
+		b.setBit(81 + affectedGroups[i][0]);
+		b.setBit(81 + affectedGroups[i][1]);
+		b.setBit(81 + affectedGroups[i][2]);
+		bm128toHex(b);
+	}
+	printf("}; //bm128 visibleCells[81]\n");
+}
+
+void printBitsForHouse() {
+	printf("bm128 bitsForHouse[27] = {\n");
+	for(int i = 0; i < 27; i++) {
+		bm128 b;
+		b.clear();
+		for(int j = 0; j < 9; j++) {
+			b.setBit(cellsInGroup[i][j]);
+		}
+		bm128toHex(b);
+	}
+	printf("}; //bm128 bitsForHouse[27]\n");
+}
+*/
+/*
 void printTripletMasks() {
 	printf("const t_128 tripletMasks[54] = {\n");
 	for(int s = 0; s < 6; s++) { //band/stack

@@ -103,6 +103,11 @@ struct bm128 {
 		}
 		return -1;
 	}
+	inline int hasMax2Bits() const {
+		//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bits set
+		static const t_128 minus1 = {-1,-1};
+		return _mm_testz_si128(bitmap128.m128i_m128i, _mm_add_epi64(bitmap128.m128i_m128i, minus1.m128i_m128i));
+	}
     inline static uint64_t FindLSBIndex64(const uint64_t Mask) {
     	uint64_t Ret;
         __asm__
