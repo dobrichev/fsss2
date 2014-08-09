@@ -13,6 +13,16 @@
 
 #include "t_128.h"
 
+//#define USE_LOCKED_CANDIDATES
+
+#ifdef USE_LOCKED_CANDIDATES
+struct tripletMask {
+	t_128 self;
+	t_128 adjacentLine;
+	t_128 adjacentBox;
+};
+#endif
+
 struct fsss2 {
 private:
 	//bits 0..80 have 1 if the digit has candidate in the respective cell, 0 if solved or eliminated
@@ -25,6 +35,10 @@ private:
 
 	bm128 knownNoHiddenSingles[9];
 
+#ifdef USE_LOCKED_CANDIDATES
+	bm128 knownNoLockedCandidates[9];
+#endif
+
 	//NULL or pointer to buffer for solved cells
 	char* sol;
 
@@ -34,19 +48,30 @@ private:
 	unsigned long long numSolutionsToDo;
 
 	int guessDepth;
-	bm128 contexts[40][10];
+	bm128 contexts[81][10];
+
+#ifdef USE_LOCKED_CANDIDATES
+	int lockedDone;
+#endif
 
 	//bits to clear when solving particular digit and cell, including the houses at bits 81+
 	static const t_128 visibleCells[81];
 
 	//1 for bits in the respective house (9 rows, 9 columns, 9 boxes)
 	static const t_128 bitsForHouse[27];
+	//static const t_128 houseBits[27];
+#ifdef USE_LOCKED_CANDIDATES
+	static const tripletMask tripletMasks[54];
+#endif
+	static const t_128 mask81;
+	static const t_128 minus1;
+	static const t_128 mask108;
 
 	//clear the context
 	void initEmpty();
 
 	//when synchronization of digit masks with solved cells is postponed use this to sync
-	inline void clearSolved();
+	//inline void clearSolved();
 
 	//called when each valid solution is found. Can manipulate "mode" value to consider whether to continue with next solutions or stop.
 	void solutionFound();
@@ -61,13 +86,24 @@ private:
 	//resolves cells with a single candidate for a digit in a house
 	//void doHiddenSingles();
 
+#ifdef USE_LOCKED_CANDIDATES
+	//performs line-box eliminations
+	//void doLockedCandidates();
+
+	//performs line-box eliminations for the specified digit
+	static void doLockedCandidatesForDigit(bm128& tmp);
+#endif
+
 	//does the direct eliminations, then does T&E
 	void doEliminations();
 
 	//used by T&E for optimal digit/cell selection
 	//void findBiValueCell(int& digit, int& cell, int& digit2, bm128& biValues) const;
 	void findBiValueCell(int& digit, int& cell) const;
-	inline void findBiValueCells(bm128& bivalues) const;
+	//void findBiValueCell(int& digit, int& cell, int& digit2) const;
+	void findBiValueCells(bm128& bivalues) const;
+
+	void findBiPositionDigit(int& digit, int& cell) const;
 
 public:
 	//solver's entry points

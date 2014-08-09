@@ -16,14 +16,20 @@
 //void	printVisibleCells();
 //void printTripletMasks();
 //void	printBitsForHouse();
+//void printHouseBits();
 //#include "tables.h"
 
-//int nNaked[81]; //debug
+//int nNaked[129]; //debug
+//int a = 0;
+//int b = 0;
 
 int main(int argc, char* argv[])
 {
 	//printVisibleCells();
+	//printBitsForHouse();
+	//printHouseBits();
 	//return 0;
+
 	clock_t start, finish;
 	int ret = 0;
 	start = clock();
@@ -42,13 +48,12 @@ int main(int argc, char* argv[])
 		//num[s.isIrreducible(c) ? 0 : 1]++;
 	}
 
-	//printVisibleCells();
-	//printBitsForHouse();
 
 	finish = clock();
 	fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC);
-	//for(int n = 0; n < 20; n++)
-	//	fprintf(stderr, "naked%d = %d\n", n, nNaked[n]);
+//	for(int n = 0; n < 20; n++)
+//		fprintf(stderr, "naked[%d] = %d\n", n, nNaked[n]);
+	//fprintf(stderr, "a = %d, b = %d\n", a, b);
 	return ret;
 }
 
@@ -240,6 +245,19 @@ void printBitsForHouse() {
 		bm128toHex(b);
 	}
 	printf("}; //bm128 bitsForHouse[27]\n");
+}
+void printHouseBits() {
+	printf("const t_128 fsss2::houseBits[27] = { //1 for the 9 cells in the house + 1 in the house marker at 81 + houseindex\n");
+	for(int i = 0; i < 27; i++) {
+		bm128 b;
+		b.clear();
+		for(int j = 0; j < 9; j++) {
+			b.setBit(cellsInGroup[i][j]);
+		}
+		b.setBit(81 + i);
+		bm128toHex(b);
+	}
+	printf("}; //houseBits[27]\n");
 }
 */
 /*
