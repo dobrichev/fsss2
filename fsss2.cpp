@@ -562,29 +562,29 @@ againNaked:
 	for(uint64_t cells = all.toInt64(); cells; cells &= (cells - 1)) {
 		uint64_t cell = bm128::FindLSBIndex64(cells); //get the rightmost bit index
 		__builtin_prefetch(bitSet + cell);
-		const bm128& theCells = visibleCells[cell];
-		const bm128& theBit = bitSet[cell];
+		const bm128 theCells = visibleCells[cell];
+		const bm128 theBit = bitSet[cell];
 		if(s) {
-			if(theBit.isSubsetOf(g0)) {g0.clearBits(theCells); s[cell] = 1; continue;}
-			if(theBit.isSubsetOf(g1)) {g1.clearBits(theCells); s[cell] = 2; continue;}
-			if(theBit.isSubsetOf(g2)) {g2.clearBits(theCells); s[cell] = 3; continue;}
-			if(theBit.isSubsetOf(g3)) {g3.clearBits(theCells); s[cell] = 4; continue;}
-			if(theBit.isSubsetOf(g4)) {g4.clearBits(theCells); s[cell] = 5; continue;}
-			if(theBit.isSubsetOf(g5)) {g5.clearBits(theCells); s[cell] = 6; continue;}
-			if(theBit.isSubsetOf(g6)) {g6.clearBits(theCells); s[cell] = 7; continue;}
-			if(theBit.isSubsetOf(g7)) {g7.clearBits(theCells); s[cell] = 8; continue;}
-			if(theBit.isSubsetOf(g8)) {g8.clearBits(theCells); s[cell] = 9; continue;}
+			if(!theBit.isSubsetOf(g0)) ; else {g0.clearBits(theCells); s[cell] = 1; continue;}
+			if(!theBit.isSubsetOf(g1)) ; else {g1.clearBits(theCells); s[cell] = 2; continue;}
+			if(!theBit.isSubsetOf(g2)) ; else {g2.clearBits(theCells); s[cell] = 3; continue;}
+			if(!theBit.isSubsetOf(g3)) ; else {g3.clearBits(theCells); s[cell] = 4; continue;}
+			if(!theBit.isSubsetOf(g4)) ; else {g4.clearBits(theCells); s[cell] = 5; continue;}
+			if(!theBit.isSubsetOf(g5)) ; else {g5.clearBits(theCells); s[cell] = 6; continue;}
+			if(!theBit.isSubsetOf(g6)) ; else {g6.clearBits(theCells); s[cell] = 7; continue;}
+			if(!theBit.isSubsetOf(g7)) ; else {g7.clearBits(theCells); s[cell] = 8; continue;}
+			if(!theBit.isSubsetOf(g8)) ; else {g8.clearBits(theCells); s[cell] = 9; continue;}
 		}
 		else {
-			if(theBit.isSubsetOf(g0)) {g0.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g1)) {g1.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g2)) {g2.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g3)) {g3.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g4)) {g4.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g5)) {g5.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g6)) {g6.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g7)) {g7.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g8)) {g8.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g0)) ; else {g0.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g1)) ; else {g1.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g2)) ; else {g2.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g3)) ; else {g3.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g4)) ; else {g4.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g5)) ; else {g5.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g6)) ; else {g6.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g7)) ; else {g7.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g8)) ; else {g8.clearBits(theCells); continue;}
 		}
 		//this cell has been just cleared by setting other naked single (2 naked in a house for the same digit)
 		//now this cell has no candidates which is a contradiction
@@ -594,29 +594,29 @@ againNaked:
 	for(uint32_t cells = all.toInt32_2(); cells; cells &= (cells - 1)) {
 		unsigned int cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
 		__builtin_prefetch(bitSet + cell);
-		const bm128& theCells = visibleCells[cell];
-		const bm128& theBit = bitSet[cell];
+		const bm128 theCells = visibleCells[cell];
+		const bm128 theBit = bitSet[cell];
 		if(s) {
-			if(theBit.isSubsetOf(g0)) {g0.clearBits(theCells); s[cell] = 1; continue;}
-			if(theBit.isSubsetOf(g1)) {g1.clearBits(theCells); s[cell] = 2; continue;}
-			if(theBit.isSubsetOf(g2)) {g2.clearBits(theCells); s[cell] = 3; continue;}
-			if(theBit.isSubsetOf(g3)) {g3.clearBits(theCells); s[cell] = 4; continue;}
-			if(theBit.isSubsetOf(g4)) {g4.clearBits(theCells); s[cell] = 5; continue;}
-			if(theBit.isSubsetOf(g5)) {g5.clearBits(theCells); s[cell] = 6; continue;}
-			if(theBit.isSubsetOf(g6)) {g6.clearBits(theCells); s[cell] = 7; continue;}
-			if(theBit.isSubsetOf(g7)) {g7.clearBits(theCells); s[cell] = 8; continue;}
-			if(theBit.isSubsetOf(g8)) {g8.clearBits(theCells); s[cell] = 9; continue;}
+			if(!theBit.isSubsetOf(g0)) ; else {g0.clearBits(theCells); s[cell] = 1; continue;}
+			if(!theBit.isSubsetOf(g1)) ; else {g1.clearBits(theCells); s[cell] = 2; continue;}
+			if(!theBit.isSubsetOf(g2)) ; else {g2.clearBits(theCells); s[cell] = 3; continue;}
+			if(!theBit.isSubsetOf(g3)) ; else {g3.clearBits(theCells); s[cell] = 4; continue;}
+			if(!theBit.isSubsetOf(g4)) ; else {g4.clearBits(theCells); s[cell] = 5; continue;}
+			if(!theBit.isSubsetOf(g5)) ; else {g5.clearBits(theCells); s[cell] = 6; continue;}
+			if(!theBit.isSubsetOf(g6)) ; else {g6.clearBits(theCells); s[cell] = 7; continue;}
+			if(!theBit.isSubsetOf(g7)) ; else {g7.clearBits(theCells); s[cell] = 8; continue;}
+			if(!theBit.isSubsetOf(g8)) ; else {g8.clearBits(theCells); s[cell] = 9; continue;}
 		}
 		else {
-			if(theBit.isSubsetOf(g0)) {g0.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g1)) {g1.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g2)) {g2.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g3)) {g3.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g4)) {g4.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g5)) {g5.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g6)) {g6.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g7)) {g7.clearBits(theCells); continue;}
-			if(theBit.isSubsetOf(g8)) {g8.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g0)) ; else {g0.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g1)) ; else {g1.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g2)) ; else {g2.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g3)) ; else {g3.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g4)) ; else {g4.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g5)) ; else {g5.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g6)) ; else {g6.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g7)) ; else {g7.clearBits(theCells); continue;}
+			if(!theBit.isSubsetOf(g8)) ; else {g8.clearBits(theCells); continue;}
 		}
 		//this cell has been just cleared by setting other naked single (2 naked in a house for the same digit)
 		//now this cell has no candidates which is a contradiction

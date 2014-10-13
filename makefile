@@ -9,7 +9,7 @@ TARGET = fsss2
 
 help:
 	@echo 'Usage:'
-	@echo 'make { gcc_debug | gcc_profiling | gcc_release | intel_profiling | intel_debug | clean }'
+	@echo 'make { gcc_debug | gcc_profiling | gcc_release | intel_debug | intel_profiling | intel_release | clean }'
 	@echo 'Where'
 	@echo ' gcc = GNU C++ Compiler g++'
 	@echo ' intel = Intel C++ Compiler icc'
@@ -47,12 +47,12 @@ intel_profiling:
 
 intel_release:
 	@echo 'Building target $(TARGET) using Intel C++ Debug settings'
-	$(ICXX) -O3 -ipo -inline-level=2 -prof-use -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
+	$(ICXX) -g -O3 -ipo -inline-level=2 -prof-use -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
 	@echo 'Done'
 
 intel_debug:
 	@echo 'Building target $(TARGET) using Intel C++ Debug settings'
-	$(ICXX) -O0 -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
+	$(ICXX) -g -O0 -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
 	@echo 'Done'
 
 clean:
