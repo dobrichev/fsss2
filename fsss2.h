@@ -13,7 +13,7 @@
 
 #include "t_128.h"
 
-#define USE_LOCKED_CANDIDATES
+//#define USE_LOCKED_CANDIDATES
 
 #ifdef USE_LOCKED_CANDIDATES
 struct tripletMask {

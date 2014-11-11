@@ -1,5 +1,4 @@
 /*
- * fsss2.cpp
  *
  *  Created on: May 13, 2014
  *      Author: Mladen Dobrichev
@@ -449,7 +448,11 @@ void fsss2::doLockedCandidatesForDigit(bm128& tmp) {
 	//int houses = 0x03FFFF & ((tmp.toInt64_1()) >> (81 - 64));
 	//for (int hbm = houses & -houses; houses; hbm = houses & -houses) {
 	for(uint32_t houses = 0x03FFFF & ((tmp.toInt64_1()) >> (81 - 64)); houses; houses &= (houses - 1)) {
+#ifdef   _MSC_VER
+		unsigned int rc = 3U * bm128::FindLSBIndex32(houses); //unsolved row or column
+#else
 		unsigned int rc = 3U * __builtin_ctz(houses); //unsolved row or column
+#endif
 		//process the 3 triplets in the row/col
 		for(unsigned int t = 0; t < 3; t++) {
 			bool dl = tmp.isDisjoint(tripletMasks[rc + t].adjacentLine);
@@ -561,7 +564,11 @@ againNaked:
 	//now find which unique where came from
 	for(uint64_t cells = all.toInt64(); cells; cells &= (cells - 1)) {
 		uint64_t cell = bm128::FindLSBIndex64(cells); //get the rightmost bit index
+#ifdef   _MSC_VER
+		_mm_prefetch((const char*)(bitSet + cell), _MM_HINT_T1);
+#else
 		__builtin_prefetch(bitSet + cell);
+#endif
 		const bm128 theCells = visibleCells[cell];
 		const bm128 theBit = bitSet[cell];
 		if(s) {
@@ -593,7 +600,11 @@ againNaked:
 	} //for lower 64 cells
 	for(uint32_t cells = all.toInt32_2(); cells; cells &= (cells - 1)) {
 		unsigned int cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+#ifdef   _MSC_VER
+		_mm_prefetch((const char*)(bitSet + cell), _MM_HINT_T1);
+#else
 		__builtin_prefetch(bitSet + cell);
+#endif
 		const bm128 theCells = visibleCells[cell];
 		const bm128 theBit = bitSet[cell];
 		if(s) {
@@ -844,6 +855,7 @@ void fsss2::findBiValueCells(bm128& all) const { //cells with 2 remaining candid
 	}
 	all &= mask81; //clear other bits
 	all.clearBits(triplicates);
+	//ret = all;
 }
 
 //inline void fsss2::findBiValueCell(int& digit, int& cell, int& digit2, bm128& all) const { //cells with 2 remaining candidates
