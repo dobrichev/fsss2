@@ -54,6 +54,8 @@ private:
 	int lockedDone;
 #endif
 
+	//int subsetsDone;
+
 	//bits to clear when solving particular digit and cell, including the houses at bits 81+
 	static const t_128 visibleCells[81];
 
@@ -103,7 +105,7 @@ private:
 	//void findBiValueCell(int& digit, int& cell, int& digit2) const;
 	void findBiValueCells(bm128& bivalues) const;
 
-	void findBiPositionDigit(int& digit, int& cell) const;
+	//void findBiPositionDigit(int& digit, int& cell) const;
 
 public:
 	//solver's entry points

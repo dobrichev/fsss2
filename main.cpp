@@ -22,6 +22,7 @@
 //int nNaked[129]; //debug
 //int a = 0;
 //int b = 0;
+int nTrials = 0;
 
 int main(int argc, char* argv[])
 {
@@ -50,7 +51,8 @@ int main(int argc, char* argv[])
 
 
 	finish = clock();
-	fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC);
+	//fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC);
+	fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds. Trials = %d.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC, nTrials);
 //	for(int n = 0; n < 20; n++)
 //		fprintf(stderr, "naked[%d] = %d\n", n, nNaked[n]);
 	//fprintf(stderr, "a = %d, b = %d\n", a, b);
