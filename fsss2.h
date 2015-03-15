@@ -14,6 +14,7 @@
 #include "t_128.h"
 
 //#define USE_LOCKED_CANDIDATES
+//#define USE_SUBSETS
 
 #ifdef USE_LOCKED_CANDIDATES
 struct tripletMask {
@@ -54,7 +55,9 @@ private:
 	int lockedDone;
 #endif
 
-	//int subsetsDone;
+#ifdef USE_SUBSETS
+	int subsetsDone;
+#endif
 
 	//bits to clear when solving particular digit and cell, including the houses at bits 81+
 	static const t_128 visibleCells[81];
