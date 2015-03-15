@@ -809,13 +809,28 @@ nakedAgain:
 			}
 		}
 		subsetsDone = 1;
-		if(found) goto nakedAgain;
+		if(found) {
+#ifdef USE_LOCKED_CANDIDATES
+			//lockedDone = 0;
+#endif
+			goto nakedAgain;
+		}
 	}
 #endif //USE_SUBSETS
 
 	//Prepare a guess
 	{
 		//At this point the existence of unsolved house(s) w/o candidates crashes the algorithm!!!
+		bm128* gg = &contexts[guessDepth++][0];
+#ifdef   _MSC_VER
+		_mm_prefetch((const char*)(&gg[0]), _MM_HINT_T1);
+		_mm_prefetch((const char*)(&gg[4]), _MM_HINT_T1);
+		_mm_prefetch((const char*)(&gg[8]), _MM_HINT_T1);
+#else
+		__builtin_prefetch(&gg[0]);
+		__builtin_prefetch(&gg[4]);
+		__builtin_prefetch(&gg[8]);
+#endif
 
 		//Find an unsolved cell with less possibilities
 		int optDigit;
@@ -836,7 +851,7 @@ nakedAgain:
 #endif
 
 		{
-			bm128* gg = &contexts[guessDepth++][0];
+			//bm128* gg = &contexts[guessDepth++][0];
 //			__builtin_prefetch(&gg[4]);
 //			__builtin_prefetch(&gg[8]);
 			gg[0] = grid[0];
