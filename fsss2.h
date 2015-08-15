@@ -10,6 +10,7 @@
 #ifndef SOLVER_H_
 #define SOLVER_H_
 #include <immintrin.h>
+#include <memory.h>
 
 #include "t_128.h"
 
@@ -24,7 +25,47 @@ struct tripletMask {
 };
 #endif
 
-struct fsss2 {
+//implemented operations
+class nullCollector {
+public:
+	inline bool solutionFound(); //false = continue, true = stop solving
+	inline void setCellValue(int cell, int val);
+};
+
+//test whether a given puzzle has at least one solution
+class hasAnySolution : public nullCollector {
+	int nsol;
+public:
+	bool solutionFound();
+	int solve(const char* p);
+};
+
+//test whether a given puzzle has exactly one solution
+class hasSingleSolution : public nullCollector {
+	int nsol;
+public:
+	bool solutionFound();
+	int solve(const char* p);
+};
+
+//test whether a given multiple-solution puzzle has at least one redundant given
+class isMSIrreducible : public nullCollector {};
+
+//test whether a given single-solution puzzle has at least one redundant given
+class isSSIrreducible : public nullCollector {
+public:
+	int nsol;
+	bool solutionFound();
+	bool solve(const char* p);
+};
+
+//test whether a given single-solution puzzle has at least one redundant given
+class getSingleSolution : public nullCollector {
+//public:
+//	int solve(const char* p, char *dest);
+};
+
+template < class X > class fsss2 {
 private:
 	//bits 0..80 have 1 if the digit has candidate in the respective cell, 0 if solved or eliminated
 	//bits 81..108 have 1 if the house (row, column, box) is not solved, 0 if solved
@@ -40,13 +81,8 @@ private:
 	bm128 knownNoLockedCandidates[9];
 #endif
 
-	//NULL or pointer to buffer for solved cells
-	char* sol;
-
 	//0 = continue solving; 1 = contradiction found, backtrack and continue; 3 = all necessary solutions are found, stop
 	int mode;						//combination of the game mode flags, initial 0
-
-	unsigned long long numSolutionsToDo;
 
 	int guessDepth;
 	bm128 contexts[81][10];
@@ -75,26 +111,10 @@ private:
 	//clear the context
 	void initEmpty();
 
-	//when synchronization of digit masks with solved cells is postponed use this to sync
-	//inline void clearSolved();
-
-	//called when each valid solution is found. Can manipulate "mode" value to consider whether to continue with next solutions or stop.
-	void solutionFound();
-
-//	//updates the context by marking the given digit/cell as solved
-//	void setDigit(const int digit, const int cell);
-
 	//resolves cells with a single candidate for a cell
 	void doNakedSingles();
-	//inline void doNakedSingles(bm128& g0, bm128& g1, bm128& g2, bm128& g3, bm128& g4, bm128& g5, bm128& g6, bm128& g7, bm128& g8, bm128& slv);
-
-	//resolves cells with a single candidate for a digit in a house
-	//void doHiddenSingles();
 
 #ifdef USE_LOCKED_CANDIDATES
-	//performs line-box eliminations
-	//void doLockedCandidates();
-
 	//performs line-box eliminations for the specified digit
 	static void doLockedCandidatesForDigit(bm128& tmp);
 #endif
@@ -103,17 +123,20 @@ private:
 	void doEliminations();
 
 	//used by T&E for optimal digit/cell selection
-	//void findBiValueCell(int& digit, int& cell, int& digit2, bm128& biValues) const;
 	void findBiValueCell(int& digit, int& cell) const;
-	//void findBiValueCell(int& digit, int& cell, int& digit2) const;
 	void findBiValueCells(bm128& bivalues) const;
 
-	//void findBiPositionDigit(int& digit, int& cell) const;
+	X &collector;
+
+	fsss2();
 
 public:
+	fsss2(X &theCollector);
 	//solver's entry points
-	unsigned long long solve(const char* const in, const unsigned long long nSolutions, char* const out = NULL);
-	bool isIrreducible(const char* const in);
+	void solve(const char* const in);
+	void solve(const uint16_t* const in);
+	//bool isIrreducible(const char* const in);
 };
+
 
 #endif /* SOLVER_H_ */

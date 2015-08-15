@@ -23,7 +23,7 @@
 //int a = 0;
 //int b = 0;
 
-//#define COUNT_TRIALS
+////#define COUNT_TRIALS
 
 #ifdef COUNT_TRIALS
 int nTrials = 0;
@@ -42,12 +42,14 @@ int main(int argc, char* argv[])
 
 	char p[2000];
 	char c[88];
-	fsss2 s;
+	isSSIrreducible ss;
+	//hasSingleSolution ss;
+	//hasAnySolution ss;
 	int num[3] = {0,0,0};
 	while(fgets(p, sizeof(p), stdin)) {
 		for(int i = 0; i < 81; i++) c[i] = (p[i] <= '9' && p[i] >='0' ? p[i] - '0' : 0);
-		num[s.solve(c, 2, NULL)]++;
-		//num[s.isIrreducible(c) ? 0 : 1]++;
+		//num[ss.solve(c)]++;
+		num[ss.solve(c) ? 0 : 1]++;
 	}
 
 
