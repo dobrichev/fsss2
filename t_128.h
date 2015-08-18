@@ -75,6 +75,7 @@ struct bm128 {
 	inline uint64_t toInt64_1() const {return _mm_extract_epi64(bitmap128.m128i_m128i, 1);}
 	inline uint32_t toInt32_2() const {return _mm_extract_epi32(bitmap128.m128i_m128i, 2);}
 	//inline int toInt32_2() const {return _mm_cvtsi128_si32(_mm_srli_si128(bitmap128.m128i_m128i, 8));}
+	inline uint32_t toInt32_3() const {return _mm_extract_epi32(bitmap128.m128i_m128i, 3);}
 	inline bool isBitSet(const int theBit) const {return !_mm_testz_si128(this->bitmap128.m128i_m128i, bitSet[theBit].m128i_m128i);};
 	inline void setBit(const int theBit) {*this |= bitSet[theBit].m128i_m128i;};
 	inline void clearBit(const int theBit) {bitmap128.m128i_m128i = _mm_andnot_si128(bitSet[theBit].m128i_m128i, bitmap128.m128i_m128i);};
@@ -118,17 +119,18 @@ struct bm128 {
 		}
 		return -1;
 	}
-//	inline int hasMax2Bits() const {
-//		//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bits set
-//		static const t_128 minus1 = {0xffffffffffffffff,0xffffffffffffffff};
-//		return _mm_testz_si128(bitmap128.m128i_m128i, _mm_add_epi64(bitmap128.m128i_m128i, minus1.m128i_m128i));
-//	}
+	inline bool hasMin2Bits() const {
+		//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bits set
+		static const t_128 minus1 = {0xffffffffffffffff,0xffffffffffffffff};
+		return 0 == _mm_testz_si128(bitmap128.m128i_m128i, _mm_add_epi64(bitmap128.m128i_m128i, minus1.m128i_m128i));
+	}
     inline static uint64_t FindLSBIndex64(const uint64_t Mask) {
 #ifdef   _MSC_VER
         unsigned long res;
         _BitScanForward64(&res, Mask);
         return res;
 #else
+#if 1
        uint64_t Ret;
         __asm__
         (
@@ -137,7 +139,9 @@ struct bm128 {
             :[Mask] "mr" (Mask)
         );
         return Ret;
-        //return __builtin_ctzll(Mask); //some g++ versions split this to two 32-bit operations that work slower
+#else
+        return __builtin_ctzll(Mask); //some g++ versions split this to two 32-bit operations that work slower
+#endif
 #endif
     }
     inline static unsigned int FindLSBIndex32(const uint32_t Mask) {

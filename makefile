@@ -42,12 +42,12 @@ gcc_release:
 
 intel_profiling:
 	@echo 'Building target $(TARGET) using Intel C++ Debug settings'
-	$(ICXX) -O3 -inline-level=2 -prof-gen -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
+	$(ICXX) -O3 -mtune=native -inline-level=2 -prof-gen -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
 	@echo 'Done'
 
 intel_release:
 	@echo 'Building target $(TARGET) using Intel C++ Debug settings'
-	$(ICXX) -g -O3 -ipo -inline-level=2 -prof-use -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
+	$(ICXX) -g -O3 -mtune=native -ipo -inline-level=2 -prof-use -I/usr/include/x86_64-linux-gnu/c++/4.8 -use-intel-optimized-headers -restrict -fargument-noalias -alias-const -fno-alias -xAVX -o $(TARGET) $(FILELIST)
 	@echo 'Done'
 
 intel_debug:

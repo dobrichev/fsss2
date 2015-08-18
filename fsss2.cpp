@@ -24,181 +24,97 @@ extern int nTrials;
 template < class X > fsss2 < X > ::fsss2(X &theCollector) : collector(theCollector) {};
 
 //only first 81 bits set
-template <class X> const t_128 fsss2<X>::mask81 = {0xFFFFFFFFFFFFFFFF,0x0001FFFF};
-
-template <class X> const t_128 fsss2<X>::minus1 = {0xffffffffffffffff,0xffffffffffffffff};
+template <class X> const t_128 fsss2<X>::mask81 = {0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
 
 //only first 81 + 27 = 108 bits set
-template <class X> const t_128 fsss2<X>::mask108 = {0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFF};
+//template <class X> const t_128 fsss2<X>::mask108 = {0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFF};
+
+//the first 81 bits for the cells and the 27 bits from position 96+
+template <class X> const t_128 fsss2<X>::mask108 = {0xFFFFFFFFFFFFFFFF,0x07FFFFFF0001FFFF};
 
 template <class X> const t_128 fsss2<X>::visibleCells[81] = { //1 for all 20 visible cells, 1 for the cell itself, 1 for the three houses
-{0x80402010081C0FFF,0x0000000804020100},
-{0x00804020101C0FFF,0x0000000808020201},
-{0x01008040201C0FFF,0x0000000810020402},
-{0x0201008040E071FF,0x0000001020020804},
-{0x0402010080E071FF,0x0000001040021008},
-{0x0804020100E071FF,0x0000001080022010},
-{0x10080402070381FF,0x0000002100024020},
-{0x20100804070381FF,0x0000002200028040},
-{0x40201008070381FF,0x0000002400030080},
-{0x80402010081FFE07,0x0000000804040100},
-{0x00804020101FFE07,0x0000000808040201},
-{0x01008040201FFE07,0x0000000810040402},
-{0x0201008040E3FE38,0x0000001020040804},
-{0x0402010080E3FE38,0x0000001040041008},
-{0x0804020100E3FE38,0x0000001080042010},
-{0x100804020703FFC0,0x0000002100044020},
-{0x201008040703FFC0,0x0000002200048040},
-{0x402010080703FFC0,0x0000002400050080},
-{0x804020100FFC0E07,0x0000000804080100},
-{0x0080402017FC0E07,0x0000000808080201},
-{0x0100804027FC0E07,0x0000000810080402},
-{0x0201008047FC7038,0x0000001020080804},
-{0x0402010087FC7038,0x0000001040081008},
-{0x0804020107FC7038,0x0000001080082010},
-{0x1008040207FF81C0,0x0000002100084020},
-{0x2010080407FF81C0,0x0000002200088040},
-{0x4020100807FF81C0,0x0000002400090080},
-{0x8040E07FF8040201,0x0000004004100100},
-{0x0080E07FF8080402,0x0000004008100201},
-{0x0100E07FF8100804,0x0000004010100402},
-{0x0207038FF8201008,0x0000008020100804},
-{0x0407038FF8402010,0x0000008040101008},
-{0x0807038FF8804020,0x0000008080102010},
-{0x10381C0FF9008040,0x0000010100104020},
-{0x20381C0FFA010080,0x0000010200108040},
-{0x40381C0FFC020100,0x0000010400110080},
-{0x8040FFF038040201,0x0000004004200100},
-{0x0080FFF038080402,0x0000004008200201},
-{0x0100FFF038100804,0x0000004010200402},
-{0x02071FF1C0201008,0x0000008020200804},
-{0x04071FF1C0402010,0x0000008040201008},
-{0x08071FF1C0804020,0x0000008080202010},
-{0x10381FFE01008040,0x0000010100204020},
-{0x20381FFE02010080,0x0000010200208040},
-{0x40381FFE04020100,0x0000010400210080},
-{0x807FE07038040201,0x0000004004400100},
-{0x00BFE07038080402,0x0000004008400201},
-{0x013FE07038100804,0x0000004010400402},
-{0x023FE381C0201008,0x0000008020400804},
-{0x043FE381C0402010,0x0000008040401008},
-{0x083FE381C0804020,0x0000008080402010},
-{0x103FFC0E01008040,0x0000010100404020},
-{0x203FFC0E02010080,0x0000010200408040},
-{0x403FFC0E04020100,0x0000010400410080},
-{0xFFC0201008040201,0x0000020004800703},
-{0xFFC0402010080402,0x0000020008800703},
-{0xFFC0804020100804,0x0000020010800703},
-{0x7FC1008040201008,0x000004002080381C},
-{0x7FC2010080402010,0x000004004080381C},
-{0x7FC4020100804020,0x000004008080381C},
-{0x7FC8040201008040,0x000008010081C0E0},
-{0x7FD0080402010080,0x000008020081C0E0},
-{0x7FE0100804020100,0x000008040081C0E0},
-{0x81C0201008040201,0x00000200050007FF},
-{0x81C0402010080402,0x00000200090007FF},
-{0x81C0804020100804,0x00000200110007FF},
-{0x8E01008040201008,0x00000400210038FF},
-{0x8E02010080402010,0x00000400410038FF},
-{0x8E04020100804020,0x00000400810038FF},
-{0xF008040201008040,0x000008010101C0FF},
-{0xF010080402010080,0x000008020101C0FF},
-{0xF020100804020100,0x000008040101C0FF},
-{0x81C0201008040201,0x000002000601FF03},
-{0x81C0402010080402,0x000002000A01FF03},
-{0x81C0804020100804,0x000002001201FF03},
-{0x0E01008040201008,0x000004002201FF1C},
-{0x0E02010080402010,0x000004004201FF1C},
-{0x0E04020100804020,0x000004008201FF1C},
-{0x7008040201008040,0x000008010201FFE0},
-{0x7010080402010080,0x000008020201FFE0},
-{0x7020100804020100,0x000008040201FFE0},
+	{0x80402010081C0FFF,0x0004020100000100},
+	{0x00804020101C0FFF,0x0004040100000201},
+	{0x01008040201C0FFF,0x0004080100000402},
+	{0x0201008040E071FF,0x0008100100000804},
+	{0x0402010080E071FF,0x0008200100001008},
+	{0x0804020100E071FF,0x0008400100002010},
+	{0x10080402070381FF,0x0010800100004020},
+	{0x20100804070381FF,0x0011000100008040},
+	{0x40201008070381FF,0x0012000100010080},
+	{0x80402010081FFE07,0x0004020200000100},
+	{0x00804020101FFE07,0x0004040200000201},
+	{0x01008040201FFE07,0x0004080200000402},
+	{0x0201008040E3FE38,0x0008100200000804},
+	{0x0402010080E3FE38,0x0008200200001008},
+	{0x0804020100E3FE38,0x0008400200002010},
+	{0x100804020703FFC0,0x0010800200004020},
+	{0x201008040703FFC0,0x0011000200008040},
+	{0x402010080703FFC0,0x0012000200010080},
+	{0x804020100FFC0E07,0x0004020400000100},
+	{0x0080402017FC0E07,0x0004040400000201},
+	{0x0100804027FC0E07,0x0004080400000402},
+	{0x0201008047FC7038,0x0008100400000804},
+	{0x0402010087FC7038,0x0008200400001008},
+	{0x0804020107FC7038,0x0008400400002010},
+	{0x1008040207FF81C0,0x0010800400004020},
+	{0x2010080407FF81C0,0x0011000400008040},
+	{0x4020100807FF81C0,0x0012000400010080},
+	{0x8040E07FF8040201,0x0020020800000100},
+	{0x0080E07FF8080402,0x0020040800000201},
+	{0x0100E07FF8100804,0x0020080800000402},
+	{0x0207038FF8201008,0x0040100800000804},
+	{0x0407038FF8402010,0x0040200800001008},
+	{0x0807038FF8804020,0x0040400800002010},
+	{0x10381C0FF9008040,0x0080800800004020},
+	{0x20381C0FFA010080,0x0081000800008040},
+	{0x40381C0FFC020100,0x0082000800010080},
+	{0x8040FFF038040201,0x0020021000000100},
+	{0x0080FFF038080402,0x0020041000000201},
+	{0x0100FFF038100804,0x0020081000000402},
+	{0x02071FF1C0201008,0x0040101000000804},
+	{0x04071FF1C0402010,0x0040201000001008},
+	{0x08071FF1C0804020,0x0040401000002010},
+	{0x10381FFE01008040,0x0080801000004020},
+	{0x20381FFE02010080,0x0081001000008040},
+	{0x40381FFE04020100,0x0082001000010080},
+	{0x807FE07038040201,0x0020022000000100},
+	{0x00BFE07038080402,0x0020042000000201},
+	{0x013FE07038100804,0x0020082000000402},
+	{0x023FE381C0201008,0x0040102000000804},
+	{0x043FE381C0402010,0x0040202000001008},
+	{0x083FE381C0804020,0x0040402000002010},
+	{0x103FFC0E01008040,0x0080802000004020},
+	{0x203FFC0E02010080,0x0081002000008040},
+	{0x403FFC0E04020100,0x0082002000010080},
+	{0xFFC0201008040201,0x0100024000000703},
+	{0xFFC0402010080402,0x0100044000000703},
+	{0xFFC0804020100804,0x0100084000000703},
+	{0x7FC1008040201008,0x020010400000381C},
+	{0x7FC2010080402010,0x020020400000381C},
+	{0x7FC4020100804020,0x020040400000381C},
+	{0x7FC8040201008040,0x040080400001C0E0},
+	{0x7FD0080402010080,0x040100400001C0E0},
+	{0x7FE0100804020100,0x040200400001C0E0},
+	{0x81C0201008040201,0x01000280000007FF},
+	{0x81C0402010080402,0x01000480000007FF},
+	{0x81C0804020100804,0x01000880000007FF},
+	{0x8E01008040201008,0x02001080000038FF},
+	{0x8E02010080402010,0x02002080000038FF},
+	{0x8E04020100804020,0x02004080000038FF},
+	{0xF008040201008040,0x040080800001C0FF},
+	{0xF010080402010080,0x040100800001C0FF},
+	{0xF020100804020100,0x040200800001C0FF},
+	{0x81C0201008040201,0x010003000001FF03},
+	{0x81C0402010080402,0x010005000001FF03},
+	{0x81C0804020100804,0x010009000001FF03},
+	{0x0E01008040201008,0x020011000001FF1C},
+	{0x0E02010080402010,0x020021000001FF1C},
+	{0x0E04020100804020,0x020041000001FF1C},
+	{0x7008040201008040,0x040081000001FFE0},
+	{0x7010080402010080,0x040101000001FFE0},
+	{0x7020100804020100,0x040201000001FFE0}
 }; //bm128 visibleCells[81]
-/*
-const t_128 fsss2<class X>::visibleCells[81] = { //1 for all 20 visible cells, 0 for the cell itself, 1 for the three houses
-	{0x80402010081C0FFE,0x0000000804020100},
-	{0x00804020101C0FFD,0x0000000808020201},
-	{0x01008040201C0FFB,0x0000000810020402},
-	{0x0201008040E071F7,0x0000001020020804},
-	{0x0402010080E071EF,0x0000001040021008},
-	{0x0804020100E071DF,0x0000001080022010},
-	{0x10080402070381BF,0x0000002100024020},
-	{0x201008040703817F,0x0000002200028040},
-	{0x40201008070380FF,0x0000002400030080},
-	{0x80402010081FFC07,0x0000000804040100},
-	{0x00804020101FFA07,0x0000000808040201},
-	{0x01008040201FF607,0x0000000810040402},
-	{0x0201008040E3EE38,0x0000001020040804},
-	{0x0402010080E3DE38,0x0000001040041008},
-	{0x0804020100E3BE38,0x0000001080042010},
-	{0x1008040207037FC0,0x0000002100044020},
-	{0x201008040702FFC0,0x0000002200048040},
-	{0x402010080701FFC0,0x0000002400050080},
-	{0x804020100FF80E07,0x0000000804080100},
-	{0x0080402017F40E07,0x0000000808080201},
-	{0x0100804027EC0E07,0x0000000810080402},
-	{0x0201008047DC7038,0x0000001020080804},
-	{0x0402010087BC7038,0x0000001040081008},
-	{0x08040201077C7038,0x0000001080082010},
-	{0x1008040206FF81C0,0x0000002100084020},
-	{0x2010080405FF81C0,0x0000002200088040},
-	{0x4020100803FF81C0,0x0000002400090080},
-	{0x8040E07FF0040201,0x0000004004100100},
-	{0x0080E07FE8080402,0x0000004008100201},
-	{0x0100E07FD8100804,0x0000004010100402},
-	{0x0207038FB8201008,0x0000008020100804},
-	{0x0407038F78402010,0x0000008040101008},
-	{0x0807038EF8804020,0x0000008080102010},
-	{0x10381C0DF9008040,0x0000010100104020},
-	{0x20381C0BFA010080,0x0000010200108040},
-	{0x40381C07FC020100,0x0000010400110080},
-	{0x8040FFE038040201,0x0000004004200100},
-	{0x0080FFD038080402,0x0000004008200201},
-	{0x0100FFB038100804,0x0000004010200402},
-	{0x02071F71C0201008,0x0000008020200804},
-	{0x04071EF1C0402010,0x0000008040201008},
-	{0x08071DF1C0804020,0x0000008080202010},
-	{0x10381BFE01008040,0x0000010100204020},
-	{0x203817FE02010080,0x0000010200208040},
-	{0x40380FFE04020100,0x0000010400210080},
-	{0x807FC07038040201,0x0000004004400100},
-	{0x00BFA07038080402,0x0000004008400201},
-	{0x013F607038100804,0x0000004010400402},
-	{0x023EE381C0201008,0x0000008020400804},
-	{0x043DE381C0402010,0x0000008040401008},
-	{0x083BE381C0804020,0x0000008080402010},
-	{0x1037FC0E01008040,0x0000010100404020},
-	{0x202FFC0E02010080,0x0000010200408040},
-	{0x401FFC0E04020100,0x0000010400410080},
-	{0xFF80201008040201,0x0000020004800703},
-	{0xFF40402010080402,0x0000020008800703},
-	{0xFEC0804020100804,0x0000020010800703},
-	{0x7DC1008040201008,0x000004002080381C},
-	{0x7BC2010080402010,0x000004004080381C},
-	{0x77C4020100804020,0x000004008080381C},
-	{0x6FC8040201008040,0x000008010081C0E0},
-	{0x5FD0080402010080,0x000008020081C0E0},
-	{0x3FE0100804020100,0x000008040081C0E0},
-	{0x01C0201008040201,0x00000200050007FF},
-	{0x81C0402010080402,0x00000200090007FE},
-	{0x81C0804020100804,0x00000200110007FD},
-	{0x8E01008040201008,0x00000400210038FB},
-	{0x8E02010080402010,0x00000400410038F7},
-	{0x8E04020100804020,0x00000400810038EF},
-	{0xF008040201008040,0x000008010101C0DF},
-	{0xF010080402010080,0x000008020101C0BF},
-	{0xF020100804020100,0x000008040101C07F},
-	{0x81C0201008040201,0x000002000601FE03},
-	{0x81C0402010080402,0x000002000A01FD03},
-	{0x81C0804020100804,0x000002001201FB03},
-	{0x0E01008040201008,0x000004002201F71C},
-	{0x0E02010080402010,0x000004004201EF1C},
-	{0x0E04020100804020,0x000004008201DF1C},
-	{0x7008040201008040,0x000008010201BFE0},
-	{0x7010080402010080,0x0000080202017FE0},
-	{0x7020100804020100,0x000008040200FFE0},
-}; //visibleCells[81]
-*/
 
 template <class X> const t_128 fsss2<X>::bitsForHouse[27] = { //1 for the 9 cells in the house
 	{0x00000000000001FF,0x0000000000000000},
@@ -229,35 +145,6 @@ template <class X> const t_128 fsss2<X>::bitsForHouse[27] = { //1 for the 9 cell
 	{0x0E00000000000000,0x000000000000381C},
 	{0x7000000000000000,0x000000000001C0E0},
 }; //bitsForHouse[27]
-//const t_128 fsss2<class X>::houseBits[27] = { //1 for the 9 cells in the house + 1 in the house marker at 81 + houseindex
-//	{0x00000000000001FF,0x0000000000020000},
-//	{0x000000000003FE00,0x0000000000040000},
-//	{0x0000000007FC0000,0x0000000000080000},
-//	{0x0000000FF8000000,0x0000000000100000},
-//	{0x00001FF000000000,0x0000000000200000},
-//	{0x003FE00000000000,0x0000000000400000},
-//	{0x7FC0000000000000,0x0000000000800000},
-//	{0x8000000000000000,0x00000000010000FF},
-//	{0x0000000000000000,0x000000000201FF00},
-//	{0x8040201008040201,0x0000000004000100},
-//	{0x0080402010080402,0x0000000008000201},
-//	{0x0100804020100804,0x0000000010000402},
-//	{0x0201008040201008,0x0000000020000804},
-//	{0x0402010080402010,0x0000000040001008},
-//	{0x0804020100804020,0x0000000080002010},
-//	{0x1008040201008040,0x0000000100004020},
-//	{0x2010080402010080,0x0000000200008040},
-//	{0x4020100804020100,0x0000000400010080},
-//	{0x00000000001C0E07,0x0000000800000000},
-//	{0x0000000000E07038,0x0000001000000000},
-//	{0x00000000070381C0,0x0000002000000000},
-//	{0x0000E07038000000,0x0000004000000000},
-//	{0x00070381C0000000,0x0000008000000000},
-//	{0x00381C0E00000000,0x0000010000000000},
-//	{0x81C0000000000000,0x0000020000000703},
-//	{0x0E00000000000000,0x000004000000381C},
-//	{0x7000000000000000,0x000008000001C0E0},
-//}; //houseBits[27]
 
 #ifdef USE_LOCKED_CANDIDATES
 template <class X> const tripletMask fsss2<X>::tripletMasks[54] = {
@@ -362,7 +249,8 @@ template <class X> void fsss2<X>::initEmpty() {
 
 #ifdef USE_LOCKED_CANDIDATES
 template <class X> void fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
-	for(uint32_t houses = 0x03FFFF & ((tmp.toInt64_1()) >> (81 - 64)); houses; houses &= (houses - 1)) {
+	//for(uint32_t houses = 0x03FFFF & ((tmp.toInt64_1()) >> (81 - 64)); houses; houses &= (houses - 1)) {
+	for(uint32_t houses = 0x03FFFF & (tmp.toInt32_3()); houses; houses &= (houses - 1)) {
 #ifdef   _MSC_VER
 		unsigned int rc = 3U * bm128::FindLSBIndex32(houses); //unsolved row or column
 #else
@@ -408,7 +296,7 @@ template <class X> void fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
 //	all &= mask81; //clear other bits
 //	all.clearBits(triplicates);
 //}
-template <class X> void fsss2<X>::findBiValueCells(bm128& all) const {
+template <class X> void fsss2<X>::findLeastPopulatedCells(bm128& all) const {
 	//the following code is written by a member of http://forum.enjoysudoku.com known by pseudonym Blue
 	//it returns the cells with less number of candidates and works for 0 to 9 candidates (4-bit sum)
    bm128 sum0 = grid[0];
@@ -495,35 +383,12 @@ template <class X> void fsss2<X>::findBiValueCells(bm128& all) const {
       all.clearBits(sum0);
 }
 
-template <class X> void fsss2<X>::findBiValueCell(int& digit, int& cell) const { //cells with 2 remaining candidates
-	bm128 all;
-	findBiValueCells(all);
-	for(digit = 0; digit < 8; digit++) {
-		if(!all.isDisjoint(grid[digit])) {
-			all &= grid[digit];
-			cell = all.getFirstBit1Index96();
-			break;
-		}
-	}
-}
-
 template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remaining candidate
 //    __asm__
 //    (
 //			"":::"%xmm0","%xmm1","%xmm2","%xmm3","%xmm4","%xmm5","%xmm6","%xmm7","%xmm8","%xmm9","%xmm10","%xmm11","%xmm12","xmm13","xmm14","xmm15"
 //    );
 
-//	grid[0].clearBits(solved); //this is postponed to the exit of this process
-//	grid[1].clearBits(solved);
-//	grid[2].clearBits(solved);
-//	grid[3].clearBits(solved);
-//	grid[4].clearBits(solved);
-//	grid[5].clearBits(solved);
-//	grid[6].clearBits(solved);
-//	grid[7].clearBits(solved);
-//	grid[8].clearBits(solved);
-
-    bm128& slv = solved;
 #if 1
     register bm128 g0 = grid[0];
 	register bm128 g1 = grid[1];
@@ -545,10 +410,9 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 	#define g7 (grid[7])
 	#define g8 (grid[8])
 #endif
+    bm128& slv = solved;
 
-//againNaked:
 	do {
-		//__builtin_prefetch(grid);
 		register bm128 all = slv;
 		{
 			register bm128 duplicates = slv; //cells with 2 or more candidates
@@ -599,14 +463,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 		//now find which unique where came from
 		for(uint64_t cells = all.toInt64(); cells; cells &= (cells - 1)) {
 			uint64_t cell = bm128::FindLSBIndex64(cells); //get the rightmost bit index
-//	#ifdef   _MSC_VER
-//			_mm_prefetch((const char*)(bitSet + cell), _MM_HINT_T1);
-//	#else
-//			__builtin_prefetch(bitSet + cell);
-//	#endif
 			const bm128 theCells = visibleCells[cell];
 			const bm128 theBit = bitSet[cell];
-
 			if(!theBit.isSubsetOf(g0)) ; else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
 			if(!theBit.isSubsetOf(g1)) ; else {g1.clearBits(theCells); collector.setCellValue(cell, 2); continue;}
 			if(!theBit.isSubsetOf(g2)) ; else {g2.clearBits(theCells); collector.setCellValue(cell, 3); continue;}
@@ -623,11 +481,6 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 		} //for lower 64 cells
 		for(uint32_t cells = all.toInt32_2(); cells; cells &= (cells - 1)) {
 			unsigned int cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-//	#ifdef   _MSC_VER
-//			_mm_prefetch((const char*)(bitSet + cell), _MM_HINT_T1);
-//	#else
-//			__builtin_prefetch(bitSet + cell);
-//	#endif
 			const bm128 theCells = visibleCells[cell];
 			const bm128 theBit = bitSet[cell];
 			if(!theBit.isSubsetOf(g0)) ; else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
@@ -644,10 +497,6 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 			mode = MODE_STOP_PROCESSING;
 			return;
 		} //for upper 17 cells
-	//	if(!((bm128)mask81).isSubsetOf(slv)) {
-	//		//changed = true;
-	//		goto againNaked;
-	//	}
 	} while(!((bm128)mask81).isSubsetOf(slv));
 	//finally all 81 cells are solved
 	mode = MODE_STOP_PROCESSING;
@@ -655,19 +504,6 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 		mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;;
 	return;
 }
-
-//inline void fsss2::clearSolved() {
-//	bm128 tmp = solved;
-//	grid[0].clearBits(tmp);
-//	grid[1].clearBits(tmp);
-//	grid[2].clearBits(tmp);
-//	grid[3].clearBits(tmp);
-//	grid[4].clearBits(tmp);
-//	grid[5].clearBits(tmp);
-//	grid[6].clearBits(tmp);
-//	grid[7].clearBits(tmp);
-//	grid[8].clearBits(tmp);
-//}
 
 template <class X> void fsss2<X>::doEliminations() {
 nakedAgain:
@@ -686,66 +522,22 @@ nakedAgain:
 				}
 				againSameHidden:
 
-//				{
-//					uint32_t hh = ((1 << 27) - 1) & ((grid[d].toInt64_1()) >> (81 - 64));
-//					//int hh = __builtin_popcountll(((1 << 27) - 1) & ((grid[d].toInt64_1()) >> (81 - 64)));
-//					if(__builtin_popcount(hh) == 3) {
-//						//we know the hidden single is located on the intersection of the row/col/box (or there is a contradiction)
-//						if((hh & ((1 << 9) - 1)) == 0) printf("r");
-//						if(((hh >> 9) & ((1 << 9) - 1)) == 0) printf("c");
-//						//int r = bm128::FindLSBIndex32(hh & ((1 << 9) - 1));
-//						int r = bm128::FindLSBIndex32(hh);
-//						//int c = bm128::FindLSBIndex32((hh >> 9) & ((1 << 9) - 1));
-//						int c = bm128::FindLSBIndex32(hh >> 9);
-//						int cell = r * 9 + c;
-//
-//						//int b = bm128::FindLSBIndex32((hh >> 18) & ((1 << 9) - 1));
-//						//if(b != (3 * (r / 3) + (c / 3))) printf("."); //there is something wrong (contradiction?)
-//
-//						if(sol)
-//							sol[cell] = d + 1; //store the digit if solution buffer is given
-//						solved.setBit(cell); //mark cell as "solved"
-//
-//						grid[d].clearBits(visibleCells[cell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
-//						//at this point the solved cell still isn't cleared from all 9 masks, but doNakedSingles does it
-//						doNakedSingles(); //checking a single cell, possible eliminations in other digits
-//						if(mode) goto backtrack;
-//						found = d; //if the latest found is in the 1-st digit then repeating search for hiddens is redundant
-//						goto againSameHidden;
-//					}
-//				}
-
-
 				//for each unsolved house
-				for(uint64_t houses = /*((1 << 27) - 1) &*/((grid[d].toInt64_1()) >> (81 - 64)); houses; houses &= (houses - 1)) {
-				//for(uint64_t houses =  ((1 << 27) - 1) & ((grid[d].toInt64_1()) >> (81 - 64)); houses; houses &= (houses - 1)) {
-					uint64_t house = bm128::FindLSBIndex64(houses);
-//#ifdef   _MSC_VER
-//					//_mm_prefetch((const char*)(&minus1), _MM_HINT_T1);
-//					_mm_prefetch((const char*)(bitsForHouse + house + 4), _MM_HINT_T1);
-//#else
-//					//__builtin_prefetch(&minus1);
-//					__builtin_prefetch(bitsForHouse + house + 4);
-//#endif
+				//for(uint32_t houses = /*((1 << 27) - 1) &*/((grid[d].toInt64_1()) >> (81 - 64)); houses; houses &= (houses - 1)) {
+				for(uint32_t houses = /*((1 << 27) - 1) &*/(grid[d].toInt32_3()); houses; houses &= (houses - 1)) {
+					uint32_t house = bm128::FindLSBIndex32(houses);
 					bm128 tmp = grid[d];
 					tmp &= bitsForHouse[house]; //mask other candidates and leave only these from the current house
 
-//					bm128 k = knownNoHiddenSingles[d];
-//					k &= bitsForHouse[house];
-//					if(k.isSubsetOf(tmp))
-//						continue; //this affects the number of T&E => unknown features exist (bugs)
-
 					//find whether the house has a single candidate and obtain its position
 					//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bits set
-					if(0 == _mm_testz_si128(tmp.bitmap128.m128i_m128i, _mm_add_epi64(tmp.bitmap128.m128i_m128i, minus1.m128i_m128i)))
-					//if(tmp.popcount_128() > 1)
+					if(tmp.hasMin2Bits())
 						continue; //too many candidates
 					//find the bit
 					uint64_t cell;
 					{
 						uint64_t low64 = tmp.toInt64();
 						uint32_t high17 = tmp.toInt32_2();
-						//uint64_t high17 = tmp.toInt64_1();
 						if(low64) {
 							if(high17) continue; //candidates in both low and high part of the house
 							//get the position of the single candidate in the low part of the house
@@ -755,7 +547,6 @@ nakedAgain:
 						if(high17) {
 							//get the position of the single candidate in the high part of the house
 							cell = 64 + bm128::FindLSBIndex32(high17);
-							//cell = 64 + bm128::FindLSBIndex64(high17);
 							goto single_found;
 						}
 					}
@@ -768,7 +559,7 @@ nakedAgain:
 					//at this point the solved cell still isn't cleared from all 9 masks, but doNakedSingles does it
 					doNakedSingles(); //checking a single cell, possible eliminations in other digits
 					if(mode) goto backtrack;
-					found = d; //if the latest found is in the 1-st digit then repeating search for hiddens is redundant
+					found = d; //if the latest found is in the 1-st digit d == 0, then repeating search for hidden singles is redundant
 					goto againSameHidden;
 				} //for houses
 				knownNoHiddenSingles[d] = grid[d];
@@ -814,10 +605,13 @@ nakedAgain:
 				bm128 ss;
 				ss.clear();
 				bm128 both = grid[d1];
-				both |= grid[d2];
+				bm128 any = grid[d1];
+				any |= grid[d2];
+				both &= grid[d2];
 				//for each unsolved for both digits house
-				for(uint64_t houses = /*((1 << 27) - 1) &*/((grid[d1].toInt64_1()) & (grid[d2].toInt64_1())) >> (81 - 64); houses; houses &= (houses - 1)) {
-					bm128 tmp = both;
+				//for(uint64_t houses = /*((1 << 27) - 1) &*/((grid[d1].toInt64_1()) & (grid[d2].toInt64_1())) >> (81 - 64); houses; houses &= (houses - 1)) {
+				for(uint64_t houses = /*((1 << 27) - 1) &*/ both.toInt32_3(); houses; houses &= (houses - 1)) {
+					bm128 tmp = any;
 					tmp &= bitsForHouse[bm128::FindLSBIndex64(houses)]; //mask other candidates and leave only these from the current house
 					if(2 == tmp.popcount_128()) {
 						//only 2 digits in 2 cells in same house
@@ -869,15 +663,24 @@ nakedAgain:
 		int optDigit;
 		int optCell;
 
-		//find first bi-value cell and return first of the two values
-		findBiValueCell(optDigit, optCell);
-//		if(optDigit != -1) {
-//			;
-//		}
-//		else {
-//			//find house with less candidates from a particular digit, exit on first bi-position house/digit
-//			findBiPositionDigit(optDigit, optCell);
-//		}
+		//find first of the best-to-guess candidates
+		{
+			bm128 all;
+			findLeastPopulatedCells(all);
+			for (optDigit = 0; optDigit < 7; optDigit++) {
+				if (!all.isDisjoint(grid[optDigit])) {
+					all &= grid[optDigit];
+					optCell = all.getFirstBit1Index96();
+					goto bestCellFound;
+				}
+			}
+			optDigit = 7;
+			all &= grid[7];
+			optCell = all.getFirstBit1Index96();
+		bestCellFound:
+			;
+		}
+
 
 #ifdef COUNT_TRIALS
 		nTrials++;
@@ -901,8 +704,6 @@ nakedAgain:
 			gg[optDigit].clearBit(optCell);
 			//try the "optimal" cell/digit candidate
 			collector.setCellValue(optCell, optDigit + 1);
-//			if(sol)
-//				sol[optCell] = optDigit + 1; //store the digit if solution buffer is given
 			solved.setBit(optCell); //mark cell as "solved"
 			grid[optDigit].clearBits(visibleCells[optCell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
 			goto nakedAgain; //apply direct eliminations
@@ -958,7 +759,8 @@ contradiction:
 //	bm128 bestHouse;
 //	for(int d = 0; d < 9; d++) {
 //		//for each unsolved house
-//		for(uint32_t houses = /*((1 << 27) - 1) &*/(grid[d].toInt64_1()) >> (81 - 64); houses; houses &= (houses - 1)) {
+//		//for(uint32_t houses = /*((1 << 27) - 1) &*/(grid[d].toInt64_1()) >> (81 - 64); houses; houses &= (houses - 1)) {
+//		for(uint32_t houses = /*((1 << 27) - 1) &*/ grid[d].toInt32_3(); houses; houses &= (houses - 1)) {
 //			bm128 tmp = grid[d];
 //			tmp &= bitsForHouse[bm128::FindLSBIndex32(houses)];
 //			int n = tmp.popcount_128();
@@ -977,46 +779,6 @@ contradiction:
 //	//for(int i = 0; i < 81; i++)
 //	//	printf("%c", puzzle[i] + '0');
 //	//printf("\t%d\n", minCells);
-//}
-
-//template <> bool fsss2<class X>::isIrreducible(const char* const in) {
-//	int pos[81], val[81], nGivens = 0;
-//	int dc[9] = {0,0,0,0,0,0,0,0,0};
-//	for(int c = 0; c < 81; c++) {
-//		if(in[c] == 0)
-//			continue;
-//		pos[nGivens] = c;
-//		val[nGivens++] = in[c] - 1;
-//		if(++dc[in[c] - 1] > 6)
-//			return false; //this works for 36+ givens
-//	}
-//	for(int skip = 0; skip < nGivens; skip++) {
-//		initEmpty();
-//		//set the givens except for the tested cell
-//		for(int n = 0; n < nGivens; n++) {
-//			if(n != skip) {
-//				if(!grid[val[n]].isBitSet(pos[n])) {
-//					//direct contradiction within the initial givens
-//					mode = MODE_STOP_PROCESSING;
-//					return false;
-//				}
-//				solved.setBit(pos[n]); //mark cell as "solved"
-//				grid[val[n]].clearBits(visibleCells[pos[n]]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
-//			}
-//		}
-//		//forbid the given for the tested cell
-//		grid[val[skip]].clearBit(pos[skip]);
-//		//update the candidates
-//		//clearSolved(); //unnecessary when calling just before hunting for naked singles
-//		//check whether there is at least one solution with the different value for the tested cell
-//		doEliminations();
-//		if(numSolutionsToDo) {
-//			//no solution with different value for the tested cell exists, therefore the given at pos[skip] is redundant
-//			return false;
-//		}
-//	}
-//	//all tests passed
-//	return true;
 //}
 
 template < class X > void fsss2 < X > ::solve(const char* const in) {
@@ -1091,11 +853,12 @@ int hasAnySolution::solve(const char* p) {
 	return nsol;
 }
 bool hasAnySolution::solutionFound() {
-	return (++nsol == 1);
+	nsol = 1;
+	return true;
 }
 
-bool isSSIrreducible::solve(const char* p) {
-	fsss2<isSSIrreducible> solver(*this);
+bool isIrreducible::solve(const char* p) {
+	fsss2<isIrreducible> solver(*this);
 	int pos[81], nGivens = 0;
 	uint16_t valBM[81];
 	int dc[9] = {0,0,0,0,0,0,0,0,0};
@@ -1122,7 +885,7 @@ bool isSSIrreducible::solve(const char* p) {
 	return true;
 }
 
-bool isSSIrreducible::solutionFound() {
+bool isIrreducible::solutionFound() {
 	nsol = 1;
 	return true;
 }

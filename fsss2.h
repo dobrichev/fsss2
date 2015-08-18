@@ -48,11 +48,8 @@ public:
 	int solve(const char* p);
 };
 
-//test whether a given multiple-solution puzzle has at least one redundant given
-class isMSIrreducible : public nullCollector {};
-
-//test whether a given single-solution puzzle has at least one redundant given
-class isSSIrreducible : public nullCollector {
+//test whether a given subgrid has at least one redundant given, works for multiple-solution puzzles too
+class isIrreducible : public nullCollector {
 public:
 	int nsol;
 	bool solutionFound();
@@ -95,24 +92,23 @@ private:
 	int subsetsDone;
 #endif
 
-	//bits to clear when solving particular digit and cell, including the houses at bits 81+
+	//bits to clear when solving particular cell, including the 20 visible cells, and the 3 houses at bits 96+
 	static const t_128 visibleCells[81];
 
 	//1 for bits in the respective house (9 rows, 9 columns, 9 boxes)
 	static const t_128 bitsForHouse[27];
-	//static const t_128 houseBits[27];
+
 #ifdef USE_LOCKED_CANDIDATES
 	static const tripletMask tripletMasks[54];
 #endif
 	static const t_128 mask81;
-	static const t_128 minus1;
 	static const t_128 mask108;
 
 	//clear the context
-	void initEmpty();
+	void inline initEmpty();
 
 	//resolves cells with a single candidate for a cell
-	void doNakedSingles();
+	void inline doNakedSingles();
 
 #ifdef USE_LOCKED_CANDIDATES
 	//performs line-box eliminations for the specified digit
@@ -120,11 +116,10 @@ private:
 #endif
 
 	//does the direct eliminations, then does T&E
-	void doEliminations();
+	void inline doEliminations();
 
 	//used by T&E for optimal digit/cell selection
-	void findBiValueCell(int& digit, int& cell) const;
-	void findBiValueCells(bm128& bivalues) const;
+	void inline findLeastPopulatedCells(bm128& bivalues) const;
 
 	X &collector;
 
@@ -133,9 +128,8 @@ private:
 public:
 	fsss2(X &theCollector);
 	//solver's entry points
-	void solve(const char* const in);
-	void solve(const uint16_t* const in);
-	//bool isIrreducible(const char* const in);
+	void inline solve(const char* const in);
+	void inline solve(const uint16_t* const in);
 };
 
 
