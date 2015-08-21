@@ -48,8 +48,8 @@ int main(int argc, char* argv[])
 	int num[3] = {0,0,0};
 	while(fgets(p, sizeof(p), stdin)) {
 		for(int i = 0; i < 81; i++) c[i] = (p[i] <= '9' && p[i] >='0' ? p[i] - '0' : 0);
-		num[ss.solve(c)]++;
-		//num[ss.solve(c) ? 0 : 1]++;
+		num[ss.solve(c)]++; //test hasAnySolution, hasSingleSolution
+		//num[ss.solve(c) ? 0 : 1]++; // test isIrreducible
 	}
 
 

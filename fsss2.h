@@ -73,6 +73,7 @@ private:
 	bm128 solved;
 
 	bm128 knownNoHiddenSingles[9];
+	//bm128 trialCandidates;
 
 #ifdef USE_LOCKED_CANDIDATES
 	bm128 knownNoLockedCandidates[9];
