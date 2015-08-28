@@ -229,54 +229,63 @@ template <class X> void fsss2<X>::initEmpty() {
 	knownNoHiddenSingles[8] = mask108;
 
 #ifdef USE_LOCKED_CANDIDATES
-	knownNoLockedCandidates[0] = mask108;
-	knownNoLockedCandidates[1] = mask108;
-	knownNoLockedCandidates[2] = mask108;
-	knownNoLockedCandidates[3] = mask108;
-	knownNoLockedCandidates[4] = mask108;
-	knownNoLockedCandidates[5] = mask108;
-	knownNoLockedCandidates[6] = mask108;
-	knownNoLockedCandidates[7] = mask108;
-	knownNoLockedCandidates[8] = mask108;
+//	knownNoLockedCandidates[0] = mask108;
+//	knownNoLockedCandidates[1] = mask108;
+//	knownNoLockedCandidates[2] = mask108;
+//	knownNoLockedCandidates[3] = mask108;
+//	knownNoLockedCandidates[4] = mask108;
+//	knownNoLockedCandidates[5] = mask108;
+//	knownNoLockedCandidates[6] = mask108;
+//	knownNoLockedCandidates[7] = mask108;
+//	knownNoLockedCandidates[8] = mask108;
 	lockedDone = 0;
 #endif
 #ifdef USE_SUBSETS
 	subsetsDone = 0;
+	//for(int i = 0; i < 36; i++) knownNoSubsets[i] = mask108;
 #endif //USE_SUBSETS
 	mode = 0; //should solve
 	guessDepth = 0; //no guessed cells yet
-	//trialCandidates.clear();
+	trialCandidates.clear();
 }
 
 #ifdef USE_LOCKED_CANDIDATES
-template <class X> void fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
-	//for(uint32_t houses = 0x03FFFF & (tmp.bitmap128.m128i_u32[3]); houses; houses &= (houses - 1)) {
-	for(uint32_t houses = 0x03FFFF & (tmp.toInt32_3()); houses; houses &= (houses - 1)) {
-//#ifdef   _MSC_VER
-		unsigned int rc = 3U * bm128::FindLSBIndex32(houses); //unsolved row or column
-//#else
-//		unsigned int rc = 3U * __builtin_ctz(houses); //unsolved row or column
-//#endif
-		//process the 3 triplets in the row/col
+template <class X> bool fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
+	bool found = false;
+	//for(uint32_t lines = 0x03FFFF & (tmp.bitmap128.m128i_u32[3]); lines; lines &= (lines - 1)) {
+	for(uint32_t lines = 0x03FFFF & (tmp.toInt32_3()); lines; lines &= (lines - 1)) {
+		unsigned int line = 3U * bm128::FindLSBIndex32(lines); //unsolved row or column
+		//process the 3 triplets in the line (row or column)
 		for(unsigned int t = 0; t < 3; t++) {
-			bool dl = tmp.isDisjoint(tripletMasks[rc + t].adjacentLine);
-			bool db = tmp.isDisjoint(tripletMasks[rc + t].adjacentBox);
+			bool dl = tmp.isDisjoint(tripletMasks[line + t].adjacentLine);
+			bool db = tmp.isDisjoint(tripletMasks[line + t].adjacentBox);
 			if(dl) {
+				//unsolved line with candidates located only within this triplet
 				if(!db) {
-					tmp.clearBits(tripletMasks[rc + t].adjacentBox);
-					return;
+					tmp.clearBits(tripletMasks[line + t].adjacentBox);
+					found = true;
+					goto next_line;
+					//return true;
 				}
 			}
 			if(db) {
+				//the other two triplets within this box have no candidates
 				if(!dl) {
-					if(!tmp.isDisjoint(tripletMasks[rc + t].self)) { //unsolved box
-						tmp.clearBits(tripletMasks[rc + t].adjacentLine);
-						return;
+					//other two triplets for this line have candidates, but the box is possibly solved
+					if(!tmp.isDisjoint(tripletMasks[line + t].self)) { //unsolved box
+						tmp.clearBits(tripletMasks[line + t].adjacentLine);
+						found = true;
+						goto next_line;
+						//return true;
 					}
 				}
 			}
-		} //triplets in a house
-	} //houses
+		} //triplets in a line
+next_line:
+		;
+	} //lines
+	return found;
+	//return false;
 }
 #endif
 
@@ -297,7 +306,7 @@ template <class X> void fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
 //	all &= mask81; //clear other bits
 //	all.clearBits(triplicates);
 //}
-template <class X> void fsss2<X>::findLeastPopulatedCells(bm128& all) const {
+template <class X> int fsss2<X>::findLeastPopulatedCells(bm128& all) const {
 	//the following code is written by a member of http://forum.enjoysudoku.com known by pseudonym Blue
 	//it returns the cells with less number of candidates and works for 0 to 9 candidates (4-bit sum)
    bm128 sum0 = grid[0];
@@ -374,14 +383,12 @@ template <class X> void fsss2<X>::findLeastPopulatedCells(bm128& all) const {
    all = mask81;
    all.clearBits(solved);
 
-   if (!all.isSubsetOf(sum3))
-      all.clearBits(sum3);
-   if (!all.isSubsetOf(sum2))
-      all.clearBits(sum2);
-   if (!all.isSubsetOf(sum1))
-      all.clearBits(sum1);
-   if (!all.isSubsetOf(sum0))
-      all.clearBits(sum0);
+   int n = 0;
+   if (all.isSubsetOf(sum3)) n = 8;  else all.clearBits(sum3);
+   if (all.isSubsetOf(sum2)) n += 4; else all.clearBits(sum2);
+   if (all.isSubsetOf(sum1)) n += 2; else all.clearBits(sum1);
+   if (all.isSubsetOf(sum0)) n++;    else all.clearBits(sum0);
+   return n;
 }
 
 template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remaining candidate
@@ -486,7 +493,7 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 		} //for lower 64 cells
 		//for(uint32_t cells = all.bitmap128.m128i_u32[2]; cells; cells &= (cells - 1)) {
 		for(uint32_t cells = all.toInt32_2(); cells; cells &= (cells - 1)) {
-			unsigned int cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+			uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
 			const bm128 theCells = visibleCells[cell];
 			const bm128 theBit = bitSet[cell];
 			if(!theBit.isSubsetOf(g0)) {;} else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
@@ -580,27 +587,13 @@ nakedAgain:
 
 	//locked candidates
 #ifdef USE_LOCKED_CANDIDATES
-	//if(lockedDone < 1) {
 	if(lockedDone == 0) {
-		int found = 0;
-		//if(solved.popcount_128() < 28) {
-			//if a digit in a row is within a single triplet, then remove digit from the box triplets and vice versa
-			for (int d = 0; d < 9; d++) {
-				bm128 tmp = grid[d];
-				if(tmp == knownNoLockedCandidates[d])
-					continue;
-				doLockedCandidatesForDigit(grid[d]);
-				if(tmp.isSubsetOf(grid[d])) {
-					knownNoLockedCandidates[d] = tmp;
-					continue;
-				}
-				//some eliminations are done for this digit
-				found = 1;
-				//goto nakedAgain;
-			}
-		//}
+		bool found = false;
+		//if a digit in a row is within a single triplet, then remove digit from the other two box triplets and vice versa
+		for (int d = 0; d < 9; d++) {
+			found |= doLockedCandidatesForDigit(grid[d]);
+		}
 		lockedDone = 1;
-		//lockedDone++;
 		if(found) goto nakedAgain;
 	} //end of locked candidates
 #endif //USE_LOCKED_CANDIDATES
@@ -608,16 +601,20 @@ nakedAgain:
 #ifdef USE_SUBSETS
 	//subsets
 	if(subsetsDone == 0) {
-	//if(subsetsDone < 2) {
+	//if(subsetsDone < 5) {
 		bool found = false;
+//		int subsetIndex = 0; //01,02,03,04,05,06,07,08,12,13,14,15,16,17,18,23,24,25,26,27,28,34,35,36,37,38,45,46,47,48,56,57,58,67,68,78
 		for(int d1 = 0; d1 < 8; d1++) {
+			//for(int d2 = d1 + 1; d2 < 9; d2++, subsetIndex++) {
 			for(int d2 = d1 + 1; d2 < 9; d2++) {
+				bm128 any = grid[d1];
+				any |= grid[d2];
+//				if(any == knownNoSubsets[subsetIndex])
+//					continue;
 				bool found2 = false;
 				bm128 ss;
 				ss.clear();
 				bm128 both = grid[d1];
-				bm128 any = grid[d1];
-				any |= grid[d2];
 				both &= grid[d2];
 				//for each unsolved for both digits house
 				for(uint32_t houses = /*((1 << 27) - 1) &*/ both.toInt32_3(); houses; houses &= (houses - 1)) {
@@ -643,13 +640,14 @@ nakedAgain:
 						}
 					}
 				}
+				//knownNoSubsets[subsetIndex] = any;
 			}
 		}
 		subsetsDone = 1;
 		//subsetsDone++;
 		if(found) {
 #ifdef USE_LOCKED_CANDIDATES
-			//lockedDone = 0;
+			lockedDone = 0;
 #endif
 			goto nakedAgain;
 		}
@@ -660,15 +658,6 @@ nakedAgain:
 	{
 		//At this point the existence of unsolved house(s) w/o candidates crashes the algorithm!!!
 		bm128* gg = &contexts[guessDepth++][0];
-//#ifdef   _MSC_VER
-//		_mm_prefetch((const char*)(&gg[0]), _MM_HINT_T1);
-//		_mm_prefetch((const char*)(&gg[4]), _MM_HINT_T1);
-//		_mm_prefetch((const char*)(&gg[8]), _MM_HINT_T1);
-//#else
-//		__builtin_prefetch(&gg[0]);
-//		__builtin_prefetch(&gg[4]);
-//		__builtin_prefetch(&gg[8]);
-//#endif
 
 		//Find an unsolved cell with less possibilities
 		int optDigit;
@@ -677,11 +666,14 @@ nakedAgain:
 		//find first of the best-to-guess candidates
 		{
 			bm128 all;
-//			all = trialCandidates;
-//			all.clearBits(solved);
-//			if(all.isZero())
-//				findLeastPopulatedCells(all);
-			findLeastPopulatedCells(all);
+			//try reusing previously found candidates
+			all = trialCandidates;
+			all.clearBits(solved);
+			if(all.isZero()) {
+				//find new candidates
+				if(2 >= findLeastPopulatedCells(all))
+					trialCandidates = all; //reuse them on next guess only if they are bi-values
+			}
 			for (optDigit = 0; optDigit < 7; optDigit++) {
 				if (!all.isDisjoint(grid[optDigit])) {
 					all &= grid[optDigit];
@@ -715,6 +707,7 @@ nakedAgain:
 			gg[7] = grid[7];
 			gg[8] = grid[8];
 			gg[9] = solved;
+			gg[10] = trialCandidates;
 			//later continue with this candidate eliminated
 			gg[optDigit].clearBit(optCell);
 			//try the "optimal" cell/digit candidate
@@ -752,6 +745,7 @@ contradiction:
 		grid[7] = gg[7];
 		grid[8] = gg[8];
 		solved = gg[9];
+		trialCandidates = gg[10];
 		mode = 0;
 	}
 	goto nakedAgain;

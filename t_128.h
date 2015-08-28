@@ -60,32 +60,32 @@ extern const t_128 bitSet[128];
 
 struct bm128 {
 	t_128 bitmap128;
-	bm128() {};
-	bm128(const bm128 &v) {bitmap128.m128i_m128i = v.bitmap128.m128i_m128i;};
-	bm128(const __m128i &v) {bitmap128.m128i_m128i = v;};
-	bm128(const t_128 &v) {bitmap128.m128i_m128i = v.m128i_m128i;};
-	inline bool operator== (const bm128& r) const {return 0xFFFF == _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i));};
-	inline void operator&= (const bm128& r) {bitmap128.m128i_m128i = _mm_and_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);};
-	inline void operator|= (const bm128& r) {bitmap128.m128i_m128i = _mm_or_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);};
-	inline void operator^= (const bm128& r) {bitmap128.m128i_m128i = _mm_xor_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);};
-	inline bool isDisjoint(const bm128& r) const {return _mm_testz_si128(r.bitmap128.m128i_m128i, bitmap128.m128i_m128i);};
+	bm128() {}
+	bm128(const bm128 &v) {bitmap128.m128i_m128i = v.bitmap128.m128i_m128i;}
+	bm128(const __m128i &v) {bitmap128.m128i_m128i = v;}
+	bm128(const t_128 &v) {bitmap128.m128i_m128i = v.m128i_m128i;}
+	inline bool isSubsetOf(const bm128 &s) const {return _mm_testc_si128(s.bitmap128.m128i_m128i, bitmap128.m128i_m128i);}
+	inline bool operator== (const bm128& r) const {return 0xFFFF == _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i));}
+	//inline bool operator== (const bm128& r) const {return ((*this).isSubsetOf(r) & r.isSubsetOf(*this));}
+	inline void operator&= (const bm128& r) {bitmap128.m128i_m128i = _mm_and_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);}
+	inline void operator|= (const bm128& r) {bitmap128.m128i_m128i = _mm_or_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);}
+	inline void operator^= (const bm128& r) {bitmap128.m128i_m128i = _mm_xor_si128(bitmap128.m128i_m128i, r.bitmap128.m128i_m128i);}
+	inline bool isDisjoint(const bm128& r) const {return _mm_testz_si128(r.bitmap128.m128i_m128i, bitmap128.m128i_m128i);}
 	inline int mask8() const {return _mm_movemask_epi8(bitmap128.m128i_m128i);}
-	//inline int toInt32() const {return _mm_cvtsi128_si32(bitmap128.m128i_m128i);}
 	inline uint64_t toInt64() const {return _mm_cvtsi128_si64(bitmap128.m128i_m128i);}
 	inline uint64_t toInt64_1() const {return _mm_extract_epi64(bitmap128.m128i_m128i, 1);}
+	//inline int toInt32() const {return _mm_cvtsi128_si32(bitmap128.m128i_m128i);}
 	inline uint32_t toInt32_2() const {return _mm_extract_epi32(bitmap128.m128i_m128i, 2);}
-	//inline int toInt32_2() const {return _mm_cvtsi128_si32(_mm_srli_si128(bitmap128.m128i_m128i, 8));}
 	inline uint32_t toInt32_3() const {return _mm_extract_epi32(bitmap128.m128i_m128i, 3);}
-	inline bool isBitSet(const int theBit) const {return !_mm_testz_si128(this->bitmap128.m128i_m128i, bitSet[theBit].m128i_m128i);};
-	inline void setBit(const int theBit) {*this |= bitSet[theBit].m128i_m128i;};
-	inline void clearBit(const int theBit) {bitmap128.m128i_m128i = _mm_andnot_si128(bitSet[theBit].m128i_m128i, bitmap128.m128i_m128i);};
-	inline void clearBits(const bm128& r) {bitmap128.m128i_m128i = _mm_andnot_si128(r.bitmap128.m128i_m128i, bitmap128.m128i_m128i);};
-	inline void clear() {bitmap128.m128i_m128i = _mm_setzero_si128();};
-	inline bool isSubsetOf(const bm128 &s) const {return _mm_testc_si128(s.bitmap128.m128i_m128i, bitmap128.m128i_m128i);}
-	inline void operator= (const bm128 &rhs) {bitmap128.m128i_m128i = rhs.bitmap128.m128i_m128i;};
-	inline void operator= (const void *p) {bitmap128.m128i_m128i = _mm_loadu_si128((const __m128i*)p);};
-	inline bool isZero() const {return _mm_testc_si128(_mm_setzero_si128(), bitmap128.m128i_m128i);};
-	inline void shl16(const int numBits) {bitmap128.m128i_m128i = _mm_slli_epi16(bitmap128.m128i_m128i, numBits);};
+	inline bool isBitSet(const int theBit) const {return !_mm_testz_si128(this->bitmap128.m128i_m128i, bitSet[theBit].m128i_m128i);}
+	inline void setBit(const int theBit) {*this |= bitSet[theBit].m128i_m128i;}
+	inline void clearBit(const int theBit) {bitmap128.m128i_m128i = _mm_andnot_si128(bitSet[theBit].m128i_m128i, bitmap128.m128i_m128i);}
+	inline void clearBits(const bm128& r) {bitmap128.m128i_m128i = _mm_andnot_si128(r.bitmap128.m128i_m128i, bitmap128.m128i_m128i);}
+	inline void clear() {bitmap128.m128i_m128i = _mm_setzero_si128();}
+	inline void operator= (const bm128 &rhs) {bitmap128.m128i_m128i = rhs.bitmap128.m128i_m128i;}
+	inline void operator= (const void *p) {bitmap128.m128i_m128i = _mm_loadu_si128((const __m128i*)p);}
+	inline bool isZero() const {return _mm_testc_si128(_mm_setzero_si128(), bitmap128.m128i_m128i);}
+	inline void shl16(const int numBits) {bitmap128.m128i_m128i = _mm_slli_epi16(bitmap128.m128i_m128i, numBits);}
 	//void toMask81(char* r) const {for(int i = 0; i < 81; i++) r[i] = isBitSet(i) ? '1' : '.';}
 	//void toMask128(char* r) const {for(int i = 0; i < 128; i++) r[i] = isBitSet(i) ? '1' : '.';}
 	inline int popcount_128() const {
@@ -96,8 +96,8 @@ struct bm128 {
 		j = _mm_cvtsi128_si64(xmm);
 		return (_popcnt64(i) + _popcnt64(j));
 	}
-    inline unsigned int nonzeroOctets() const {return 0x0000ffff ^ _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, _mm_setzero_si128()));}
-    inline unsigned int diffOctets(const bm128 &rhs) const {return 0x0000ffff ^ _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, rhs.bitmap128.m128i_m128i));}
+    //inline unsigned int nonzeroOctets() const {return 0x0000ffff ^ _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, _mm_setzero_si128()));}
+    //inline unsigned int diffOctets(const bm128 &rhs) const {return 0x0000ffff ^ _mm_movemask_epi8(_mm_cmpeq_epi8(bitmap128.m128i_m128i, rhs.bitmap128.m128i_m128i));}
 	inline int getFirstBit1Index96() const {
 		//lower 64 bits
 		{
@@ -148,7 +148,7 @@ struct bm128 {
     }
     inline static unsigned int FindLSBIndex32(const uint32_t Mask) {
 #ifdef   _MSC_VER
-        unsigned long res;
+        unsigned int res;
         _BitScanForward(&res, Mask);
         return res;
 #else
