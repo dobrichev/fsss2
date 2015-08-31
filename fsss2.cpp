@@ -242,7 +242,7 @@ template <class X> void fsss2<X>::initEmpty() {
 #endif
 #ifdef USE_SUBSETS
 	subsetsDone = 0;
-	//for(int i = 0; i < 36; i++) knownNoSubsets[i] = mask108;
+//	for(int i = 0; i < 36; i++) knownNoSubsets[i] = mask108;
 #endif //USE_SUBSETS
 	mode = 0; //should solve
 	guessDepth = 0; //no guessed cells yet
@@ -252,7 +252,6 @@ template <class X> void fsss2<X>::initEmpty() {
 #ifdef USE_LOCKED_CANDIDATES
 template <class X> bool fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
 	bool found = false;
-	//for(uint32_t lines = 0x03FFFF & (tmp.bitmap128.m128i_u32[3]); lines; lines &= (lines - 1)) {
 	for(uint32_t lines = 0x03FFFF & (tmp.toInt32_3()); lines; lines &= (lines - 1)) {
 		unsigned int line = 3U * bm128::FindLSBIndex32(lines); //unsolved row or column
 		//process the 3 triplets in the line (row or column)
@@ -472,9 +471,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 			slv |= all; //mark cells as solved
 		}
 		//now find which unique where came from
-		//for(uint64_t cells = all.bitmap128.m128i_u64[0]; cells; cells &= (cells - 1)) {
 		for(uint64_t cells = all.toInt64(); cells; cells &= (cells - 1)) {
-			uint64_t cell = bm128::FindLSBIndex64(cells); //get the rightmost bit index
+			uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
 			const bm128 theCells = visibleCells[cell];
 			const bm128 theBit = bitSet[cell];
 			if(!theBit.isSubsetOf(g0)) {;} else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
@@ -491,7 +489,6 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 			mode = MODE_STOP_PROCESSING;
 			return;
 		} //for lower 64 cells
-		//for(uint32_t cells = all.bitmap128.m128i_u32[2]; cells; cells &= (cells - 1)) {
 		for(uint32_t cells = all.toInt32_2(); cells; cells &= (cells - 1)) {
 			uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
 			const bm128 theCells = visibleCells[cell];
@@ -541,8 +538,7 @@ nakedAgain:
 				againSameHidden:
 
 				//for each unsolved house
-				//for(uint32_t houses = /*((1 << 27) - 1) &*/(grid[d].toInt32_3()); houses; houses &= (houses - 1)) {
-				for(uint32_t houses = /*((1 << 27) - 1) &*/ grid[d].bitmap128.m128i_u32[3]; houses; houses &= (houses - 1)) {
+				for(uint32_t houses = /*((1 << 27) - 1) &*/(grid[d].toInt32_3()); houses; houses &= (houses - 1)) {
 					uint32_t house = bm128::FindLSBIndex32(houses);
 					bm128 tmp = grid[d];
 					tmp &= bitsForHouse[house]; //mask other candidates and leave only these from the current house
@@ -552,14 +548,15 @@ nakedAgain:
 					if(tmp.hasMin2Bits())
 						continue; //too many candidates
 					//find the bit
-					uint64_t cell;
+					int cell;
 					{
 						uint64_t low64 = tmp.toInt64();
 						uint32_t high17 = tmp.toInt32_2();
 						if(low64) {
-							if(high17) continue; //candidates in both low and high part of the house
+							if(high17)
+								continue; //candidates in both low and high part of the house
 							//get the position of the single candidate in the low part of the house
-							cell = bm128::FindLSBIndex64(low64);
+							cell = (int) bm128::FindLSBIndex64(low64);
 							goto single_found;
 						}
 						if(high17) {
@@ -592,9 +589,23 @@ nakedAgain:
 		//if a digit in a row is within a single triplet, then remove digit from the other two box triplets and vice versa
 		for (int d = 0; d < 9; d++) {
 			found |= doLockedCandidatesForDigit(grid[d]);
+//			if(knownNoLockedCandidates[d] == grid[d])
+//				continue;
+//			if(doLockedCandidatesForDigit(grid[d])) {
+//				found = true;
+//			}
+//			else {
+//				knownNoLockedCandidates[d] = grid[d];
+//			}
 		}
 		lockedDone = 1;
-		if(found) goto nakedAgain;
+		if(found) {
+#ifdef USE_SUBSETS
+			//subsetsDone = 0;
+#endif //USE_SUBSETS
+			goto nakedAgain;
+		}
+		//lockedDone = 1;
 	} //end of locked candidates
 #endif //USE_LOCKED_CANDIDATES
 
@@ -602,8 +613,8 @@ nakedAgain:
 	//subsets
 	if(subsetsDone == 0) {
 	//if(subsetsDone < 5) {
-		bool found = false;
-//		int subsetIndex = 0; //01,02,03,04,05,06,07,08,12,13,14,15,16,17,18,23,24,25,26,27,28,34,35,36,37,38,45,46,47,48,56,57,58,67,68,78
+		bool eliminationFound = false;
+		//int subsetIndex = 0; //01,02,03,04,05,06,07,08,12,13,14,15,16,17,18,23,24,25,26,27,28,34,35,36,37,38,45,46,47,48,56,57,58,67,68,78
 		for(int d1 = 0; d1 < 8; d1++) {
 			//for(int d2 = d1 + 1; d2 < 9; d2++, subsetIndex++) {
 			for(int d2 = d1 + 1; d2 < 9; d2++) {
@@ -611,7 +622,7 @@ nakedAgain:
 				any |= grid[d2];
 //				if(any == knownNoSubsets[subsetIndex])
 //					continue;
-				bool found2 = false;
+				bool pairFound = false;
 				bm128 ss;
 				ss.clear();
 				bm128 both = grid[d1];
@@ -624,33 +635,36 @@ nakedAgain:
 					if(2 == tmp.popcount_128()) {
 						//only 2 digits in 2 cells in same house
 						ss |= tmp;
-						found2 = true;
+						pairFound = true;
 						break;
 					}
 				}
 				//eliminate the candidates from other digits
-				if(found2) {
+				if(pairFound) {
 					for(int d = 0; d < 9; d++) {
 						if((d != d1) && (d != d2)) {
 							if(!grid[d].isDisjoint(ss)) {
 								grid[d].clearBits(ss);
-								found = true;
+								eliminationFound = true;
 								//goto nakedAgain;
 							}
 						}
 					}
 				}
-				//knownNoSubsets[subsetIndex] = any;
+//				else {
+//					knownNoSubsets[subsetIndex] = any;
+//				}
 			}
 		}
 		subsetsDone = 1;
 		//subsetsDone++;
-		if(found) {
+		if(eliminationFound) {
 #ifdef USE_LOCKED_CANDIDATES
 			lockedDone = 0;
 #endif
 			goto nakedAgain;
 		}
+		//subsetsDone = 1;
 	}
 #endif //USE_SUBSETS
 
@@ -894,7 +908,7 @@ template < class X > void fsss2 < X > ::solve(const uint16_t* const in) {
 		grid[0].bitmap128.m128i_u8[i] = y;
 		grid[8].bitmap128.m128i_u8[i] = y >> 8;
 	}
-	//now the last given
+	//now the last cell
 	y = in[80];
 	if(y != 511) {
 		grid[0].bitmap128.m128i_u8[10] = (y >> 0) & 1;

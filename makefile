@@ -37,7 +37,7 @@ gcc_profiling:
 
 gcc_release:
 	@echo 'Building target $(TARGET) using Gnu C++ Profile Use settings'
-	$(GCXX) -flto -O3 -march=native -msse4.2 -mavx -g -Wall -fprofile-use -o $(TARGET) $(FILELIST)
+	$(GCXX) -flto -O3 -march=native -msse4.2 -mavx -g3 -gdwarf-2 -Wall -fprofile-use -o $(TARGET) $(FILELIST)
 	@echo 'Done'
 
 intel_profiling:

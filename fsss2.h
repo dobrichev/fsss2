@@ -69,15 +69,16 @@ public:
 	//bits
 	//0         1         2         3         4         5         6         7         8         9        10        11        12
 	//01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567
+
+	//sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss...............................................
+	//bits 0..80 have 1 if the respective cell is given or solved, 0 if unsolved
+	bm128 solved; //already solved cells
+
 	//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc...............RRRRRRRRRCCCCCCCCCBBBBBBBB......
 	//l = bits 0..80 have 1 if the digit has candidate in the respective cell, 0 if solved or eliminated
 	//RCB = bits 96..121 have 1 if the house (row, column, box) is not solved, 0 if solved
 	//bits 81..95 and 122..127 are not used and must be 0
 	bm128 grid[9]; //candidates for each value from 1 to 9
-
-	//sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss...............................................
-	//bits 0..80 have 1 if the respective cell is given or solved, 0 if unsolved
-	bm128 solved; //already solved cells
 
 	bm128 knownNoHiddenSingles[9]; //cache for latest known candidates for each value that failed in search for hidden single
 
@@ -85,15 +86,15 @@ public:
 	//bm128 knownNoLockedCandidates[9];
 #endif
 
-	//0 = continue solving; 1 = contradiction found, backtrack and continue; 3 = all necessary solutions are found, stop
-	int mode; //combination of the game mode flags, initial 0
-
-	int guessDepth;
+	bm128 trialCandidates; //cache for latest optimal cells to make T&E for
 
 	//the backtracking stack
 	bm128 contexts[81][11]; //9 for the candidates per digit + 1 for solved cells + 1 for trial candidates
 
-	bm128 trialCandidates; //cache for latest optimal cells to make T&E for
+	//0 = continue solving; 1 = contradiction found, backtrack and continue; 3 = all necessary solutions are found, stop
+	uint32_t mode; //combination of the game mode flags, initial 0
+
+	uint32_t guessDepth;
 
 #ifdef USE_LOCKED_CANDIDATES
 	int lockedDone;
