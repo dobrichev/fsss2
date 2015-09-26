@@ -427,6 +427,28 @@ bool inline clearNaked(bm128 &gn, bm128 &mask) {
 	return false;
 };
 #endif
+#if 1
+bool inline clearNaked(bm128 &gn, bm128 &mask) {
+	bm128 theCells = mask; theCells &= gn;
+	uint32_t solvedHouses = 0;
+	for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+		uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+		if(constraints::visibleCells[cell].m128i_u32[3] & solvedHouses) return true;
+		solvedHouses |= constraints::visibleCells[cell].m128i_u32[3];
+		gn.clearBits(constraints::visibleCells[cell]);
+		//collector.setCellValue(cell, 1);
+	} //for lower 64 cells
+	for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+		uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+		if(constraints::visibleCells[cell].m128i_u32[3] & solvedHouses) return true;
+		solvedHouses |= constraints::visibleCells[cell].m128i_u32[3];
+		gn.clearBits(constraints::visibleCells[cell]);
+		//collector.setCellValue(cell, 1);
+	}
+	mask.clearBits(theCells);
+	return false;
+};
+#endif
 
 template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remaining candidate
 //    __asm__
@@ -570,8 +592,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g0.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 1);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
 		if(!g1.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g1;
@@ -587,8 +609,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g1.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 2);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
 		if(!g2.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g2;
@@ -604,8 +626,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g2.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 3);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
 		if(!g3.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g3;
@@ -621,8 +643,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g3.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 4);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
 		if(!g4.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g4;
@@ -638,8 +660,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g4.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 5);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
 		if(!g5.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g5;
@@ -655,8 +677,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g5.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 6);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
 		if(!g6.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g6;
@@ -672,8 +694,8 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g6.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 7);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
 		if(!g7.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g7;
@@ -689,10 +711,10 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g7.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 8);
 			}
+			if(all.isSubsetOf(theCells)) continue;
 			all.clearBits(theCells);
-			if(all.isZero()) continue;
 		}
-		/*if(!g8.isDisjoint(all))*/ {
+		{
 			bm128 theCells = all; theCells &= g8;
 			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
 				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
@@ -706,8 +728,6 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				g8.clearBits(constraints::visibleCells[cell]);
 				collector.setCellValue(cell, 9);
 			}
-			/*all.clearBits(theCells);
-			if(all.isZero()) continue;*/
 		}
 #endif
 	} while(!((bm128)constraints::mask81).isSubsetOf(slv));

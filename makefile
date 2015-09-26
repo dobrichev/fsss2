@@ -32,7 +32,7 @@ gcc_debug:
 
 gcc_profiling:
 	@echo 'Building target $(TARGET) using Gnu C++ Profile Generate settings'
-	$(GCXX) -flto -O3 -march=native -g -Wall -fprofile-generate -o $(TARGET) $(FILELIST)
+	$(GCXX) -flto -O3 -march=native -msse4.2 -mavx -g3 -gdwarf-2 -Wall -fprofile-generate -o $(TARGET) $(FILELIST)
 	@echo 'Done'
 
 gcc_release:
