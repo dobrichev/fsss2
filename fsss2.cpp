@@ -21,18 +21,21 @@
 extern int nTrials;
 #endif
 
-template < class X > fsss2 < X > ::fsss2(X &theCollector) : collector(theCollector) {};
+template <class X> fsss2<X>::fsss2(X &theCollector) : collector(theCollector) {};
 
 //only first 81 bits set
-template <class X> const t_128 fsss2<X>::mask81 = {0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
+const t_128 constraints::mask81 = {0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
 
 //only first 81 + 27 = 108 bits set
 //template <class X> const t_128 fsss2<X>::mask108 = {0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFF};
 
 //the first 81 bits for the cells and the 27 bits from position 96+
-template <class X> const t_128 fsss2<X>::mask108 = {0xFFFFFFFFFFFFFFFF,0x07FFFFFF0001FFFF};
+const t_128 constraints::mask108 = {0xFFFFFFFFFFFFFFFF,0x07FFFFFF0001FFFF};
 
-template <class X> const t_128 fsss2<X>::visibleCells[81] = { //1 for all 20 visible cells, 1 for the cell itself, 1 for the three houses
+//the 27 bits from position 96+
+const t_128 constraints::mask27 = {0x0,0x07FFFFFF00000000};
+
+const t_128 constraints::visibleCells[81] = { //1 for all 20 visible cells, 1 for the cell itself, 1 for the three houses
 	{0x80402010081C0FFF,0x0004020100000100},
 	{0x00804020101C0FFF,0x0004040100000201},
 	{0x01008040201C0FFF,0x0004080100000402},
@@ -116,7 +119,7 @@ template <class X> const t_128 fsss2<X>::visibleCells[81] = { //1 for all 20 vis
 	{0x7020100804020100,0x040201000001FFE0}
 }; //bm128 visibleCells[81]
 
-template <class X> const t_128 fsss2<X>::bitsForHouse[27] = { //1 for the 9 cells in the house
+const t_128 constraints::bitsForHouse[27] = { //1 for the 9 cells in the house
 	{0x00000000000001FF,0x0000000000000000},
 	{0x000000000003FE00,0x0000000000000000},
 	{0x0000000007FC0000,0x0000000000000000},
@@ -146,8 +149,10 @@ template <class X> const t_128 fsss2<X>::bitsForHouse[27] = { //1 for the 9 cell
 	{0x7000000000000000,0x000000000001C0E0},
 }; //bitsForHouse[27]
 
+//const uint32 constraints::topCellsHouses = 0x00FC007F; //000111111000000000001111111
+
 #ifdef USE_LOCKED_CANDIDATES
-template <class X> const tripletMask fsss2<X>::tripletMasks[54] = {
+const tripletMask constraints::tripletMasks[54] = {
 	{{0x0000000000000007,0x0000000000000000}, {0x00000000000001F8,0x0000000000000000}, {0x00000000001C0E00,0x0000000000000000}, },
 	{{0x0000000000000038,0x0000000000000000}, {0x00000000000001C7,0x0000000000000000}, {0x0000000000E07000,0x0000000000000000}, },
 	{{0x00000000000001C0,0x0000000000000000}, {0x000000000000003F,0x0000000000000000}, {0x0000000007038000,0x0000000000000000}, },
@@ -207,46 +212,56 @@ template <class X> const tripletMask fsss2<X>::tripletMasks[54] = {
 
 template <class X> void fsss2<X>::initEmpty() {
 	//set all cells and houses as "unsolved"
-	grid[0] = mask108;
-	grid[1] = mask108;
-	grid[2] = mask108;
-	grid[3] = mask108;
-	grid[4] = mask108;
-	grid[5] = mask108;
-	grid[6] = mask108;
-	grid[7] = mask108;
-	grid[8] = mask108;
-	solved.clear(); //no solved cells yet
+	grid[0] = constraints::mask108;
+	grid[1] = constraints::mask108;
+	grid[2] = constraints::mask108;
+	grid[3] = constraints::mask108;
+	grid[4] = constraints::mask108;
+	grid[5] = constraints::mask108;
+	grid[6] = constraints::mask108;
+	grid[7] = constraints::mask108;
+	grid[8] = constraints::mask108;
 	//no processed digits for hidden singles yet
-	knownNoHiddenSingles[0] = mask108;
-	knownNoHiddenSingles[1] = mask108;
-	knownNoHiddenSingles[2] = mask108;
-	knownNoHiddenSingles[3] = mask108;
-	knownNoHiddenSingles[4] = mask108;
-	knownNoHiddenSingles[5] = mask108;
-	knownNoHiddenSingles[6] = mask108;
-	knownNoHiddenSingles[7] = mask108;
-	knownNoHiddenSingles[8] = mask108;
+	knownNoHiddenSingles[0] = constraints::mask108;
+	knownNoHiddenSingles[1] = constraints::mask108;
+	knownNoHiddenSingles[2] = constraints::mask108;
+	knownNoHiddenSingles[3] = constraints::mask108;
+	knownNoHiddenSingles[4] = constraints::mask108;
+	knownNoHiddenSingles[5] = constraints::mask108;
+	knownNoHiddenSingles[6] = constraints::mask108;
+	knownNoHiddenSingles[7] = constraints::mask108;
+	knownNoHiddenSingles[8] = constraints::mask108;
 
 #ifdef USE_LOCKED_CANDIDATES
-//	knownNoLockedCandidates[0] = mask108;
-//	knownNoLockedCandidates[1] = mask108;
-//	knownNoLockedCandidates[2] = mask108;
-//	knownNoLockedCandidates[3] = mask108;
-//	knownNoLockedCandidates[4] = mask108;
-//	knownNoLockedCandidates[5] = mask108;
-//	knownNoLockedCandidates[6] = mask108;
-//	knownNoLockedCandidates[7] = mask108;
-//	knownNoLockedCandidates[8] = mask108;
+//	knownNoLockedCandidates[0] = constraints::mask108;
+//	knownNoLockedCandidates[1] = constraints::mask108;
+//	knownNoLockedCandidates[2] = constraints::mask108;
+//	knownNoLockedCandidates[3] = constraints::mask108;
+//	knownNoLockedCandidates[4] = constraints::mask108;
+//	knownNoLockedCandidates[5] = constraints::mask108;
+//	knownNoLockedCandidates[6] = constraints::mask108;
+//	knownNoLockedCandidates[7] = constraints::mask108;
+//	knownNoLockedCandidates[8] = constraints::mask108;
 	lockedDone = 0;
 #endif
 #ifdef USE_SUBSETS
 	subsetsDone = 0;
-//	for(int i = 0; i < 36; i++) knownNoSubsets[i] = mask108;
+//	for(int i = 0; i < 36; i++) knownNoSubsets[i] = constraints::mask108;
 #endif //USE_SUBSETS
+	solved.clear(); //no solved cells yet
+	trialCandidates.clear(); //unknown cell candidates for T&E
 	mode = 0; //should solve
 	guessDepth = 0; //no guessed cells yet
-	trialCandidates.clear();
+}
+
+template <class X> void fsss2<X>::setCellValue(int pos, int value) {
+	collector.setCellValue(pos, value);
+	solved.setBit(pos); //mark cell as "solved"
+	grid[value - 1].clearBits(constraints::visibleCells[pos]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
+}
+
+template <class X> void fsss2<X>::eliminateCellValue(int pos, int value) {
+	grid[value - 1].clearBit(pos);
 }
 
 #ifdef USE_LOCKED_CANDIDATES
@@ -256,12 +271,12 @@ template <class X> bool fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
 		unsigned int line = 3U * bm128::FindLSBIndex32(lines); //unsolved row or column
 		//process the 3 triplets in the line (row or column)
 		for(unsigned int t = 0; t < 3; t++) {
-			bool dl = tmp.isDisjoint(tripletMasks[line + t].adjacentLine);
-			bool db = tmp.isDisjoint(tripletMasks[line + t].adjacentBox);
+			bool dl = tmp.isDisjoint(constraints::tripletMasks[line + t].adjacentLine);
+			bool db = tmp.isDisjoint(constraints::tripletMasks[line + t].adjacentBox);
 			if(dl) {
 				//unsolved line with candidates located only within this triplet
 				if(!db) {
-					tmp.clearBits(tripletMasks[line + t].adjacentBox);
+					tmp.clearBits(constraints::tripletMasks[line + t].adjacentBox);
 					found = true;
 					goto next_line;
 					//return true;
@@ -271,8 +286,8 @@ template <class X> bool fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
 				//the other two triplets within this box have no candidates
 				if(!dl) {
 					//other two triplets for this line have candidates, but the box is possibly solved
-					if(!tmp.isDisjoint(tripletMasks[line + t].self)) { //unsolved box
-						tmp.clearBits(tripletMasks[line + t].adjacentLine);
+					if(!tmp.isDisjoint(constraints::tripletMasks[line + t].self)) { //unsolved box
+						tmp.clearBits(constraints::tripletMasks[line + t].adjacentLine);
 						found = true;
 						goto next_line;
 						//return true;
@@ -302,7 +317,7 @@ next_line:
 //		duplicates |= tmp;
 //		all |= grid[d];
 //	}
-//	all &= mask81; //clear other bits
+//	all &= constraints::mask81; //clear other bits
 //	all.clearBits(triplicates);
 //}
 template <class X> int fsss2<X>::findLeastPopulatedCells(bm128& all) const {
@@ -379,7 +394,7 @@ template <class X> int fsss2<X>::findLeastPopulatedCells(bm128& all) const {
    carry &= tmp;
    sum3 |= carry;
 
-   all = mask81;
+   all = constraints::mask81;
    all.clearBits(solved);
 
    int n = 0;
@@ -390,12 +405,34 @@ template <class X> int fsss2<X>::findLeastPopulatedCells(bm128& all) const {
    return n;
 }
 
+#if 0
+bool inline clearNaked(bm128 &gn, bm128 &mask) {
+	bm128 theCells = mask; theCells &= gn;
+	bool x = false;
+	for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+		uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+		if(x && !gn.isBitSet(cell)) return true;
+		x = true;
+		gn.clearBits(constraints::visibleCells[cell]);
+		//collector.setCellValue(cell, 1);
+	} //for lower 64 cells
+	for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+		uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+		if(x && !gn.isBitSet(cell)) return true;
+		x = true;
+		gn.clearBits(constraints::visibleCells[cell]);
+		//collector.setCellValue(cell, 1);
+	}
+	mask.clearBits(theCells);
+	return false;
+};
+#endif
+
 template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remaining candidate
 //    __asm__
 //    (
 //			"":::"%xmm0","%xmm1","%xmm2","%xmm3","%xmm4","%xmm5","%xmm6","%xmm7","%xmm8","%xmm9","%xmm10","%xmm11","%xmm12","xmm13","xmm14","xmm15"
 //    );
-
 #if 1
     register bm128 g0 = grid[0];
 	register bm128 g1 = grid[1];
@@ -418,7 +455,6 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 	#define g8 (grid[8])
 #endif
     bm128& slv = solved;
-
 	do {
 		register bm128 all = slv;
 		{
@@ -432,7 +468,7 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 			{bm128 tmp = g6; tmp &= all; duplicates |= tmp; all |= g6;}
 			{bm128 tmp = g7; tmp &= all; duplicates |= tmp; all |= g7;}
 			{bm128 tmp = g8; tmp &= all; duplicates |= tmp; all |= g8;}
-			if(((bm128)mask81).isSubsetOf(all)) {
+			if(((bm128)constraints::mask81).isSubsetOf(all)) {
 				;
 			}
 			else {
@@ -440,7 +476,7 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				mode = MODE_STOP_PROCESSING;
 				return;
 			}
-			if(((bm128)mask81).isSubsetOf(duplicates)) {
+			if(((bm128)constraints::mask81).isSubsetOf(duplicates)) {
 				//sorry, no naked singles
 				//remove all candidates for the solved cells (even if no eliminations were made here)
 				//Note: this cleanup is postponed up to there because
@@ -466,14 +502,15 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				grid[8] = g8;
 				return;
 			}
-			all = mask81;
+			all = constraints::mask81;
 			all.clearBits(duplicates);
 			slv |= all; //mark cells as solved
 		}
 		//now find which unique where came from
+#if 0
 		for(uint64_t cells = all.toInt64(); cells; cells &= (cells - 1)) {
 			uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-			const bm128 theCells = visibleCells[cell];
+			const bm128 theCells = constraints::visibleCells[cell];
 			const bm128 theBit = bitSet[cell];
 			if(!theBit.isSubsetOf(g0)) {;} else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
 			if(!theBit.isSubsetOf(g1)) {;} else {g1.clearBits(theCells); collector.setCellValue(cell, 2); continue;}
@@ -491,7 +528,7 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 		} //for lower 64 cells
 		for(uint32_t cells = all.toInt32_2(); cells; cells &= (cells - 1)) {
 			uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-			const bm128 theCells = visibleCells[cell];
+			const bm128 theCells = constraints::visibleCells[cell];
 			const bm128 theBit = bitSet[cell];
 			if(!theBit.isSubsetOf(g0)) {;} else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
 			if(!theBit.isSubsetOf(g1)) {;} else {g1.clearBits(theCells); collector.setCellValue(cell, 2); continue;}
@@ -507,16 +544,183 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 			mode = MODE_STOP_PROCESSING;
 			return;
 		} //for upper 17 cells
-	} while(!((bm128)mask81).isSubsetOf(slv));
+#elif 0
+		if(!g8.isDisjoint(all)) {if(clearNaked(g8, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g7.isDisjoint(all)) {if(clearNaked(g7, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g6.isDisjoint(all)) {if(clearNaked(g6, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g5.isDisjoint(all)) {if(clearNaked(g5, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g4.isDisjoint(all)) {if(clearNaked(g4, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g3.isDisjoint(all)) {if(clearNaked(g3, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g2.isDisjoint(all)) {if(clearNaked(g2, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g1.isDisjoint(all)) {if(clearNaked(g1, all)) goto contradiction; if(all.isZero()) continue;}
+		if(!g0.isDisjoint(all)) {if(clearNaked(g0, all)) goto contradiction; if(all.isZero()) continue;}
+		printf(".");
+#else
+		if(!g0.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g0;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g0.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g0.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 1);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g0.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g0.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 1);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		if(!g1.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g1;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g1.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g1.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 2);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g1.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g1.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 2);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		if(!g2.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g2;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g2.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g2.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 3);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g2.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g2.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 3);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		if(!g3.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g3;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g3.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g3.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 4);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g3.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g3.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 4);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		if(!g4.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g4;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g4.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g4.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 5);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g4.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g4.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 5);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		if(!g5.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g5;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g5.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g5.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 6);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g5.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g5.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 6);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		if(!g6.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g6;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g6.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g6.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 7);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g6.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g6.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 7);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		if(!g7.isDisjoint(all)) {
+			bm128 theCells = all; theCells &= g7;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g7.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g7.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 8);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g7.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g7.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 8);
+			}
+			all.clearBits(theCells);
+			if(all.isZero()) continue;
+		}
+		/*if(!g8.isDisjoint(all))*/ {
+			bm128 theCells = all; theCells &= g8;
+			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
+				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+				if(!g8.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g8.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 9);
+			} //for lower 64 cells
+			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
+				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+				if(!g8.isBitSet(cell)) goto contradiction; //two naked singles for the same digit in the same house
+				g8.clearBits(constraints::visibleCells[cell]);
+				collector.setCellValue(cell, 9);
+			}
+			/*all.clearBits(theCells);
+			if(all.isZero()) continue;*/
+		}
+#endif
+	} while(!((bm128)constraints::mask81).isSubsetOf(slv));
 	//finally all 81 cells are solved
-	if(!collector.solutionFound()) {
-		//continue to next possible solution
-		mode = MODE_STOP_PROCESSING;
-	}
-	else {
+	if(collector.solutionFound()) {
 		//collector doesn't ask for more solutions, we are done
 		mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
+		return;
 	}
+	//continue with next possible solution
+
+contradiction:
+	mode = MODE_STOP_PROCESSING;
 	return;
 }
 
@@ -535,18 +739,18 @@ nakedAgain:
 				if(knownNoHiddenSingles[d] == grid[d]) {
 					continue;
 				}
-				againSameHidden:
-
+againSameHidden:
 				//for each unsolved house
-				for(uint32_t houses = /*((1 << 27) - 1) &*/(grid[d].toInt32_3()); houses; houses &= (houses - 1)) {
+				for(uint32_t houses = grid[d].toInt32_3(); houses; houses &= (houses - 1)) {
 					uint32_t house = bm128::FindLSBIndex32(houses);
 					bm128 tmp = grid[d];
-					tmp &= bitsForHouse[house]; //mask other candidates and leave only these from the current house
+					tmp &= constraints::bitsForHouse[house]; //mask other candidates and leave only these from the current house
 
 					//find whether the house has a single candidate and obtain its position
 					//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bits set
 					if(tmp.hasMin2Bits())
 						continue; //too many candidates
+
 					//find the bit
 					int cell;
 					{
@@ -567,12 +771,12 @@ nakedAgain:
 					}
 					//no any candidate for this digit in this unsolved house
 					goto contradiction;
-		single_found:
+single_found:
 					collector.setCellValue(cell, d + 1);
 					solved.setBit(cell); //mark cell as "solved"
-					grid[d].clearBits(visibleCells[cell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
+					grid[d].clearBits(constraints::visibleCells[cell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
 					//at this point the solved cell still isn't cleared from all 9 masks, but doNakedSingles does it
-					doNakedSingles(); //checking a single cell, possible eliminations in other digits
+					doNakedSingles(); //checking for a single candidate in a cell, possible eliminations in other digits
 					if(mode) goto backtrack;
 					found = d; //if the latest found is in the 1-st digit d == 0, then repeating search for hidden singles is redundant
 					goto againSameHidden;
@@ -628,15 +832,16 @@ nakedAgain:
 				bm128 both = grid[d1];
 				both &= grid[d2];
 				//for each unsolved for both digits house
-				for(uint32_t houses = /*((1 << 27) - 1) &*/ both.toInt32_3(); houses; houses &= (houses - 1)) {
-				//for(uint32_t houses = /*((1 << 27) - 1) &*/ both.bitmap128.m128i_u32[3]; houses; houses &= (houses - 1)) {
+				for(uint32_t houses = both.toInt32_3(); houses; houses &= (houses - 1)) {
 					bm128 tmp = any;
-					tmp &= bitsForHouse[bm128::FindLSBIndex32(houses)]; //mask other candidates and leave only these from the current house
+					tmp &= constraints::bitsForHouse[bm128::FindLSBIndex32(houses)]; //mask other candidates and leave only these from the current house
 					if(2 == tmp.popcount_128()) {
-						//only 2 digits in 2 cells in same house
+						//only 2 digits in 2 cells in the same house
 						ss |= tmp;
+						//ss = tmp;
 						pairFound = true;
-						break;
+						//trialCandidates |= ss;
+						//break;
 					}
 				}
 				//eliminate the candidates from other digits
@@ -727,7 +932,7 @@ nakedAgain:
 			//try the "optimal" cell/digit candidate
 			collector.setCellValue(optCell, optDigit + 1);
 			solved.setBit(optCell); //mark cell as "solved"
-			grid[optDigit].clearBits(visibleCells[optCell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
+			grid[optDigit].clearBits(constraints::visibleCells[optCell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
 			//if(guessDepth == 1) subsetsDone = 0;
 			//if(guessDepth == 1) lockedDone = 0;
 			goto nakedAgain; //apply direct eliminations
@@ -825,11 +1030,11 @@ template < class X > void fsss2 < X > ::solve(const char* const in) {
 		}
 		collector.setCellValue(c, d + 1);
 		solved.setBit(c); //mark cell as "solved"
-		grid[d].clearBits(visibleCells[c]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
+		grid[d].clearBits(constraints::visibleCells[c]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
 	}
 	//clear all givens from the candidates in one pass
 	//clearSolved(); //unnecessary just before hunting for naked singles
-	if(((bm128)mask81).isSubsetOf(solved)) {
+	if(((bm128)constraints::mask81).isSubsetOf(solved)) {
 		//all givens :)
 		collector.solutionFound();
 		return;
@@ -943,18 +1148,43 @@ bool nullCollector::solutionFound() {
 }
 void nullCollector::setCellValue(int cell, int val) {}
 
+//hasSingleSolution::hasSingleSolution() :
+//	solver(fsss2<hasSingleSolution>(*this))
+//{}
 int hasSingleSolution::solve(const char* p) {
-	fsss2<hasSingleSolution> solver(*this);
 	nsol = 0;
+	fsss2<hasSingleSolution> solver(*this);
 	solver.solve(p);
 	return nsol;
 }
+//int hasSingleSolution::solve(const bm128* p) {
+//	nsol = 0;
+//	solver.initEmpty();
+//	for(int g = 0; g < 9; g++) {
+//		solver.grid[g].clearBits(p[g]);
+//	}
+//	solver.doEliminations();
+//	return nsol;
+//}
 bool hasSingleSolution::solutionFound() {
 	return (++nsol == 2);
 }
 
+hasAnySolution::hasAnySolution() :
+	solver(fsss2<hasAnySolution>(*this))
+	{}
+int hasAnySolution::solve(const bm128* p) {
+	//fsss2<hasAnySolution> solver(*this);
+	nsol = 0;
+	solver.initEmpty();
+	for(int g = 0; g < 9; g++) {
+		solver.grid[g].clearBits(p[g]);
+	}
+	solver.doEliminations();
+	return nsol;
+}
 int hasAnySolution::solve(const char* p) {
-	fsss2<hasAnySolution> solver(*this);
+	//fsss2<hasAnySolution> solver(*this);
 	nsol = 0;
 	solver.solve(p);
 	return nsol;
@@ -962,6 +1192,52 @@ int hasAnySolution::solve(const char* p) {
 bool hasAnySolution::solutionFound() {
 	nsol = 1;
 	return true;
+}
+
+//void isRedundant::setCellValue(int cell, int val) { //debug
+//	if(cell < 0 || cell > 80 || val < 1 || val > 9)
+//		return;
+//	sol[cell] = val;
+//}
+
+bool isRedundant::solutionFound() {
+	nsol = 1;
+	return true;
+}
+bool isRedundant::solve(const char* p, int c) {
+	fsss2<isRedundant> solver(*this);
+	nsol = 0;
+	solver.initEmpty();
+	for(int i = 0; i < 81; i++) {
+		if(i != c) {
+			int g = p[i];
+			if(g) {
+				solver.setCellValue(i, g);
+			}
+		}
+		else {
+			solver.eliminateCellValue(i, p[i]);
+		}
+	}
+	solver.doEliminations();
+	return (nsol == 0);
+}
+bool isRedundant::solve(const bm128* p, int given, int position) {
+	fsss2<isRedundant> solver(*this);
+	nsol = 0;
+	solver.initEmpty();
+	bm128 posMask = bitSet[position];
+	for(int g = 0; g < 9; g++) {
+		solver.grid[g].clearBits(p[g]);
+		if(g != given) {
+			solver.grid[g].clearBits(posMask);
+		}
+		else {
+			solver.grid[g] |= posMask;
+		}
+	}
+	solver.doEliminations();
+	return (nsol != 0);
 }
 
 bool isIrreducible::solve(const char* p) {
@@ -1015,9 +1291,33 @@ bool isIrreducible::solve(const char* p) {
 	//all tests passed
 	return true;
 }
-
 bool isIrreducible::solutionFound() {
 	nsol = 1;
 	return true;
+}
+
+void getSingleSolution::setCellValue(int cell, int val) {
+	if(nsol) return; //store only the first solution
+	resChar[cell] = val;
+}
+bool getSingleSolution::solutionFound() {
+	return (++nsol == 2); //stop after possible second solution
+}
+int getSingleSolution::solve(const char* p, char* res) {
+	fsss2<getSingleSolution> solver(*this);
+	resChar = res;
+	solver.solve(p);
+	return nsol;
+}
+int getSingleSolution::solve(const bm128* p, char* res) {
+	fsss2<getSingleSolution> solver(*this);
+	nsol = 0;
+	resChar = res;
+	solver.initEmpty();
+	for(int g = 0; g < 9; g++) {
+		solver.grid[g].clearBits(p[g]);
+	}
+	solver.doEliminations();
+	return nsol;
 }
 

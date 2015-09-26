@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "fsss2.h"
+#include "minimizer.h"
 
 //void	printVisibleCells();
 //void printTripletMasks();
@@ -22,8 +23,6 @@
 //int nNaked[129]; //debug
 //int a = 0;
 //int b = 0;
-
-////#define COUNT_TRIALS
 
 #ifdef COUNT_TRIALS
 int nTrials = 0;
@@ -42,16 +41,31 @@ int main(int argc, char* argv[])
 
 	char p[2000];
 	char c[88];
+	//bm128 pm[9];
 	//isIrreducible ss;
 	hasSingleSolution ss;
 	//hasAnySolution ss;
+	//minimizer mm;
 	int num[3] = {0,0,0};
 	while(fgets(p, sizeof(p), stdin)) {
 		for(int i = 0; i < 81; i++) c[i] = (p[i] <= '9' && p[i] >='0' ? p[i] - '0' : 0);
 		num[ss.solve(c)]++; //test hasAnySolution, hasSingleSolution
 		//num[ss.solve(c) ? 0 : 1]++; // test isIrreducible
+		//mm.minimizePencilmarks(c);
+		//mm.minimizeVanilla(c);
+//		for(int r = 0; r < 9; r++) pm[r].clear();
+//		for(int r = 0; r < 9; r++) for(int c = 0; c < 9; c++) for(int d = 0; d < 9; d++) if(p[81 * r + 9 * c + d] == '.') pm[d].setBit(9 * r + c);
+//		{
+//			char pp[88];
+//			printf("********************************\n");
+//			for(int i = 0; i < 9; i++) {
+//				pm[i].toMask81(pp);
+//				printf("%81.81s\n", pp);
+//			}
+//			printf("\n");
+//		}
+//		mm.minimizePencilmarks(pm);
 	}
-
 
 	finish = clock();
 #ifdef COUNT_TRIALS
@@ -59,9 +73,6 @@ int main(int argc, char* argv[])
 #else
 	fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC);
 #endif
-//	for(int n = 0; n < 20; n++)
-//		fprintf(stderr, "naked[%d] = %d\n", n, nNaked[n]);
-	//fprintf(stderr, "a = %d, b = %d\n", a, b);
 	return ret;
 }
 
