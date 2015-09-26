@@ -1170,11 +1170,11 @@ bool hasSingleSolution::solutionFound() {
 	return (++nsol == 2);
 }
 
-hasAnySolution::hasAnySolution() :
-	solver(fsss2<hasAnySolution>(*this))
-	{}
+//hasAnySolution::hasAnySolution() :
+//	solver(fsss2<hasAnySolution>(*this))
+//	{}
 int hasAnySolution::solve(const bm128* p) {
-	//fsss2<hasAnySolution> solver(*this);
+	fsss2<hasAnySolution> solver(*this);
 	nsol = 0;
 	solver.initEmpty();
 	for(int g = 0; g < 9; g++) {
@@ -1184,7 +1184,7 @@ int hasAnySolution::solve(const bm128* p) {
 	return nsol;
 }
 int hasAnySolution::solve(const char* p) {
-	//fsss2<hasAnySolution> solver(*this);
+	fsss2<hasAnySolution> solver(*this);
 	nsol = 0;
 	solver.solve(p);
 	return nsol;

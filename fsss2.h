@@ -126,10 +126,10 @@ public:
 
 //test whether a given puzzle has at least one solution
 class hasAnySolution : public nullCollector {
-	fsss2<hasAnySolution> solver;
+	//fsss2<hasAnySolution> solver;
 	int nsol;
 public:
-	hasAnySolution();
+	//hasAnySolution();
 	bool solutionFound();
 	int solve(const char* p);
 	int solve(const bm128* p);
