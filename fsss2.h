@@ -35,6 +35,8 @@ struct constraints {
 	//bits to clear when solving particular cell, including the 20 visible cells, and the 3 houses at bits 96+
 	static const t_128 visibleCells[81];
 
+	//static const t_128 noDuplicateCells[81];
+
 	//1 for bits in the respective house (9 rows, 9 columns, 9 boxes)
 	static const t_128 bitsForHouse[27];
 

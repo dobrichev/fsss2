@@ -15,6 +15,7 @@
 #include "minimizer.h"
 
 //void	printVisibleCells();
+//void	printVisibleCellsX();
 //void printTripletMasks();
 //void	printBitsForHouse();
 //void printHouseBits();
@@ -31,6 +32,7 @@ int nTrials = 0;
 int main(int argc, char* argv[])
 {
 	//printVisibleCells();
+	//printVisibleCellsX();
 	//printBitsForHouse();
 	//printHouseBits();
 	//return 0;
@@ -40,7 +42,7 @@ int main(int argc, char* argv[])
 	start = clock();
 
 	char p[2000];
-	char c[88];
+	char curPuz[96];
 	//bm128 pm[9];
 	//isIrreducible ss;
 	hasSingleSolution ss;
@@ -48,23 +50,9 @@ int main(int argc, char* argv[])
 	//minimizer mm;
 	int num[3] = {0,0,0};
 	while(fgets(p, sizeof(p), stdin)) {
-		for(int i = 0; i < 81; i++) c[i] = (p[i] <= '9' && p[i] >='0' ? p[i] - '0' : 0);
-		num[ss.solve(c)]++; //test hasAnySolution, hasSingleSolution
-		//num[ss.solve(c) ? 0 : 1]++; // test isIrreducible
-		//mm.minimizePencilmarks(c);
-		//mm.minimizeVanilla(c);
-//		for(int r = 0; r < 9; r++) pm[r].clear();
-//		for(int r = 0; r < 9; r++) for(int c = 0; c < 9; c++) for(int d = 0; d < 9; d++) if(p[81 * r + 9 * c + d] == '.') pm[d].setBit(9 * r + c);
-//		{
-//			char pp[88];
-//			printf("********************************\n");
-//			for(int i = 0; i < 9; i++) {
-//				pm[i].toMask81(pp);
-//				printf("%81.81s\n", pp);
-//			}
-//			printf("\n");
-//		}
-//		mm.minimizePencilmarks(pm);
+		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
+		num[ss.solve(curPuz)]++; //test hasAnySolution, hasSingleSolution
+		//num[ss.solve(curPuz) ? 0 : 1]++; // test isIrreducible
 	}
 
 	finish = clock();
@@ -80,7 +68,7 @@ int main(int argc, char* argv[])
 
 ////temporary and debug functions
 //void bm128toHex(const bm128& v) {
-//	printf("{0x%016.16lX,0x%016.16lX},\n", v.bitmap128.m128i_u64[0], v.bitmap128.m128i_u64[1]);
+//	printf("\t{0x%016.16lX,0x%016.16lX},\n", v.bitmap128.m128i_u64[0], v.bitmap128.m128i_u64[1]);
 //}
 //
 //extern const int affectedCells[81][20] =
@@ -252,7 +240,22 @@ int main(int argc, char* argv[])
 //	}
 //	printf("}; //bm128 visibleCells[81]\n");
 //}
-//
+//void printVisibleCellsX() {
+//	printf("const t_128 constraints::noDuplicateCells[81] = { //1 for visible cells, excluding self, 1 for the three houses\n");
+//	for(int i = 0; i < 81; i++) {
+//		bm128 b;
+//		b.clear();
+//		for(int j = 0; j < 20; j++) {
+//			b.setBit(affectedCells[i][j]);
+//		}
+//		b.setBit(96 + affectedGroups[i][0]);
+//		b.setBit(96 + affectedGroups[i][1]);
+//		b.setBit(96 + affectedGroups[i][2]);
+//		bm128toHex(b);
+//	}
+//	printf("}; //noDuplicateCells[81]\n");
+//}
+
 //void printBitsForHouse() {
 //	printf("bm128 bitsForHouse[27] = {\n");
 //	for(int i = 0; i < 27; i++) {
