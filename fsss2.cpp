@@ -119,90 +119,6 @@ const t_128 constraints::visibleCells[81] = { //1 for all 20 visible cells, 1 fo
 	{0x7020100804020100,0x040201000001FFE0}
 }; //bm128 visibleCells[81]
 
-//const t_128 constraints::noDuplicateCells[81] = { //1 for visible cells, excluding self, 1 for the three houses
-//	{0x80402010081C0FFE,0x0004020100000100},
-//	{0x00804020101C0FFD,0x0004040100000201},
-//	{0x01008040201C0FFB,0x0004080100000402},
-//	{0x0201008040E071F7,0x0008100100000804},
-//	{0x0402010080E071EF,0x0008200100001008},
-//	{0x0804020100E071DF,0x0008400100002010},
-//	{0x10080402070381BF,0x0010800100004020},
-//	{0x201008040703817F,0x0011000100008040},
-//	{0x40201008070380FF,0x0012000100010080},
-//	{0x80402010081FFC07,0x0004020200000100},
-//	{0x00804020101FFA07,0x0004040200000201},
-//	{0x01008040201FF607,0x0004080200000402},
-//	{0x0201008040E3EE38,0x0008100200000804},
-//	{0x0402010080E3DE38,0x0008200200001008},
-//	{0x0804020100E3BE38,0x0008400200002010},
-//	{0x1008040207037FC0,0x0010800200004020},
-//	{0x201008040702FFC0,0x0011000200008040},
-//	{0x402010080701FFC0,0x0012000200010080},
-//	{0x804020100FF80E07,0x0004020400000100},
-//	{0x0080402017F40E07,0x0004040400000201},
-//	{0x0100804027EC0E07,0x0004080400000402},
-//	{0x0201008047DC7038,0x0008100400000804},
-//	{0x0402010087BC7038,0x0008200400001008},
-//	{0x08040201077C7038,0x0008400400002010},
-//	{0x1008040206FF81C0,0x0010800400004020},
-//	{0x2010080405FF81C0,0x0011000400008040},
-//	{0x4020100803FF81C0,0x0012000400010080},
-//	{0x8040E07FF0040201,0x0020020800000100},
-//	{0x0080E07FE8080402,0x0020040800000201},
-//	{0x0100E07FD8100804,0x0020080800000402},
-//	{0x0207038FB8201008,0x0040100800000804},
-//	{0x0407038F78402010,0x0040200800001008},
-//	{0x0807038EF8804020,0x0040400800002010},
-//	{0x10381C0DF9008040,0x0080800800004020},
-//	{0x20381C0BFA010080,0x0081000800008040},
-//	{0x40381C07FC020100,0x0082000800010080},
-//	{0x8040FFE038040201,0x0020021000000100},
-//	{0x0080FFD038080402,0x0020041000000201},
-//	{0x0100FFB038100804,0x0020081000000402},
-//	{0x02071F71C0201008,0x0040101000000804},
-//	{0x04071EF1C0402010,0x0040201000001008},
-//	{0x08071DF1C0804020,0x0040401000002010},
-//	{0x10381BFE01008040,0x0080801000004020},
-//	{0x203817FE02010080,0x0081001000008040},
-//	{0x40380FFE04020100,0x0082001000010080},
-//	{0x807FC07038040201,0x0020022000000100},
-//	{0x00BFA07038080402,0x0020042000000201},
-//	{0x013F607038100804,0x0020082000000402},
-//	{0x023EE381C0201008,0x0040102000000804},
-//	{0x043DE381C0402010,0x0040202000001008},
-//	{0x083BE381C0804020,0x0040402000002010},
-//	{0x1037FC0E01008040,0x0080802000004020},
-//	{0x202FFC0E02010080,0x0081002000008040},
-//	{0x401FFC0E04020100,0x0082002000010080},
-//	{0xFF80201008040201,0x0100024000000703},
-//	{0xFF40402010080402,0x0100044000000703},
-//	{0xFEC0804020100804,0x0100084000000703},
-//	{0x7DC1008040201008,0x020010400000381C},
-//	{0x7BC2010080402010,0x020020400000381C},
-//	{0x77C4020100804020,0x020040400000381C},
-//	{0x6FC8040201008040,0x040080400001C0E0},
-//	{0x5FD0080402010080,0x040100400001C0E0},
-//	{0x3FE0100804020100,0x040200400001C0E0},
-//	{0x01C0201008040201,0x01000280000007FF},
-//	{0x81C0402010080402,0x01000480000007FE},
-//	{0x81C0804020100804,0x01000880000007FD},
-//	{0x8E01008040201008,0x02001080000038FB},
-//	{0x8E02010080402010,0x02002080000038F7},
-//	{0x8E04020100804020,0x02004080000038EF},
-//	{0xF008040201008040,0x040080800001C0DF},
-//	{0xF010080402010080,0x040100800001C0BF},
-//	{0xF020100804020100,0x040200800001C07F},
-//	{0x81C0201008040201,0x010003000001FE03},
-//	{0x81C0402010080402,0x010005000001FD03},
-//	{0x81C0804020100804,0x010009000001FB03},
-//	{0x0E01008040201008,0x020011000001F71C},
-//	{0x0E02010080402010,0x020021000001EF1C},
-//	{0x0E04020100804020,0x020041000001DF1C},
-//	{0x7008040201008040,0x040081000001BFE0},
-//	{0x7010080402010080,0x0401010000017FE0},
-//	{0x7020100804020100,0x040201000000FFE0},
-//}; //noDuplicateCells[81]
-
 const t_128 constraints::bitsForHouse[27] = { //1 for the 9 cells in the house
 	{0x00000000000001FF,0x0000000000000000},
 	{0x000000000003FE00,0x0000000000000000},
@@ -489,52 +405,7 @@ template <class X> int fsss2<X>::findLeastPopulatedCells(bm128& all) const {
    return n;
 }
 
-#if 0
-bool inline clearNaked(bm128 &gn, bm128 &mask) {
-	bm128 theCells = mask; theCells &= gn;
-	bool x = false;
-	for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-		uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-		if(x && !gn.isBitSet(cell)) return true;
-		x = true;
-		gn.clearBits(constraints::visibleCells[cell]);
-		//collector.setCellValue(cell, 1);
-	} //for lower 64 cells
-	for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-		uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-		if(x && !gn.isBitSet(cell)) return true;
-		x = true;
-		gn.clearBits(constraints::visibleCells[cell]);
-		//collector.setCellValue(cell, 1);
-	}
-	mask.clearBits(theCells);
-	return false;
-};
-#elif 0
-bool inline clearNaked(bm128 &gn, bm128 &mask) {
-	bm128 theCells = mask; theCells &= gn;
-	for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-		uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-		if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) return true; //2 naked in a house
-		gn.clearBits(constraints::visibleCells[cell]);
-		//collector.setCellValue(cell, 1);
-	} //for lower 64 cells
-	for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-		uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-		if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) return true; //2 naked in a house
-		gn.clearBits(constraints::visibleCells[cell]);
-		//collector.setCellValue(cell, 1);
-	}
-	mask.clearBits(theCells);
-	return false;
-};
-#endif
-
 template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remaining candidate
-//    __asm__
-//    (
-//			"":::"%xmm0","%xmm1","%xmm2","%xmm3","%xmm4","%xmm5","%xmm6","%xmm7","%xmm8","%xmm9","%xmm10","%xmm11","%xmm12","xmm13","xmm14","xmm15"
-//    );
 #if 1
     register bm128 g0 = grid[0];
 	register bm128 g1 = grid[1];
@@ -612,216 +483,6 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 			slv |= all; //mark cells as solved
 		}
 		//now find which unique where came from
-#if 0
-		for(uint64_t cells = all.toInt64(); cells; cells &= (cells - 1)) {
-			uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-			const bm128 theCells = constraints::visibleCells[cell];
-			const bm128 theBit = bitSet[cell];
-			if(!theBit.isSubsetOf(g0)) {;} else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
-			if(!theBit.isSubsetOf(g1)) {;} else {g1.clearBits(theCells); collector.setCellValue(cell, 2); continue;}
-			if(!theBit.isSubsetOf(g2)) {;} else {g2.clearBits(theCells); collector.setCellValue(cell, 3); continue;}
-			if(!theBit.isSubsetOf(g3)) {;} else {g3.clearBits(theCells); collector.setCellValue(cell, 4); continue;}
-			if(!theBit.isSubsetOf(g4)) {;} else {g4.clearBits(theCells); collector.setCellValue(cell, 5); continue;}
-			if(!theBit.isSubsetOf(g5)) {;} else {g5.clearBits(theCells); collector.setCellValue(cell, 6); continue;}
-			if(!theBit.isSubsetOf(g6)) {;} else {g6.clearBits(theCells); collector.setCellValue(cell, 7); continue;}
-			if(!theBit.isSubsetOf(g7)) {;} else {g7.clearBits(theCells); collector.setCellValue(cell, 8); continue;}
-			if(!theBit.isSubsetOf(g8)) {;} else {g8.clearBits(theCells); collector.setCellValue(cell, 9); continue;}
-			//this cell has been just cleared by setting other naked single (2 naked in a house for the same digit)
-			//now this cell has no candidates which is a contradiction
-			mode = MODE_STOP_PROCESSING;
-			return;
-		} //for lower 64 cells
-		for(uint32_t cells = all.toInt32_2(); cells; cells &= (cells - 1)) {
-			uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-			const bm128 theCells = constraints::visibleCells[cell];
-			const bm128 theBit = bitSet[cell];
-			if(!theBit.isSubsetOf(g0)) {;} else {g0.clearBits(theCells); collector.setCellValue(cell, 1); continue;}
-			if(!theBit.isSubsetOf(g1)) {;} else {g1.clearBits(theCells); collector.setCellValue(cell, 2); continue;}
-			if(!theBit.isSubsetOf(g2)) {;} else {g2.clearBits(theCells); collector.setCellValue(cell, 3); continue;}
-			if(!theBit.isSubsetOf(g3)) {;} else {g3.clearBits(theCells); collector.setCellValue(cell, 4); continue;}
-			if(!theBit.isSubsetOf(g4)) {;} else {g4.clearBits(theCells); collector.setCellValue(cell, 5); continue;}
-			if(!theBit.isSubsetOf(g5)) {;} else {g5.clearBits(theCells); collector.setCellValue(cell, 6); continue;}
-			if(!theBit.isSubsetOf(g6)) {;} else {g6.clearBits(theCells); collector.setCellValue(cell, 7); continue;}
-			if(!theBit.isSubsetOf(g7)) {;} else {g7.clearBits(theCells); collector.setCellValue(cell, 8); continue;}
-			if(!theBit.isSubsetOf(g8)) {;} else {g8.clearBits(theCells); collector.setCellValue(cell, 9); continue;}
-			//this cell has been just cleared by setting other naked single (2 naked in a house for the same digit)
-			//now this cell has no candidates which is a contradiction
-			mode = MODE_STOP_PROCESSING;
-			return;
-		} //for upper 17 cells
-#elif 0
-		if(!g8.isDisjoint(all)) {if(clearNaked(g8, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g7.isDisjoint(all)) {if(clearNaked(g7, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g6.isDisjoint(all)) {if(clearNaked(g6, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g5.isDisjoint(all)) {if(clearNaked(g5, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g4.isDisjoint(all)) {if(clearNaked(g4, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g3.isDisjoint(all)) {if(clearNaked(g3, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g2.isDisjoint(all)) {if(clearNaked(g2, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g1.isDisjoint(all)) {if(clearNaked(g1, all)) goto contradiction; if(all.isZero()) continue;}
-		if(!g0.isDisjoint(all)) {if(clearNaked(g0, all)) goto contradiction; if(all.isZero()) continue;}
-		printf(".");
-#elif 0
-		if(!g0.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g0;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g0.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 1);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g0.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 1);
-			}
-			g0.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		if(!g1.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g1;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g1.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 2);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g1.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 2);
-			}
-			g1.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		if(!g2.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g2;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g2.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 3);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g2.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 3);
-			}
-			g2.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		if(!g3.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g3;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g3.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 4);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g3.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 4);
-			}
-			g3.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		if(!g4.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g4;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g4.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 5);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g4.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 5);
-			}
-			g4.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		if(!g5.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g5;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g5.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 6);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g5.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 6);
-			}
-			g5.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		if(!g6.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g6;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g6.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 7);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g6.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 7);
-			}
-			g6.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		if(!g7.isDisjoint(all)) {
-			bm128 theCells = all; theCells &= g7;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g7.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 8);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g7.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 8);
-			}
-			g7.clearBits(theCells);
-			if(all.isSubsetOf(theCells)) continue;
-			all.clearBits(theCells);
-		}
-		{
-			bm128 theCells = all; theCells &= g8;
-			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
-				uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g8.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 9);
-			} //for lower 64 cells
-			for(uint32_t cells = theCells.toInt32_2(); cells; cells &= (cells - 1)) {
-				uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
-				if(!((bm128)constraints::noDuplicateCells[cell]).isDisjoint(theCells)) goto contradiction; //two naked singles for the same digit in the same house
-				g8.clearBits(constraints::noDuplicateCells[cell]);
-				collector.setCellValue(cell, 9);
-			}
-			g8.clearBits(theCells);
-		}
-#else
 		if(!g0.isDisjoint(all)) {
 			bm128 theCells = all; theCells &= g0;
 			for(uint64_t cells = theCells.toInt64(); cells; cells &= (cells - 1)) {
@@ -973,9 +634,10 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 				collector.setCellValue(cell, 9);
 			}
 		}
-#endif
 	} while(!((bm128)constraints::mask81).isSubsetOf(slv));
 	//finally all 81 cells are solved
+
+	//a slower alternative for contradiction checking within the loops
 //	slv = g0;
 //	slv |= g1;
 //	slv |= g2;
@@ -987,6 +649,7 @@ template <class X> void fsss2<X>::doNakedSingles() { //cells with only one remai
 //	slv |= g8;
 //	if(!slv.isZero())
 //		goto contradiction;
+
 	if(collector.solutionFound()) {
 		//collector doesn't ask for more solutions, we are done
 		mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING;
