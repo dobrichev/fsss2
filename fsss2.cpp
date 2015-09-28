@@ -33,7 +33,7 @@ const t_128 constraints::mask81 = {0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
 const t_128 constraints::mask108 = {0xFFFFFFFFFFFFFFFF,0x07FFFFFF0001FFFF};
 
 //the 27 bits from position 96+
-const t_128 constraints::mask27 = {0x0,0x07FFFFFF00000000};
+//const t_128 constraints::mask27 = {0x0,0x07FFFFFF00000000};
 
 const t_128 constraints::visibleCells[81] = { //1 for all 20 visible cells, 1 for the cell itself, 1 for the three houses
 	{0x80402010081C0FFF,0x0004020100000100},

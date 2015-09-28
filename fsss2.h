@@ -28,14 +28,17 @@ struct tripletMask {
 #endif
 
 struct constraints {
+	//1 for first 81 bits
 	static const t_128 mask81;
+
+	//1 for first 81 bits (cells) and 27 bits from position 96+ (houses)
 	static const t_128 mask108;
-	static const t_128 mask27;
 
-	//bits to clear when solving particular cell, including the 20 visible cells, and the 3 houses at bits 96+
+	//1 for 27 bits at position 96 (houses)
+	//static const t_128 mask27;
+
+	//1 for bits to clear when solving particular cell, including the 20 visible cells, self, and the 3 houses at bits 96+
 	static const t_128 visibleCells[81];
-
-	//static const t_128 noDuplicateCells[81];
 
 	//1 for bits in the respective house (9 rows, 9 columns, 9 boxes)
 	static const t_128 bitsForHouse[27];
@@ -43,7 +46,8 @@ struct constraints {
 #ifdef USE_LOCKED_CANDIDATES
 	static const tripletMask tripletMasks[54];
 #endif
-	//static const uint32_t topCellsHouses;
+
+	//static const uint32_t topCellsHouses; //1 for the houses having cells only within top 64 ones
 };
 
 template < class X > class fsss2 {
