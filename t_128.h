@@ -20,10 +20,10 @@
 
 #ifdef   _MSC_VER
 	#define _popcnt64(a) __popcnt64(a)
-	//#define _popcnt32(a) __popcnt32(a)
+	#define _popcnt32(a) __popcnt32(a)
 #else
 	#define _popcnt64(a) __builtin_popcountll(a)
-	//#define _popcnt32(a) __builtin_popcount(a)
+	#define _popcnt32(a) __builtin_popcount(a)
 #endif
 
 #ifndef _MSC_VER

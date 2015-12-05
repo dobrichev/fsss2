@@ -128,6 +128,7 @@ class nullCollector {
 public:
 	inline bool solutionFound(); //false = continue, true = stop solving
 	inline void setCellValue(int cell, int val);
+	bool beforeGuess(int guessDepth, int &optCell, int &optDigit);
 };
 
 //test whether a given puzzle has at least one solution
@@ -180,6 +181,30 @@ public:
 	bool solutionFound();
 	int solve(const char* p, char* res);
 	int solve(const bm128* p, char* res);
+};
+
+//get only the positions of givens and find all minimal unique puzzles within the pattern
+class patEnum : public nullCollector {
+	bm128 unsetCells[81]; //for each guess
+	uint32_t cellCandidates[82]; //for each guess
+	uint32_t chosenGuessCell[82]; //for each guess
+	uint32_t usedValues[82]; //accumulated set values
+	fsss2<patEnum> solver;
+	int nsol;
+	int size;
+	int numFixedValues;
+	int curGuessDepth; //0 to ...
+	int numPuzzles;
+	//char resChar[88];
+	char pp[88];
+public:
+	patEnum();
+	bool solutionFound();
+	//void setCellValue(int cell, int val);
+	int solve(const char* p);
+	int solve(const bm128* p);
+	bool beforeGuess(int guessDepth, int &optCell, int &optDigit);
+	void init(const char *puz);
 };
 
 #endif /* SOLVER_H_ */

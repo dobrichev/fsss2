@@ -36,6 +36,8 @@ int main(int argc, char* argv[])
 	//printBitsForHouse();
 	//printHouseBits();
 	//return 0;
+	//printf("%d", __builtin_clz((uint32_t)1));
+	//return 0;
 
 	clock_t start, finish;
 	int ret = 0;
@@ -45,9 +47,10 @@ int main(int argc, char* argv[])
 	char curPuz[96];
 	//bm128 pm[9];
 	//isIrreducible ss;
-	hasSingleSolution ss;
+	//hasSingleSolution ss;
 	//hasAnySolution ss;
 	//minimizer mm;
+	patEnum ss;
 	int num[3] = {0,0,0};
 	while(fgets(p, sizeof(p), stdin)) {
 		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
@@ -56,6 +59,7 @@ int main(int argc, char* argv[])
 	}
 
 	finish = clock();
+	fflush(NULL);
 #ifdef COUNT_TRIALS
 	fprintf(stderr, "%d+%d+%d puzzles in %2.3f seconds. Trials = %d.\n", num[0], num[1], num[2], (double)(finish - start) / CLOCKS_PER_SEC, nTrials);
 #else
@@ -313,3 +317,4 @@ int main(int argc, char* argv[])
 //	}
 //	printf("}; //tripletMasks\n");
 //}
+

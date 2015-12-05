@@ -663,6 +663,7 @@ contradiction:
 }
 
 template <class X> void fsss2<X>::doEliminations() {
+	bool guessAuto = true;
 nakedAgain:
 	doNakedSingles();
 	if(mode) goto backtrack;
@@ -812,16 +813,17 @@ single_found:
 #endif //USE_SUBSETS
 
 	//Prepare a guess
+nextGuess:
 	{
 		//At this point the existence of unsolved house(s) w/o candidates crashes the algorithm!!!
-		bm128* gg = &contexts[guessDepth++][0];
 
 		//Find an unsolved cell with less possibilities
 		int optDigit;
 		int optCell;
+		guessAuto = collector.beforeGuess(guessDepth, optCell, optDigit);
 
 		//find first of the best-to-guess candidates
-		{
+		if(guessAuto) {
 			bm128 all;
 			//try reusing previously found candidates
 			all = trialCandidates;
@@ -844,6 +846,11 @@ single_found:
 		bestCellFound:
 			;
 		}
+		else {
+			if(mode) {
+				goto backtrack;
+			}
+		}
 
 
 #ifdef COUNT_TRIALS
@@ -851,9 +858,7 @@ single_found:
 #endif
 
 		{
-			//bm128* gg = &contexts[guessDepth++][0];
-//			__builtin_prefetch(&gg[4]);
-//			__builtin_prefetch(&gg[8]);
+			bm128* gg = &contexts[guessDepth++][0];
 			gg[0] = grid[0];
 			gg[1] = grid[1];
 			gg[2] = grid[2];
@@ -866,15 +871,15 @@ single_found:
 			gg[9] = solved;
 			gg[10] = trialCandidates;
 			//later continue with this candidate eliminated
-			gg[optDigit].clearBit(optCell);
-			//try the "optimal" cell/digit candidate
-			collector.setCellValue(optCell, optDigit + 1);
-			solved.setBit(optCell); //mark cell as "solved"
-			grid[optDigit].clearBits(constraints::visibleCells[optCell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
-			//if(guessDepth == 1) subsetsDone = 0;
-			//if(guessDepth == 1) lockedDone = 0;
-			goto nakedAgain; //apply direct eliminations
+			if(guessAuto)gg[optDigit].clearBit(optCell); //unless the guess choice has been enforced by the collector
 		}
+		//try the "optimal" cell/digit candidate
+		collector.setCellValue(optCell, optDigit + 1);
+		solved.setBit(optCell); //mark cell as "solved"
+		grid[optDigit].clearBits(constraints::visibleCells[optCell]); //mark visible cells as forbidden for the same digit, mark the 3 houses as solved
+		//if(guessDepth == 1) subsetsDone = 0;
+		//if(guessDepth == 1) lockedDone = 0;
+		goto nakedAgain; //apply direct eliminations
 	}
 
 backtrack:
@@ -886,12 +891,11 @@ contradiction:
 		return;
 	}
 	{
+		//fprintf(stderr, "restoring to guessDepth=%d\n", guessDepth); //debug
 		//We are done with the guess.
 		//The caller is notified for each of the the possible solutions found so far
-		//Now restore the context. The just guessed candidate has been removed from the context earlier.
+		//Now restore the context. The just guessed candidate has been removed from the context earlier (unless it was an enforced guess).
 		bm128* gg = &contexts[guessDepth][0];
-//		__builtin_prefetch(&gg[4]);
-//		__builtin_prefetch(&gg[8]);
 		grid[0] = gg[0];
 		grid[1] = gg[1];
 		grid[2] = gg[2];
@@ -905,7 +909,8 @@ contradiction:
 		trialCandidates = gg[10];
 		mode = 0;
 	}
-	goto nakedAgain;
+	if(guessAuto) goto nakedAgain;
+	goto nextGuess;
 }
 
 //	//debug
@@ -1081,10 +1086,9 @@ template < class X > void fsss2 < X > ::solve(const uint16_t* const in) {
 //template class fsss2<getSingleSolution>;
 //template class fsss2<hasSingleSolution>;
 
-bool nullCollector::solutionFound() {
-	return false;
-}
+bool nullCollector::solutionFound() {return false;} //continue
 void nullCollector::setCellValue(int cell, int val) {}
+bool nullCollector::beforeGuess(int guessDepth, int &optCell, int &optDigit) {return true;} //guess Auto
 
 //hasSingleSolution::hasSingleSolution() :
 //	solver(fsss2<hasSingleSolution>(*this))
@@ -1183,29 +1187,6 @@ bool isIrreducible::solve(const char* p) {
 	int pos[81], nGivens = 0;
 	uint16_t valBM[81];
 
-//	for(int c = 0; c < 81; c++) {
-//		valBM[c] = 0;
-//	}
-//	for(int testCell = 0; testCell < 81; testCell++) {
-//		for(int testBit = 0; testBit < 9; testBit++) {
-//			valBM[testCell] = 1 << testBit;
-//			printf("\n%d,%d\n", testCell, testBit);
-//			solver.solve(valBM);
-//			valBM[testCell] = 0;
-//		}
-//	}
-//	for(int c = 0; c < 81; c++) {
-//		valBM[c] = 511;
-//	}
-//	for(int testCell = 0; testCell < 81; testCell++) {
-//		for(int testBit = 0; testBit < 9; testBit++) {
-//			valBM[testCell] = 511 & ~(1 << testBit);
-//			printf("\n%d,%d\n", testCell, testBit);
-//			solver.solve(valBM);
-//			valBM[testCell] = 511;
-//		}
-//	}
-
 	int dc[9] = {0,0,0,0,0,0,0,0,0};
 	for(int c = 0; c < 81; c++) {
 		if(p[c] == 0) {
@@ -1259,3 +1240,385 @@ int getSingleSolution::solve(const bm128* p, char* res) {
 	return nsol;
 }
 
+patEnum::patEnum() :
+	solver(fsss2<patEnum>(*this))
+{}
+//void patEnum::setCellValue(int cell, int val) {
+//	if(nsol) return; //store only the first solution
+//	resChar[cell] = val;
+//}
+bool patEnum::solutionFound() {
+	//at this point in pp[] we have a puzzle candidate with at least one solution
+	if(nsol++) { //multiple solutions
+		if((int)solver.guessDepth > size) // beyond the enforced placements?
+			solver.guessDepth = size; //backtrack to the last enforced cell, guessDepth will be decremented by the solver
+	}
+	return false; //stop from beforeGuess() handler, not from here
+}
+int patEnum::solve(const char* p) {
+	nsol = 0;
+	init(p);
+	solver.solve(pp);
+	return 0;
+}
+bool patEnum::beforeGuess(int guessDepth, int &optCell, int &optDigit) {
+	//possible outputs:
+	// - auto = set optCell to optDigit, eliminate it from further processing, store context, increment guessDepth and do eliminations (return true)
+	// - exit = return (set solver.mode to MODE_STOP_PROCESSING, return false)
+	// - backtrack to X and continue = do eliminations (restore context, set optCell and optDigit, set solver.guessDepth, leave solver.mode unset, return false)
+
+	//fprintf(stderr, "entering guessDepth=%d\n", guessDepth); //debug
+//	if(0 && guessDepth == size) { //debug
+//		char ppp[88];
+//		for(int i = 0; i < 81; i++) {
+//			ppp[i] = pp[i] ? pp[i] + '0' : '.';
+//		}
+//		//ppp[81] = 13;
+//		//ppp[82] = 0;
+//		//puts(ppp);
+//		fprintf(stdout, "%81.81s examining\n", ppp);
+//	}
+	if(guessDepth >= size) return true; //all cells of interest are set
+
+#ifdef USE_LOCKED_CANDIDATES
+	solver.lockedDone = 0;
+#endif //USE_LOCKED_CANDIDATES
+
+#ifdef USE_SUBSETS
+	solver.subsetsDone = 0;
+#endif
+
+	//if(guessDepth == size - 9) fprintf(stderr, "*"); //debug
+
+	//if we are going deeply, then choose the cell and obtain the values to iterate
+	if(guessDepth > curGuessDepth) {
+		//choose cell
+		if(!unsetCells[guessDepth].isDisjoint(solver.solved)) {
+			//one of the unset givens is already solved, puzzle is not minimal
+			//backtrack to previous guessDepth
+			//fprintf(stderr, "m"); //debug
+			solver.mode = MODE_STOP_PROCESSING;
+			return false;
+		}
+		bm128 best;
+		{
+			bm128 oldSolved = solver.solved;
+			solver.solved = constraints::mask81;
+			solver.solved.clearBits(unsetCells[guessDepth]);
+			solver.findLeastPopulatedCells(best);
+			solver.solved = oldSolved;
+		}
+		//if(best.isZero()) fprintf(stderr, "U\n"); //debug
+		optCell = best.getFirstBit1Index96();
+		bm128 cellBM = bitSet[optCell];
+		cellCandidates[guessDepth] = 0;
+		//int maxVal = (numFixedValues + guessDepth) > 8 ? 9 : numFixedValues + guessDepth + 1; //allow all used and first of the unused values
+		//for(int d = 0; d < maxVal; d++) {
+		for(int d = 0; d < 9; d++) {
+			if(solver.grid[d].isDisjoint(cellBM)) continue; //skip eliminated candidates
+			cellCandidates[guessDepth] |= (1 << d); //add this candidate
+		}
+		//mask all unused values but one,
+		//i.e. if values 1..4 have been used so far, then add only 5 as candidate, but not 6..9 since they result in puzzles that are isomorphic to the one with 5 set
+
+		////how? Shift left the most significant bit from the used values, and if it isn't outside the range then add it to used values as an only new candidate.
+		//cellCandidates[guessDepth] &= (usedValues[guessDepth] | (511 & (1 << (32 - __builtin_clz(usedValues[guessDepth])))));
+
+		//how? Take the less significant bit from the unused values and mask candidates with (used values | lsb from the unused values)
+		if(usedValues[guessDepth] == 511) {
+			;
+		}
+		else {
+			uint32_t unusedValues = ((uint32_t)511) ^ usedValues[guessDepth];
+			cellCandidates[guessDepth] &= (usedValues[guessDepth] | (((uint32_t)1) << bm128::FindLSBIndex32(unusedValues)));
+		}
+
+		//we know a puzzle must have givens with at least 8 different digits. Check this.
+		//on size=20 and guessDepth=18 we must have 7 digits already set
+		int32_t numDifferentValues = _popcnt32(usedValues[guessDepth]);
+		if(numDifferentValues < 8) {
+			//if(size - guessDepth - 1 == 8 - numDifferentValues) { //maximum different values from further givens == minimum new values to be used
+			if(size - guessDepth == 8 - numDifferentValues) { //maximum different values from this and any further givens == minimum new values that must be used
+				//we are enforced to use only new digits. Clear the used ones from the candidates.
+				cellCandidates[guessDepth] &= ~usedValues[guessDepth];
+			}
+		}
+
+		chosenGuessCell[guessDepth] = optCell;
+		//remove the chosen cell from the further guessing candidates
+		unsetCells[guessDepth + 1] = unsetCells[guessDepth];
+		unsetCells[guessDepth + 1].clearBits(cellBM);
+	}
+
+	curGuessDepth = guessDepth;
+
+	//in the latest controlled guess check whether a valid puzzle is found in the previous iteration
+	if(guessDepth == (size - 1)) {
+		if(nsol == 1) {
+			//a single solution puzzle was found in previous iteration and is placed in pp[]
+			isIrreducible ss;
+			if(ss.solve(pp)) {
+				//lucky!
+				char ppp[88];
+				for(int i = 0; i < 81; i++) {
+					ppp[i] = pp[i] ? pp[i] + '0' : '.';
+				}
+				fprintf(stdout, "%81.81s\n", ppp);
+				fflush(NULL);
+				numPuzzles++;
+				if(numPuzzles > 1000) exit(0); //for profile generation
+			}
+//			else { //slow!
+//				//We just found a unique but non-minimal puzzle. Which is the latest placement that produces redundancy?
+//				//fprintf(stderr, "M"); //debug
+//				//check for redundant clues
+//				char ppp[88];
+//				const int depth = 3; // 0..3?
+//				int g = size - 1 - depth;
+//				do {
+//					g--;
+//					//compose a sub-grid with first g givens
+//					for(int i = 0; i < 81; i++) ppp[i] = 0;
+//					for(int i = 0; i < g; i++) ppp[chosenGuessCell[i]] = pp[chosenGuessCell[i]];
+//				} while(!ss.solve(ppp));
+//				//g is the latest non-redundant placement
+//				if(g < size - 2 - depth) {
+//					fprintf(stderr, "^"); //debug
+//					curGuessDepth = g + 1;
+//				}
+//			}
+		}
+		//nsol = 0; //clean start for the next iteration
+	}
+
+	//solutionFound() handler can bring us there when an "incomplete" puzzle is solved w/o guessing, giving nsol > 0
+	//since we are about to move to the next candidate, clearing the nsol is necessary in order not to mix solutions from different iterations
+	nsol = 0;
+
+//	while(1) {
+		//ensure we have a value to set
+		while(curGuessDepth >= 0 && cellCandidates[curGuessDepth] == 0) {
+			curGuessDepth--;
+		}
+		if(curGuessDepth != guessDepth) {
+			if(curGuessDepth < 0) {
+				//we are done
+				solver.guessDepth = 0; //enforce exit
+				solver.mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING; //exit (actually MODE_STOP_GUESSING is redundant here)
+				return false;
+			}
+			solver.guessDepth = curGuessDepth + 1;
+			solver.mode = MODE_STOP_PROCESSING; //load context and return back
+			return false;
+		}
+		//choose first unprocessed candidate for this cell
+		optCell = chosenGuessCell[curGuessDepth];
+		optDigit = bm128::FindLSBIndex32(cellCandidates[curGuessDepth]);
+		cellCandidates[curGuessDepth] ^= (1 << optDigit); //exclude this value from later iterations
+		pp[optCell] = optDigit + 1; //save it for later checking and output
+		usedValues[curGuessDepth + 1] = usedValues[curGuessDepth] | (1 << optDigit);
+		//fprintf(stderr, "(%d:%d=%d%s)\n", curGuessDepth, optCell, pp[optCell], cellCandidates[curGuessDepth] ? "" : ", last"); //debug
+//		if(curGuessDepth == 12) { //slow!
+//			//check for redundant clues
+//			char ppp[88];
+//			for(int i = 0; i < 81; i++) ppp[i] = 0;
+//			for(int i = 0; i < curGuessDepth; i++) ppp[chosenGuessCell[i]] = pp[chosenGuessCell[i]];
+//			isIrreducible ss;
+//			if(!ss.solve(ppp)) {
+//				//fprintf(stderr, "^"); //debug
+//				cellCandidates[curGuessDepth] ^= (1 << optDigit); //exclude this value from later iterations
+//				continue;
+//			}
+//		}
+		return false; //enforce the solver to guess this cell/digit
+//	} //ensure we have a value to set
+}
+void patEnum::init(const char *puz) {
+	size = 0;
+	curGuessDepth = -1;
+	numFixedValues = 0;
+	numPuzzles = 0;
+//	int housePopulation[27] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+//	//choose a house where all values are to be fixed to 1..n
+//	int fixedHouse = 0;
+//	const int affectedGroups[81][3] =
+//	{
+//		{0, 9,18},{0,10,18},{0,11,18},{0,12,19},{0,13,19},{0,14,19},{0,15,20},{0,16,20},{0,17,20},
+//		{1, 9,18},{1,10,18},{1,11,18},{1,12,19},{1,13,19},{1,14,19},{1,15,20},{1,16,20},{1,17,20},
+//		{2, 9,18},{2,10,18},{2,11,18},{2,12,19},{2,13,19},{2,14,19},{2,15,20},{2,16,20},{2,17,20},
+//		{3, 9,21},{3,10,21},{3,11,21},{3,12,22},{3,13,22},{3,14,22},{3,15,23},{3,16,23},{3,17,23},
+//		{4, 9,21},{4,10,21},{4,11,21},{4,12,22},{4,13,22},{4,14,22},{4,15,23},{4,16,23},{4,17,23},
+//		{5, 9,21},{5,10,21},{5,11,21},{5,12,22},{5,13,22},{5,14,22},{5,15,23},{5,16,23},{5,17,23},
+//		{6, 9,24},{6,10,24},{6,11,24},{6,12,25},{6,13,25},{6,14,25},{6,15,26},{6,16,26},{6,17,26},
+//		{7, 9,24},{7,10,24},{7,11,24},{7,12,25},{7,13,25},{7,14,25},{7,15,26},{7,16,26},{7,17,26},
+//		{8, 9,24},{8,10,24},{8,11,24},{8,12,25},{8,13,25},{8,14,25},{8,15,26},{8,16,26},{8,17,26}
+//	};
+//	//accumulate houses population
+//	for(int i = 0; i < 81; i++) {
+//		if(puz[i] == 0) continue;
+//		housePopulation[affectedGroups[i][0]]++;
+//		housePopulation[affectedGroups[i][1]]++;
+//		housePopulation[affectedGroups[i][2]]++;
+//	}
+//	//find the most populated houses
+//	int fixedHouses[27];
+//	int numFixedHouses = 0;
+//	for(int i = 0; i < 27; i++) {
+//		if(numFixedValues < housePopulation[i]) {
+//			numFixedValues = housePopulation[i];
+//			fixedHouses[0] = i;
+//			numFixedHouses = 1;
+//		}
+//		else if(numFixedValues == housePopulation[i]) {
+//			fixedHouses[numFixedHouses++] = i;
+//		}
+//	}
+//	//within the most populated houses, find this having most interactions with other cells
+//	//example killer 308m48.463s ................11..1.11........11.....1.1.....1...1......1.1...1......111.......
+//	if(numFixedHouses > 1) {
+//		//rate the cells by visible cells, then the houses by sum(visible cells)
+//		const int affectedCells[81][20] =
+//		{
+//			{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,18,19,20,27,36,45,54,63,72},
+//			{ 0, 2, 3, 4, 5, 6, 7, 8, 9,10,11,18,19,20,28,37,46,55,64,73},
+//			{ 0, 1, 3, 4, 5, 6, 7, 8, 9,10,11,18,19,20,29,38,47,56,65,74},
+//			{ 0, 1, 2, 4, 5, 6, 7, 8,12,13,14,21,22,23,30,39,48,57,66,75},
+//			{ 0, 1, 2, 3, 5, 6, 7, 8,12,13,14,21,22,23,31,40,49,58,67,76},
+//			{ 0, 1, 2, 3, 4, 6, 7, 8,12,13,14,21,22,23,32,41,50,59,68,77},
+//			{ 0, 1, 2, 3, 4, 5, 7, 8,15,16,17,24,25,26,33,42,51,60,69,78},
+//			{ 0, 1, 2, 3, 4, 5, 6, 8,15,16,17,24,25,26,34,43,52,61,70,79},
+//			{ 0, 1, 2, 3, 4, 5, 6, 7,15,16,17,24,25,26,35,44,53,62,71,80},
+//			{ 0, 1, 2,10,11,12,13,14,15,16,17,18,19,20,27,36,45,54,63,72},
+//			{ 0, 1, 2, 9,11,12,13,14,15,16,17,18,19,20,28,37,46,55,64,73},
+//			{ 0, 1, 2, 9,10,12,13,14,15,16,17,18,19,20,29,38,47,56,65,74},
+//			{ 3, 4, 5, 9,10,11,13,14,15,16,17,21,22,23,30,39,48,57,66,75},
+//			{ 3, 4, 5, 9,10,11,12,14,15,16,17,21,22,23,31,40,49,58,67,76},
+//			{ 3, 4, 5, 9,10,11,12,13,15,16,17,21,22,23,32,41,50,59,68,77},
+//			{ 6, 7, 8, 9,10,11,12,13,14,16,17,24,25,26,33,42,51,60,69,78},
+//			{ 6, 7, 8, 9,10,11,12,13,14,15,17,24,25,26,34,43,52,61,70,79},
+//			{ 6, 7, 8, 9,10,11,12,13,14,15,16,24,25,26,35,44,53,62,71,80},
+//			{ 0, 1, 2, 9,10,11,19,20,21,22,23,24,25,26,27,36,45,54,63,72},
+//			{ 0, 1, 2, 9,10,11,18,20,21,22,23,24,25,26,28,37,46,55,64,73},
+//			{ 0, 1, 2, 9,10,11,18,19,21,22,23,24,25,26,29,38,47,56,65,74},
+//			{ 3, 4, 5,12,13,14,18,19,20,22,23,24,25,26,30,39,48,57,66,75},
+//			{ 3, 4, 5,12,13,14,18,19,20,21,23,24,25,26,31,40,49,58,67,76},
+//			{ 3, 4, 5,12,13,14,18,19,20,21,22,24,25,26,32,41,50,59,68,77},
+//			{ 6, 7, 8,15,16,17,18,19,20,21,22,23,25,26,33,42,51,60,69,78},
+//			{ 6, 7, 8,15,16,17,18,19,20,21,22,23,24,26,34,43,52,61,70,79},
+//			{ 6, 7, 8,15,16,17,18,19,20,21,22,23,24,25,35,44,53,62,71,80},
+//			{ 0, 9,18,28,29,30,31,32,33,34,35,36,37,38,45,46,47,54,63,72},
+//			{ 1,10,19,27,29,30,31,32,33,34,35,36,37,38,45,46,47,55,64,73},
+//			{ 2,11,20,27,28,30,31,32,33,34,35,36,37,38,45,46,47,56,65,74},
+//			{ 3,12,21,27,28,29,31,32,33,34,35,39,40,41,48,49,50,57,66,75},
+//			{ 4,13,22,27,28,29,30,32,33,34,35,39,40,41,48,49,50,58,67,76},
+//			{ 5,14,23,27,28,29,30,31,33,34,35,39,40,41,48,49,50,59,68,77},
+//			{ 6,15,24,27,28,29,30,31,32,34,35,42,43,44,51,52,53,60,69,78},
+//			{ 7,16,25,27,28,29,30,31,32,33,35,42,43,44,51,52,53,61,70,79},
+//			{ 8,17,26,27,28,29,30,31,32,33,34,42,43,44,51,52,53,62,71,80},
+//			{ 0, 9,18,27,28,29,37,38,39,40,41,42,43,44,45,46,47,54,63,72},
+//			{ 1,10,19,27,28,29,36,38,39,40,41,42,43,44,45,46,47,55,64,73},
+//			{ 2,11,20,27,28,29,36,37,39,40,41,42,43,44,45,46,47,56,65,74},
+//			{ 3,12,21,30,31,32,36,37,38,40,41,42,43,44,48,49,50,57,66,75},
+//			{ 4,13,22,30,31,32,36,37,38,39,41,42,43,44,48,49,50,58,67,76},
+//			{ 5,14,23,30,31,32,36,37,38,39,40,42,43,44,48,49,50,59,68,77},
+//			{ 6,15,24,33,34,35,36,37,38,39,40,41,43,44,51,52,53,60,69,78},
+//			{ 7,16,25,33,34,35,36,37,38,39,40,41,42,44,51,52,53,61,70,79},
+//			{ 8,17,26,33,34,35,36,37,38,39,40,41,42,43,51,52,53,62,71,80},
+//			{ 0, 9,18,27,28,29,36,37,38,46,47,48,49,50,51,52,53,54,63,72},
+//			{ 1,10,19,27,28,29,36,37,38,45,47,48,49,50,51,52,53,55,64,73},
+//			{ 2,11,20,27,28,29,36,37,38,45,46,48,49,50,51,52,53,56,65,74},
+//			{ 3,12,21,30,31,32,39,40,41,45,46,47,49,50,51,52,53,57,66,75},
+//			{ 4,13,22,30,31,32,39,40,41,45,46,47,48,50,51,52,53,58,67,76},
+//			{ 5,14,23,30,31,32,39,40,41,45,46,47,48,49,51,52,53,59,68,77},
+//			{ 6,15,24,33,34,35,42,43,44,45,46,47,48,49,50,52,53,60,69,78},
+//			{ 7,16,25,33,34,35,42,43,44,45,46,47,48,49,50,51,53,61,70,79},
+//			{ 8,17,26,33,34,35,42,43,44,45,46,47,48,49,50,51,52,62,71,80},
+//			{ 0, 9,18,27,36,45,55,56,57,58,59,60,61,62,63,64,65,72,73,74},
+//			{ 1,10,19,28,37,46,54,56,57,58,59,60,61,62,63,64,65,72,73,74},
+//			{ 2,11,20,29,38,47,54,55,57,58,59,60,61,62,63,64,65,72,73,74},
+//			{ 3,12,21,30,39,48,54,55,56,58,59,60,61,62,66,67,68,75,76,77},
+//			{ 4,13,22,31,40,49,54,55,56,57,59,60,61,62,66,67,68,75,76,77},
+//			{ 5,14,23,32,41,50,54,55,56,57,58,60,61,62,66,67,68,75,76,77},
+//			{ 6,15,24,33,42,51,54,55,56,57,58,59,61,62,69,70,71,78,79,80},
+//			{ 7,16,25,34,43,52,54,55,56,57,58,59,60,62,69,70,71,78,79,80},
+//			{ 8,17,26,35,44,53,54,55,56,57,58,59,60,61,69,70,71,78,79,80},
+//			{ 0, 9,18,27,36,45,54,55,56,64,65,66,67,68,69,70,71,72,73,74},
+//			{ 1,10,19,28,37,46,54,55,56,63,65,66,67,68,69,70,71,72,73,74},
+//			{ 2,11,20,29,38,47,54,55,56,63,64,66,67,68,69,70,71,72,73,74},
+//			{ 3,12,21,30,39,48,57,58,59,63,64,65,67,68,69,70,71,75,76,77},
+//			{ 4,13,22,31,40,49,57,58,59,63,64,65,66,68,69,70,71,75,76,77},
+//			{ 5,14,23,32,41,50,57,58,59,63,64,65,66,67,69,70,71,75,76,77},
+//			{ 6,15,24,33,42,51,60,61,62,63,64,65,66,67,68,70,71,78,79,80},
+//			{ 7,16,25,34,43,52,60,61,62,63,64,65,66,67,68,69,71,78,79,80},
+//			{ 8,17,26,35,44,53,60,61,62,63,64,65,66,67,68,69,70,78,79,80},
+//			{ 0, 9,18,27,36,45,54,55,56,63,64,65,73,74,75,76,77,78,79,80},
+//			{ 1,10,19,28,37,46,54,55,56,63,64,65,72,74,75,76,77,78,79,80},
+//			{ 2,11,20,29,38,47,54,55,56,63,64,65,72,73,75,76,77,78,79,80},
+//			{ 3,12,21,30,39,48,57,58,59,66,67,68,72,73,74,76,77,78,79,80},
+//			{ 4,13,22,31,40,49,57,58,59,66,67,68,72,73,74,75,77,78,79,80},
+//			{ 5,14,23,32,41,50,57,58,59,66,67,68,72,73,74,75,76,78,79,80},
+//			{ 6,15,24,33,42,51,60,61,62,69,70,71,72,73,74,75,76,77,79,80},
+//			{ 7,16,25,34,43,52,60,61,62,69,70,71,72,73,74,75,76,77,78,80},
+//			{ 8,17,26,35,44,53,60,61,62,69,70,71,72,73,74,75,76,77,78,79}
+//		};
+//		//how many other cells each cell sees?
+//		int sees[81] = {0};
+//		for(int i = 0; i < 81; i++) {
+//			if(puz[i]) { //i is given
+//				for(int j = 0; j < 20; j++) {
+//					if(puz[affectedCells[i][j]]) { //affectedCells[i][j] is given
+//						sees[i]++;
+//					}
+//				}
+//			}
+//		}
+//		//how many givens the cells within a house see (incl. within the house)?
+//		int houseRating[27] = {0};
+//		for(int i = 0; i < 81; i++) {
+//			if(puz[i] == 0) continue;
+//			for(int h = 0; h < numFixedHouses; h++) {
+//				if(((bm128)constraints::bitsForHouse[fixedHouses[h]]).isBitSet(i)) {
+//					houseRating[h] += sees[i];
+//				}
+//			}
+//		}
+//		//choose a house with maximal interactions
+//		int maxHouseRating = 0;
+//		for(int h = 0; h < numFixedHouses; h++) {
+//			if(maxHouseRating < houseRating[h]) {
+//				maxHouseRating = houseRating[h];
+//				fixedHouse = fixedHouses[h];
+//			}
+//		}
+//	}
+//	else {
+//		fixedHouse = fixedHouses[0]; //old behavior
+//	}
+
+	//set the rest of the class members
+	usedValues[0] = (1 << numFixedValues) - 1; //the values already in use
+	unsetCells[0].clear();
+//	int curFixed = 0;
+	for(int i = 0; i < 81; i++) {
+		pp[i] = 0;
+		if(puz[i] == 0) continue;
+//		if(((bm128)constraints::bitsForHouse[fixedHouse]).isBitSet(i)) {
+//			pp[i] = ++curFixed;
+//		}
+//		else {
+			unsetCells[0].setBit(i);
+			size++;
+//		}
+	}
+	//at this stage we have
+	// - number of givens, in size
+	// - number of fixed values at the top of the positions, in numFixedValues
+	// - a subgrid with populated fixed values and cleared others, in pp[]
+
+	//debug
+	//char x[88];
+	//for(int i = 0; i < 81; i++) x[i] = puz[i] ? puz[i] + '0' : '.';
+	//fprintf(stderr, "%81.81s  input\n", x);
+	//for(int i = 0; i < 81; i++) x[i] = pp[i] ? pp[i] + '0' : unsetCells[0].isBitSet(i) ? 'X' : '.';
+	//fprintf(stderr, "%81.81s  mask\n", x);
+}
