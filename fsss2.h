@@ -201,10 +201,10 @@ public:
 	patEnum();
 	bool solutionFound();
 	//void setCellValue(int cell, int val);
-	int solve(const char* p);
-	int solve(const bm128* p);
+	int solve(const char* p, const bm128* fixed = NULL);
+	//int solve(const bm128* p);
 	bool beforeGuess(int guessDepth, int &optCell, int &optDigit);
-	void init(const char *puz);
+	void init(const char *puz, const bm128* fixed);
 };
 
 #endif /* SOLVER_H_ */
