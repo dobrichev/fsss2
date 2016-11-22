@@ -21,7 +21,7 @@
 extern int nTrials;
 #endif
 
-template <class X> fsss2<X>::fsss2(X &theCollector) : collector(theCollector) {};
+template <class X> fsss2<X>::fsss2(X &theCollector) : collector(theCollector), guessDepth(0), mode(0) {};
 
 //only first 81 bits set
 const t_128 constraints::mask81 = {0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
@@ -1242,7 +1242,7 @@ int getSingleSolution::solve(const bm128* p, char* res) {
 }
 
 patEnum::patEnum() :
-	solver(fsss2<patEnum>(*this))
+	solver(fsss2<patEnum>(*this)), nsol(0), curGuessDepth(0), numPuzzles(0),numFixedValues(0), size(0)
 {}
 //void patEnum::setCellValue(int cell, int val) {
 //	if(nsol) return; //store only the first solution

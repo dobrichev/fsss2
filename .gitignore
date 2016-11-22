@@ -25,4 +25,4 @@
 !/.gitignore
 
 # Subdirectories
-**/*
+#**/*
