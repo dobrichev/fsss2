@@ -150,21 +150,21 @@ public:
 	//hasSingleSolution();
 	bool solutionFound();
 	int solve(const char* p);
-	//int solve(const bm128* p);
+	int solve(const bm128* p);
 };
 
-//test whether a given subgrid has at least one redundant given, works for multiple-solution puzzles too
+//test whether a given subgrid has at least one redundant given, works for single-solution puzzles only
 class isRedundant : public nullCollector {
 public:
 	int nsol;
 	//char sol[81]; //debug
 	bool solutionFound();
-	bool solve(const char* p, int c);
-	bool solve(const bm128* p, int given, int position);
+	bool solve(const char* p, int testPosition);
+	bool solve(const bm128* forbiddenValuePositions, int testValue, int testPosition);
 	//void setCellValue(int cell, int val); //debug
 };
 
-//test whether a given subgrid has at least one redundant given, works for multiple-solution puzzles too
+//test whether a given subgrid has at least one redundant given, works for single-solution puzzles only
 class isIrreducible : public nullCollector {
 public:
 	int nsol;
@@ -180,7 +180,20 @@ public:
 	inline void setCellValue(int cell, int val);
 	bool solutionFound();
 	int solve(const char* p, char* res);
-	int solve(const bm128* p, char* res);
+	int solve(const bm128* forbiddenValuePositions, char* res);
+};
+
+//compose pencilmarks from all solutions
+class multiSolutionPM : public nullCollector {
+	int nsol;
+	bm128 *resPM; //solutionFound sets bits from sol[] here
+	char sol[81]; //setCellValue accumulates the solution here
+	int solutionsLimit;
+public:
+	inline void setCellValue(int cell, int val);
+	bool solutionFound();
+	int solve(const char* p, bm128* res, int maxSolutions);
+	int solve(const bm128* forbiddenValuePositions, bm128* res, int maxSolutions);
 };
 
 //get only the positions of givens and find all minimal unique puzzles within the pattern

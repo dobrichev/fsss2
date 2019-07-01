@@ -43,36 +43,46 @@ int main(int argc, char* argv[])
 	int ret = 0;
 	start = clock();
 
-	char p[2000];
+	char p[5000];
 	char curPuz[96];
 	//bm128 pm[9];
-	bm128 fixedClues;
 	//isIrreducible ss;
 	//hasSingleSolution ss;
 	//hasAnySolution ss;
-	//minimizer mm;
-	patEnum ss;
 	int num[3] = {0,0,0};
 //	while(fgets(p, sizeof(p), stdin)) {
 //		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
 //		num[ss.solve(curPuz)]++; //test hasAnySolution, hasSingleSolution
 //		//num[ss.solve(curPuz) ? 0 : 1]++; // test isIrreducible
 //	}
-	while(fgets(p, sizeof(p), stdin)) { //for pattern enumeration with fixed clues
-		fixedClues.clear();
-		for(int i = 0; i < 81; i++) {
-			if(p[i] <= '9' && p[i] > '0') {
-				curPuz[i] = p[i] - '0';
-				fixedClues.setBit(i);
-			}
-			else if(p[i] == '*') {
-				curPuz[i] = 1; //some nonzero value that later will be ignored
-			}
-			else {
-				curPuz[i] = 0;
-			}
-		}
-		num[ss.solve(curPuz, &fixedClues)]++; //test patEnum
+
+//	//for pattern enumeration with fixed clues
+//	bm128 fixedClues;
+//	patEnum ss;
+//	while(fgets(p, sizeof(p), stdin)) {
+//		fixedClues.clear();
+//		for(int i = 0; i < 81; i++) {
+//			if(p[i] <= '9' && p[i] > '0') {
+//				curPuz[i] = p[i] - '0';
+//				fixedClues.setBit(i);
+//			}
+//			else if(p[i] == '*') {
+//				curPuz[i] = 1; //some nonzero value that later will be ignored
+//			}
+//			else {
+//				curPuz[i] = 0;
+//			}
+//		}
+//		num[ss.solve(curPuz, &fixedClues)]++; //test patEnum
+//	}
+
+	minimizer mm;
+	while(fgets(p, sizeof(p), stdin)) {
+//		mm.reduceM2P1(p);
+		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
+		mm.minimizePencilmarks(curPuz);
+//		//mm.minimizeVanilla(curPuz);
+		num[0]++;
 	}
 
 	finish = clock();

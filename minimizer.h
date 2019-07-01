@@ -1,6 +1,7 @@
 #include <inttypes.h>
 #include <memory.h>
 #include "t_128.h"
+#include "fsss2.h"
 
 struct knownNonRedundantGivens {
     uint64_t aliveGivensMask;
@@ -10,62 +11,163 @@ struct knownNonRedundantGivens {
     bool isForRemoval(int pos) const {return (aliveGivensMask & ((uint64_t)1 << pos)) && !(knownNonRedundantsMask & ((uint64_t)1 << pos));}
     void getReducedGivensFrom(const knownNonRedundantGivens &src, int pos) {aliveGivensMask = src.aliveGivensMask & (~((uint64_t)1 << pos));}
 };
-struct knownNonRedundantConstrains {
-    bm128 aliveConstrainsMask[9];
-    bm128 knownNonRedundantsMask[9];
-    bool operator< (const knownNonRedundantConstrains& constrainsMask) const {
-    	//return memcmp(aliveConstrainsMask, constrainsMask.aliveConstrainsMask, sizeof(aliveConstrainsMask) * sizeof(aliveConstrainsMask[0])) > 0;
+struct complementaryPencilmarksX {
+    bm128 forbiddenValuePositions[9];
+    bm128 fixedValuePositions[9];
+    bool operator< (const complementaryPencilmarksX& other) const {
+    	//return memcmp(forbiddenValuePositions, other.aliveConstrainsMask, sizeof(forbiddenValuePositions) * sizeof(forbiddenValuePositions[0])) > 0;
     	for(int g = 8; g >= 0; g--) {
-			if(aliveConstrainsMask[g].bitmap128.m128i_u64[1] < constrainsMask.aliveConstrainsMask[g].bitmap128.m128i_u64[1]) return true;
-			if(aliveConstrainsMask[g].bitmap128.m128i_u64[1] > constrainsMask.aliveConstrainsMask[g].bitmap128.m128i_u64[1]) return false;
-			if(aliveConstrainsMask[g].bitmap128.m128i_u64[0] < constrainsMask.aliveConstrainsMask[g].bitmap128.m128i_u64[0]) return true;
-			if(aliveConstrainsMask[g].bitmap128.m128i_u64[0] > constrainsMask.aliveConstrainsMask[g].bitmap128.m128i_u64[0]) return false;
+			if(forbiddenValuePositions[g].bitmap128.m128i_u64[1] < other.forbiddenValuePositions[g].bitmap128.m128i_u64[1]) return true;
+			if(forbiddenValuePositions[g].bitmap128.m128i_u64[1] > other.forbiddenValuePositions[g].bitmap128.m128i_u64[1]) return false;
+			if(forbiddenValuePositions[g].bitmap128.m128i_u64[0] < other.forbiddenValuePositions[g].bitmap128.m128i_u64[0]) return true;
+			if(forbiddenValuePositions[g].bitmap128.m128i_u64[0] > other.forbiddenValuePositions[g].bitmap128.m128i_u64[0]) return false;
     	}
     	return false;
    }
-    void markAsNonRedundant(int given, int cell) {knownNonRedundantsMask[given].setBit(cell);}
-    bool isForRemoval(int given, int cell) const {return (aliveConstrainsMask[given].isBitSet(cell) & !knownNonRedundantsMask[given].isBitSet(cell));}
-    void getReducedGivensFrom(const knownNonRedundantConstrains &src, int given, int cell) {
-    	aliveConstrainsMask[0] = src.aliveConstrainsMask[0];
-    	aliveConstrainsMask[1] = src.aliveConstrainsMask[1];
-    	aliveConstrainsMask[2] = src.aliveConstrainsMask[2];
-    	aliveConstrainsMask[3] = src.aliveConstrainsMask[3];
-    	aliveConstrainsMask[4] = src.aliveConstrainsMask[4];
-    	aliveConstrainsMask[5] = src.aliveConstrainsMask[5];
-    	aliveConstrainsMask[6] = src.aliveConstrainsMask[6];
-    	aliveConstrainsMask[7] = src.aliveConstrainsMask[7];
-    	aliveConstrainsMask[8] = src.aliveConstrainsMask[8];
-    	aliveConstrainsMask[given].clearBit(cell);
+   bool operator== (const complementaryPencilmarksX& constraintsMask) const {
+       return memcmp(forbiddenValuePositions, constraintsMask.forbiddenValuePositions, sizeof(forbiddenValuePositions) * sizeof(forbiddenValuePositions[0])) == 0;
+   }
+    void markAsFixed(int given, int cell) {fixedValuePositions[given].setBit(cell);}
+    bool isForRemoval(int given, int cell) const {return (forbiddenValuePositions[given].isBitSet(cell) & !fixedValuePositions[given].isBitSet(cell));}
+    void getReducedForbiddensFrom(const complementaryPencilmarksX &src, int given, int cell) {
+    	forbiddenValuePositions[0] = src.forbiddenValuePositions[0];
+    	forbiddenValuePositions[1] = src.forbiddenValuePositions[1];
+    	forbiddenValuePositions[2] = src.forbiddenValuePositions[2];
+    	forbiddenValuePositions[3] = src.forbiddenValuePositions[3];
+    	forbiddenValuePositions[4] = src.forbiddenValuePositions[4];
+    	forbiddenValuePositions[5] = src.forbiddenValuePositions[5];
+    	forbiddenValuePositions[6] = src.forbiddenValuePositions[6];
+    	forbiddenValuePositions[7] = src.forbiddenValuePositions[7];
+    	forbiddenValuePositions[8] = src.forbiddenValuePositions[8];
+    	forbiddenValuePositions[given].clearBit(cell);
     }
-    void getKnownNonRedundantsFrom(const knownNonRedundantConstrains &src) {
-    	knownNonRedundantsMask[0] = src.knownNonRedundantsMask[0];
-    	knownNonRedundantsMask[1] = src.knownNonRedundantsMask[1];
-    	knownNonRedundantsMask[2] = src.knownNonRedundantsMask[2];
-    	knownNonRedundantsMask[3] = src.knownNonRedundantsMask[3];
-    	knownNonRedundantsMask[4] = src.knownNonRedundantsMask[4];
-    	knownNonRedundantsMask[5] = src.knownNonRedundantsMask[5];
-    	knownNonRedundantsMask[6] = src.knownNonRedundantsMask[6];
-    	knownNonRedundantsMask[7] = src.knownNonRedundantsMask[7];
-    	knownNonRedundantsMask[8] = src.knownNonRedundantsMask[8];
+    void getFixedFrom(const complementaryPencilmarksX &src) {
+    	fixedValuePositions[0] = src.fixedValuePositions[0];
+    	fixedValuePositions[1] = src.fixedValuePositions[1];
+    	fixedValuePositions[2] = src.fixedValuePositions[2];
+    	fixedValuePositions[3] = src.fixedValuePositions[3];
+    	fixedValuePositions[4] = src.fixedValuePositions[4];
+    	fixedValuePositions[5] = src.fixedValuePositions[5];
+    	fixedValuePositions[6] = src.fixedValuePositions[6];
+    	fixedValuePositions[7] = src.fixedValuePositions[7];
+    	fixedValuePositions[8] = src.fixedValuePositions[8];
     }
-    bool hasNothingForRemoval() const {
-		//if((current.aliveGivensMask & (~current.knownNonRedundantsMask)) == 0)
-			//there are no more givens to remove => a minimal puzzle is found
+    bool isMinimal() const {
     	return
-    			aliveConstrainsMask[0].isSubsetOf(knownNonRedundantsMask[0]) &&
-    			aliveConstrainsMask[1].isSubsetOf(knownNonRedundantsMask[1]) &&
-    			aliveConstrainsMask[2].isSubsetOf(knownNonRedundantsMask[2]) &&
-    			aliveConstrainsMask[3].isSubsetOf(knownNonRedundantsMask[3]) &&
-    			aliveConstrainsMask[4].isSubsetOf(knownNonRedundantsMask[4]) &&
-    			aliveConstrainsMask[5].isSubsetOf(knownNonRedundantsMask[5]) &&
-    			aliveConstrainsMask[6].isSubsetOf(knownNonRedundantsMask[6]) &&
-    			aliveConstrainsMask[7].isSubsetOf(knownNonRedundantsMask[7]) &&
-    			aliveConstrainsMask[8].isSubsetOf(knownNonRedundantsMask[8]);
+    			forbiddenValuePositions[0].isSubsetOf(fixedValuePositions[0]) &&
+    			forbiddenValuePositions[1].isSubsetOf(fixedValuePositions[1]) &&
+    			forbiddenValuePositions[2].isSubsetOf(fixedValuePositions[2]) &&
+    			forbiddenValuePositions[3].isSubsetOf(fixedValuePositions[3]) &&
+    			forbiddenValuePositions[4].isSubsetOf(fixedValuePositions[4]) &&
+    			forbiddenValuePositions[5].isSubsetOf(fixedValuePositions[5]) &&
+    			forbiddenValuePositions[6].isSubsetOf(fixedValuePositions[6]) &&
+    			forbiddenValuePositions[7].isSubsetOf(fixedValuePositions[7]) &&
+    			forbiddenValuePositions[8].isSubsetOf(fixedValuePositions[8]);
+    }
+    bool isMinimalUniqueDoubleCheck(const char* sol) const {
+		char sol2[88];
+		getSingleSolution ss;
+		int nSol = ss.solve(forbiddenValuePositions, sol2);
+		if(nSol != 1) {
+			printf("\nNot unique, nSol = %d\n", nSol);
+			return false;
+		}
+		if(memcmp(sol, sol2, 81) != 0) {
+			printf("\nWrong solution\n");
+			return false;
+		}
+		for(int d = 0; d < 9; d++) {
+			for(int c = 0; c < 81; c++) {
+				if(forbiddenValuePositions[d].isBitSet(c)) {
+					//try removal of this pencilmark and see whether it causes 2+ solutions
+					complementaryPencilmarksX tmp(*this);
+					hasSingleSolution sss;
+					tmp.forbiddenValuePositions[d].clearBit(c);
+					if(2 != sss.solve(tmp.forbiddenValuePositions)) {
+						printf("\nNon-minimal, value=%d, cell=%d is redundant\n", d + 1, c);
+						dump();
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+    void dump() const {
+		//printf("\nforbidden\n");
+    	//dump1(forbiddenValuePositions);
+		printf("\nallowed\n");
+    	dump1(forbiddenValuePositions, true);
+		printf("\nfixed\n");
+    	dump1(fixedValuePositions);
+    }
+    static void dump1(const bm128* what, bool invert = false) {
+		for(int c = 0; c < 81; c++) {
+			if((c + 0) % 9 == 0) {
+				printf("|");
+			}
+			for(int d = 0; d < 9; d++) {
+				if(invert != what[d].isBitSet(c)) {
+					printf("%d", d + 1);
+				}
+				else {
+					printf(".");
+				}
+			}
+			if((c + 1) % 3 == 0) {
+				printf("|");
+			}
+			else {
+				printf(" ");
+			}
+			if((c + 1) % 9 == 0) {
+				printf("\n");
+			}
+		}
+
+    }
+    void dump2() const {
+    	dump2(forbiddenValuePositions);
+    }
+    static void dump2(const bm128* what) {
+		printf("http://www.dailysudoku.com/sudoku/play.shtml?p=");
+		for(int c = 0; c < 81; c++) {
+			for(int d = 0; d < 9; d++) {
+				if(!what[d].isBitSet(c)) {
+					printf("%d", d + 1);
+				}
+			}
+			printf(":");
+		}
+		printf("\n");
+		fflush(NULL);
+    }
+    bool fromChars2(const char *src) {
+		for(int d = 0; d < 9; d++) {
+			forbiddenValuePositions[d] = constraints::mask81; //all forbidden
+			fixedValuePositions[d].clear();
+		}
+    	const char* x = src;
+    	const char* theEnd = src + 1000;
+    	for(; x < theEnd && *x != '='; x++); //skip up to '='
+    	if(x >= theEnd) return false;
+    	for(int c = 0; c < 81; c++) {
+    		x++; //skip separator '=' or ':'
+        	for(; x < theEnd && *x != ':'; x++) {
+            	if(x >= theEnd) return false;
+            	int d = (*x) - '0' - 1;
+            	if(d < 0 || d > 8) return false;
+        		forbiddenValuePositions[d].clearBit(c); //mark as allowed
+        	}
+    	}
+    	return true;
     }
 };
 
 struct minimizer {
 	void minimizeVanilla(char *puz);
-	void minimizePencilmarks(char *puz);
-	void minimizePencilmarks(bm128 *puz);
+	void minimizePencilmarks(char *puz); //expand the pencilmarks for single-solution puzzle
+	void minimizePencilmarks(bm128 *puz); //expand the pencilmarks for single-solution puzzle
+	void reduceM2P1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1(const char* p); //string as input
 };
