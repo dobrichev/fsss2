@@ -14,7 +14,7 @@
 
 #include "t_128.h"
 
-//#define COUNT_TRIALS
+#define COUNT_TRIALS
 
 //#define USE_LOCKED_CANDIDATES
 //#define USE_SUBSETS
@@ -174,6 +174,7 @@ public:
 
 //test whether a given puzzle has single solution and returns it
 class getSingleSolution : public nullCollector {
+protected:
 	int nsol;
 	char *resChar;
 public:
@@ -181,6 +182,12 @@ public:
 	bool solutionFound();
 	int solve(const char* p, char* res);
 	int solve(const bm128* forbiddenValuePositions, char* res);
+};
+
+//test whether a given puzzle has at least one solution and returns it
+class getAnySolution : public getSingleSolution {
+public:
+	bool solutionFound();
 };
 
 //compose pencilmarks from all solutions

@@ -78,9 +78,11 @@ int main(int argc, char* argv[])
 
 	minimizer mm;
 	while(fgets(p, sizeof(p), stdin)) {
-//		mm.reduceM2P1(p);
-		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
-		mm.minimizePencilmarks(curPuz);
+		mm.reduceM2P1(p);
+//		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
+//		mm.solRowMinLex(curPuz);
+//		mm.transformM1P1(curPuz);
+//		mm.minimizePencilmarks(curPuz);
 //		//mm.minimizeVanilla(curPuz);
 		num[0]++;
 	}

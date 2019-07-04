@@ -142,6 +142,23 @@ struct complementaryPencilmarksX {
 		printf("\n");
 		fflush(NULL);
     }
+    void dump3() const { //729 symbols/line
+    	dump3(forbiddenValuePositions);
+    }
+    static void dump3(const bm128* what) {
+		for(int c = 0; c < 81; c++) {
+			for(int d = 0; d < 9; d++) {
+				if(!what[d].isBitSet(c)) {
+					printf("%d", d + 1);
+				}
+				else {
+					printf(".");
+				}
+			}
+		}
+		printf("\n");
+		fflush(NULL);
+    }
     bool fromChars2(const char *src) {
 		for(int d = 0; d < 9; d++) {
 			forbiddenValuePositions[d] = constraints::mask81; //all forbidden
@@ -170,4 +187,11 @@ struct minimizer {
 	void minimizePencilmarks(bm128 *puz); //expand the pencilmarks for single-solution puzzle
 	void reduceM2P1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
 	void reduceM2P1(const char* p); //string as input
+	void transformM1P1(bm128 *forbiddenValuePositions); //transform single-solution puzzle
+	void transformM1P1(const char* p); //string as input
+	void solRowMinLex(const bm128 *src, bm128 *res, const char* sol);
+	bool solRowMinLex(const bm128 *src, bm128 *res); //transform single-solution puzzle to row-min-lex by solution grid
+	void solRowMinLex(const bm128 *src); //transform single-solution puzzle to row-min-lex by solution grid
+	void solRowMinLex(const char *p); //string as input
+	void solRowMinLex(const bm128 *src, const char* sol);
 };

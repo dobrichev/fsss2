@@ -6,6 +6,7 @@
 #include <random>
 #include <experimental/algorithm> //gcc-specific
 #include "minimizer.h"
+#include "rowminlex.h"
 #include "fsss2.h"
 
 void minimizer::minimizeVanilla(char *puz) {
@@ -367,6 +368,17 @@ void minimizer::reduceM2P1(const char* p) {
 	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
 	reduceM2P1(src.forbiddenValuePositions); //do the job
 }
+void minimizer::transformM1P1(const char* p) {
+	complementaryPencilmarksX src;
+	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
+	transformM1P1(src.forbiddenValuePositions); //do the job
+}
+void minimizer::solRowMinLex(const char* p) {
+	complementaryPencilmarksX src;
+	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
+	solRowMinLex(src.forbiddenValuePositions); //do the job
+}
+
 //void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) {
 //	multiSolutionPM ms;
 //	hasSingleSolution ss;
@@ -520,24 +532,90 @@ void minimizer::reduceM2P1(const char* p) {
 //		} //c1
 //	} //d1
 //}
-void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) {
-	bm128 blackList[9][81][9];
-	hasSingleSolution ss;
-	//for {-{x,y},+z} success both {-x,+z} and {-y,+z} must success
-	//for each {-1} compose a blacklist
+//void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) {
+//	bm128 blackList[9][81][9];
+//	hasSingleSolution ss;
+//	//for {-{x,y},+z} success both {-x,+z} and {-y,+z} must success
+//	//for each {-1} compose a blacklist
+//	for(int d1 = 0; d1 < 9; d1++) {
+//		for(int c1 = 0; c1 < 81; c1++) {
+//			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
+//			forbiddenValuePositions[d1].clearBit(c1); //allow
+//			//apply {+1} and check if single-solution is found
+//			for(int d = 0; d < 9; d++) {
+//				blackList[d1][c1][d].clear();
+//				for(int c = 0; c < 81; c++) {
+//					if(forbiddenValuePositions[d].isBitSet(c)) continue; //skip already forbidden placements
+//					if(d == d1 && c == c1) continue;
+//					forbiddenValuePositions[d].setBit(c); // forbid d in c
+//					if(2 == ss.solve(forbiddenValuePositions)) {
+//						blackList[d1][c1][d].setBit(c); //multiple-solution => blacklisted
+//					}
+//					forbiddenValuePositions[d].clearBit(c); // restore
+//				}
+//			}
+//			forbiddenValuePositions[d1].setBit(c1); //restore
+//		} //c1
+//	} //d1
+//	//apply {-2} and get multiple-solution puzzle
+//	for(int d1 = 0; d1 < 9; d1++) {
+//		for(int c1 = 0; c1 < 81; c1++) {
+//			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
+//			forbiddenValuePositions[d1].clearBit(c1); //allow
+//			for(int d2 = d1; d2 < 9; d2++) {
+//				for(int c2 = d1 == d2 ? c1 + 1 : 0; c2 < 81; c2++) {
+//					if(!forbiddenValuePositions[d2].isBitSet(c2)) continue; //skip allowed placements
+//					forbiddenValuePositions[d2].clearBit(c2); //allow
+//					//apply {+1} and check if single-solution is found
+//					for(int d = 0; d < 9; d++) {
+//						for(int c = 0; c < 81; c++) {
+//							if(forbiddenValuePositions[d].isBitSet(c)) continue; //skip already forbidden placements
+//							if(d == d1 && c == c1) continue;
+//							if(d == d2 && c == c2) continue;
+//							if(blackList[d1][c1][d].isBitSet(c)) continue; //requires 2+ more constraints
+//							if(blackList[d2][c2][d].isBitSet(c)) continue; //requires 2+ more constraints
+//							forbiddenValuePositions[d].setBit(c); // forbid d in c
+//							if(1 == ss.solve(forbiddenValuePositions)) {
+//								//lucky
+//								complementaryPencilmarksX::dump2(forbiddenValuePositions);
+//							}
+//							forbiddenValuePositions[d].clearBit(c); // restore
+//						}
+//					}
+//					forbiddenValuePositions[d2].setBit(c2); //restore
+//				} //c2
+//			} //d2
+//			forbiddenValuePositions[d1].setBit(c1); //restore
+//		} //c1
+//	} //d1
+//}
+void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzzle
+	fprintf(stderr, ".");
+	bm128 exchangable[9][81][9];
+	getSingleSolution ss;
+	char sol[88]; //pass solution as hint parameter to canonicalizer
+	//compose a list of validity preserving mutually exchangable forbiddenValuePositions
+	for(int d1 = 0; d1 < 9; d1++) {
+		for(int c1 = 0; c1 < 81; c1++) {
+			for(int d = 0; d < 9; d++) {
+				exchangable[d1][c1][d].clear();
+			}
+		}
+	}
 	for(int d1 = 0; d1 < 9; d1++) {
 		for(int c1 = 0; c1 < 81; c1++) {
 			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
 			forbiddenValuePositions[d1].clearBit(c1); //allow
 			//apply {+1} and check if single-solution is found
 			for(int d = 0; d < 9; d++) {
-				blackList[d1][c1][d].clear();
 				for(int c = 0; c < 81; c++) {
 					if(forbiddenValuePositions[d].isBitSet(c)) continue; //skip already forbidden placements
 					if(d == d1 && c == c1) continue;
 					forbiddenValuePositions[d].setBit(c); // forbid d in c
-					if(2 == ss.solve(forbiddenValuePositions)) {
-						blackList[d1][c1][d].setBit(c); //multiple-solution => blacklisted
+					if(1 == ss.solve(forbiddenValuePositions, sol)) {
+						exchangable[d][c][d1].setBit(c1); // forbidden at {d1, c1} is exchangable with {d2, c2}
+						solRowMinLex(forbiddenValuePositions, sol); // export {-1,+1}
+						//complementaryPencilmarksX::dump2(forbiddenValuePositions); // export {-1,+1}
 					}
 					forbiddenValuePositions[d].clearBit(c); // restore
 				}
@@ -545,36 +623,101 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) {
 			forbiddenValuePositions[d1].setBit(c1); //restore
 		} //c1
 	} //d1
+	//if union(exchangable[d][c][*]) has > 1 bit set, then all forbiddens from * can be removed together, and replaced by the single [d][c]
 	//apply {-2} and get multiple-solution puzzle
+	for(int dDest = 0; dDest < 9; dDest++) {
+		for(int cDest = 0; cDest < 81; cDest++) {
+			if(forbiddenValuePositions[dDest].isBitSet(cDest)) continue; //skip forbidden placements
+			bm128 u;
+			u.clear();
+			int removeCount = 0;
+			for(int d = 0; d < 9; d++) {
+				removeCount += exchangable[dDest][cDest][d].popcount_128();
+				u |= exchangable[dDest][cDest][d];
+			}
+			if(removeCount < 2) continue; // no reduction possible
+			//if(removeCount > 2) {
+			//	fprintf(stderr, "%d,", removeCount);
+			//}
+			forbiddenValuePositions[dDest].setBit(cDest); //forbid
+			int removedCount = 0;
+			std::pair<int,int> suited[9*81];
+			for(int c = 0; c < 81 && removedCount < removeCount; c++) {
+				if(!u.isBitSet(c)) continue;
+				for(int d = 0; d < 9 && removedCount < removeCount; d++) {
+					if(!exchangable[dDest][cDest][d].isBitSet(c)) continue;
+					forbiddenValuePositions[d].clearBit(c); //allow
+					suited[removedCount] = std::pair<int,int>(d, c);
+					removedCount++;
+				}
+			}
+			//remove only 2 at a time in all possible ways
+			for(int src1 = 0; src1 < removeCount - 1; src1++) {
+				forbiddenValuePositions[suited[src1].first].clearBit(suited[src1].second); //allow
+				for(int src2 = src1 + 1; src2 < removeCount; src2++) {
+					forbiddenValuePositions[suited[src2].first].clearBit(suited[src2].second); //allow
+					int numSolutions = ss.solve(forbiddenValuePositions, sol);
+					if(1 == numSolutions) {
+						//lucky
+						solRowMinLex(forbiddenValuePositions, sol); // export {-2,+1}
+						//complementaryPencilmarksX::dump2(forbiddenValuePositions); // export {-2,+1}
+					}
+					forbiddenValuePositions[suited[src2].first].setBit(suited[src2].second); //forbid
+				} //src2
+				forbiddenValuePositions[suited[src1].first].setBit(suited[src1].second); //forbid
+			} //src1
+			forbiddenValuePositions[dDest].clearBit(cDest); //restore
+		} //cDest
+	} //dDest
+}
+void minimizer::transformM1P1(bm128 *forbiddenValuePositions) {
+	fprintf(stderr, ".");
+	hasSingleSolution ss;
+	//apply {-1} and get multiple-solution puzzle
 	for(int d1 = 0; d1 < 9; d1++) {
 		for(int c1 = 0; c1 < 81; c1++) {
 			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
 			forbiddenValuePositions[d1].clearBit(c1); //allow
-			for(int d2 = d1; d2 < 9; d2++) {
-				for(int c2 = d1 == d2 ? c1 + 1 : 0; c2 < 81; c2++) {
-					if(!forbiddenValuePositions[d2].isBitSet(c2)) continue; //skip allowed placements
-					forbiddenValuePositions[d2].clearBit(c2); //allow
-					//apply {+1} and check if single-solution is found
-					for(int d = 0; d < 9; d++) {
-						for(int c = 0; c < 81; c++) {
-							if(forbiddenValuePositions[d].isBitSet(c)) continue; //skip already forbidden placements
-							if(d == d1 && c == c1) continue;
-							if(d == d2 && c == c2) continue;
-							if(blackList[d1][c1][d].isBitSet(c)) continue; //requires 2+ more constraints
-							if(blackList[d2][c2][d].isBitSet(c)) continue; //requires 2+ more constraints
-							forbiddenValuePositions[d].setBit(c); // forbid d in c
-							if(1 == ss.solve(forbiddenValuePositions)) {
-								//lucky
-								complementaryPencilmarksX::dump2(forbiddenValuePositions);
-							}
-							forbiddenValuePositions[d].clearBit(c); // restore
-						}
+			//apply {+1} and check if single-solution is found
+			for(int d = 0; d < 9; d++) {
+				for(int c = 0; c < 81; c++) {
+					if(forbiddenValuePositions[d].isBitSet(c)) continue; //skip already forbidden placements
+					if(d == d1 && c == c1) continue;
+					forbiddenValuePositions[d].setBit(c); // forbid d in c
+					if(1 == ss.solve(forbiddenValuePositions)) {
+						//lucky
+						complementaryPencilmarksX::dump2(forbiddenValuePositions);
 					}
-					forbiddenValuePositions[d2].setBit(c2); //restore
-				} //c2
-			} //d2
+					forbiddenValuePositions[d].clearBit(c); // restore
+				}
+			}
 			forbiddenValuePositions[d1].setBit(c1); //restore
 		} //c1
 	} //d1
+}
+void minimizer::solRowMinLex(const bm128 *src) { //transform single-solution puzzle to row-min-lex by solution grid
+	bm128 res[9];
+	if(solRowMinLex(src, res)) {
+		complementaryPencilmarksX::dump2(res);
+	}
+}
+bool minimizer::solRowMinLex(const bm128 *src, bm128 *res) { //transform single-solution puzzle to row-min-lex by solution grid
+	getAnySolution solver;
+	char sol[88];
+	if(0 == solver.solve(src, sol)) return false; //ignore invalid puzzles
+	solRowMinLex(src, res, sol);
+	return true;
+}
+void minimizer::solRowMinLex(const bm128 *src, bm128 *res, const char* sol) { //transform single-solution puzzle to row-min-lex by solution grid
+	transformer tr;
+	tr.byGrid(sol);
+	tr.transform(src, res);
+}
+void minimizer::solRowMinLex(const bm128 *src, const char* sol) { //transform single-solution puzzle to row-min-lex by solution grid
+	bm128 res[9];
+	transformer tr;
+	tr.byGrid(sol);
+	tr.transform(src, res);
+	complementaryPencilmarksX::dump2(res);
 }
 #endif
