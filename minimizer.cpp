@@ -661,6 +661,7 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzz
 						//lucky
 						solRowMinLex(forbiddenValuePositions, sol); // export {-2,+1}
 						//complementaryPencilmarksX::dump2(forbiddenValuePositions); // export {-2,+1}
+						fprintf(stderr, "+");
 					}
 					forbiddenValuePositions[suited[src2].first].setBit(suited[src2].second); //forbid
 				} //src2

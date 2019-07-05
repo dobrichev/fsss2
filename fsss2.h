@@ -14,7 +14,7 @@
 
 #include "t_128.h"
 
-#define COUNT_TRIALS
+//#define COUNT_TRIALS
 
 //#define USE_LOCKED_CANDIDATES
 //#define USE_SUBSETS
