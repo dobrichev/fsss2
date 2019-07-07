@@ -16,7 +16,11 @@
 
 //#define COUNT_TRIALS
 
-//#define USE_LOCKED_CANDIDATES
+#define USE_LOCKED_CANDIDATES
+#define LOCKED_CANDIDATES_ALWAYS
+#define LOCKED_CANDIDATES_USE_CACHE
+
+
 //#define USE_SUBSETS
 
 #ifdef USE_LOCKED_CANDIDATES
@@ -71,7 +75,9 @@ public:
 	bm128 knownNoHiddenSingles[9]; //cache for latest known candidates for each value that failed in search for hidden single
 
 #ifdef USE_LOCKED_CANDIDATES
-	//bm128 knownNoLockedCandidates[9];
+#ifdef LOCKED_CANDIDATES_USE_CACHE
+	bm128 knownNoLockedCandidates[9];
+#endif
 #endif
 
 	bm128 trialCandidates; //cache for latest optimal cells to make T&E for

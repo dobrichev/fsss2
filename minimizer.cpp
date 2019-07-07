@@ -589,11 +589,17 @@ void minimizer::solRowMinLex(const char* p) {
 //		} //c1
 //	} //d1
 //}
+#ifdef COUNT_TRIALS
+	extern int nTrials;
+#endif
 void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzzle
 	fprintf(stderr, ".");
 	bm128 exchangable[9][81][9];
 	getSingleSolution ss;
 	char sol[88]; //pass solution as hint parameter to canonicalizer
+#ifdef COUNT_TRIALS
+	int maxTrialsSoFar = 0;
+#endif
 	//compose a list of validity preserving mutually exchangable forbiddenValuePositions
 	for(int d1 = 0; d1 < 9; d1++) {
 		for(int c1 = 0; c1 < 81; c1++) {
@@ -612,11 +618,22 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzz
 					if(forbiddenValuePositions[d].isBitSet(c)) continue; //skip already forbidden placements
 					if(d == d1 && c == c1) continue;
 					forbiddenValuePositions[d].setBit(c); // forbid d in c
-					if(1 == ss.solve(forbiddenValuePositions, sol)) {
+#ifdef COUNT_TRIALS
+					nTrials = 0;
+#endif
+					int numSolutions = ss.solve(forbiddenValuePositions, sol);
+					if(1 == numSolutions) {
 						exchangable[d][c][d1].setBit(c1); // forbidden at {d1, c1} is exchangable with {d2, c2}
 						solRowMinLex(forbiddenValuePositions, sol); // export {-1,+1}
 						//complementaryPencilmarksX::dump2(forbiddenValuePositions); // export {-1,+1}
 					}
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+						//fprintf(stderr, "\n%d", maxTrialsSoFar);
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),+(%d,%d)}\t%d", nTrials, d1, c1, d, c, numSolutions);
+#endif
 					forbiddenValuePositions[d].clearBit(c); // restore
 				}
 			}
@@ -656,7 +673,17 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzz
 				forbiddenValuePositions[suited[src1].first].clearBit(suited[src1].second); //allow
 				for(int src2 = src1 + 1; src2 < removeCount; src2++) {
 					forbiddenValuePositions[suited[src2].first].clearBit(suited[src2].second); //allow
+#ifdef COUNT_TRIALS
+					nTrials = 0;
+#endif
 					int numSolutions = ss.solve(forbiddenValuePositions, sol);
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+						//fprintf(stderr, "\n%d", maxTrialsSoFar);
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),(%d,%d),+(%d,%d)}\t%d", nTrials, suited[src1].first, suited[src1].second, suited[src2].first, suited[src2].second, dDest, cDest, numSolutions);
+#endif
 					if(1 == numSolutions) {
 						//lucky
 						solRowMinLex(forbiddenValuePositions, sol); // export {-2,+1}

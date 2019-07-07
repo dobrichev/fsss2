@@ -10,8 +10,6 @@
 #include <memory.h>
 #include "fsss2.h"
 
-//#define COUNT_TRIALS
-
 //game mode flags
 #define MODE_SOLVING			0	//unused, keep solving
 #define MODE_STOP_PROCESSING	1	//solved or error
@@ -233,15 +231,17 @@ template <class X> void fsss2<X>::initEmpty() {
 	knownNoHiddenSingles[8] = constraints::mask108;
 
 #ifdef USE_LOCKED_CANDIDATES
-//	knownNoLockedCandidates[0] = constraints::mask108;
-//	knownNoLockedCandidates[1] = constraints::mask108;
-//	knownNoLockedCandidates[2] = constraints::mask108;
-//	knownNoLockedCandidates[3] = constraints::mask108;
-//	knownNoLockedCandidates[4] = constraints::mask108;
-//	knownNoLockedCandidates[5] = constraints::mask108;
-//	knownNoLockedCandidates[6] = constraints::mask108;
-//	knownNoLockedCandidates[7] = constraints::mask108;
-//	knownNoLockedCandidates[8] = constraints::mask108;
+#ifdef LOCKED_CANDIDATES_USE_CACHE
+	knownNoLockedCandidates[0] = constraints::mask108;
+	knownNoLockedCandidates[1] = constraints::mask108;
+	knownNoLockedCandidates[2] = constraints::mask108;
+	knownNoLockedCandidates[3] = constraints::mask108;
+	knownNoLockedCandidates[4] = constraints::mask108;
+	knownNoLockedCandidates[5] = constraints::mask108;
+	knownNoLockedCandidates[6] = constraints::mask108;
+	knownNoLockedCandidates[7] = constraints::mask108;
+	knownNoLockedCandidates[8] = constraints::mask108;
+#endif
 	lockedDone = 0;
 #endif
 #ifdef USE_SUBSETS
@@ -731,17 +731,22 @@ single_found:
 		bool found = false;
 		//if a digit in a row is within a single triplet, then remove digit from the other two box triplets and vice versa
 		for (int d = 0; d < 9; d++) {
+#ifdef LOCKED_CANDIDATES_USE_CACHE
+			if(knownNoLockedCandidates[d] == grid[d])
+				continue;
+			if(doLockedCandidatesForDigit(grid[d])) {
+				found = true;
+			}
+			else {
+				knownNoLockedCandidates[d] = grid[d];
+			}
+#else
 			found |= doLockedCandidatesForDigit(grid[d]);
-//			if(knownNoLockedCandidates[d] == grid[d])
-//				continue;
-//			if(doLockedCandidatesForDigit(grid[d])) {
-//				found = true;
-//			}
-//			else {
-//				knownNoLockedCandidates[d] = grid[d];
-//			}
+#endif
 		}
+#ifndef LOCKED_CANDIDATES_ALWAYS
 		lockedDone = 1;
+#endif
 		if(found) {
 #ifdef USE_SUBSETS
 			//subsetsDone = 0;
@@ -820,6 +825,7 @@ nextGuess:
 		//Find an unsolved cell with less possibilities
 		int optDigit;
 		int optCell;
+		int minCellValues = 0;
 		guessAuto = collector.beforeGuess(guessDepth, optCell, optDigit);
 
 		//find first of the best-to-guess candidates
@@ -830,11 +836,40 @@ nextGuess:
 			all.clearBits(solved);
 			if(all.isZero()) {
 				//find new candidates
-				if(2 >= findLeastPopulatedCells(all))
+				minCellValues = findLeastPopulatedCells(all);
+				if(minCellValues <= 2) {
 					trialCandidates = all; //reuse them on next guess only if they are bi-values
+				}
+//				else if(minCellValues > 3) {
+//					//find house with less candidates from a particular digit, exit on first bi-position house/digit
+//					int minValueLocations = 100;
+//					for (int d = 0; d < 9; d++) {
+//						for (int h = 0; h < 27; h++) {
+//							if (!grid[d].isBitSet(81 + h))
+//								continue;
+//							bm128 tmp = grid[d];
+//							tmp &= constraints::bitsForHouse[h];
+//							tmp &= constraints::mask81;
+//							int n = tmp.popcount_128();
+//							if (n < minValueLocations) {
+//								optDigit = d;
+//								optCell = tmp.getFirstBit1Index96();
+//								if(n == 2) { //not so bad, a bi-position is found
+//									//break;
+//									goto bestCellFound;
+//								}
+//								minValueLocations = n;
+//							}
+//						}
+//					}
+//					if(minValueLocations < minCellValues) { //prefer n-location
+//						goto bestCellFound;
+//					}
+//				}
 			}
 			//strategy 1: least value, then least cell index //234.922 seconds. Trials = 737 680 539
-			if(solved.popcount_128() > 50)
+			//if(solved.popcount_128() > 50)
+			if(solved.popcount_128() < 10)
 			{
 				for(optDigit = 0; optDigit < 7; optDigit++) { //prefer the least value
 					if(!all.isDisjoint(grid[optDigit])) {
