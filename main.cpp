@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
 
 	minimizer mm;
 	while(fgets(p, sizeof(p), stdin)) {
+//		mm.tryReduceM1(p);
 		mm.reduceM2P1(p);
 //		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
 //		mm.solRowMinLex(curPuz);

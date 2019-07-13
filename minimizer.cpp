@@ -240,7 +240,7 @@ void minimizer::minimizePencilmarks(char *puz) {
 		//next_pass:;
 		previousPass.clear();
 		//std::experimental::sample(std::begin(currentPass), std::end(currentPass), std::inserter(previousPass, previousPass.end()), 5, std::mt19937{/*std::random_device{}()*/}); //gcc-specific
-		std::experimental::sample(std::begin(currentPass), std::end(currentPass), std::inserter(previousPass, previousPass.end()), 10, rg); //gcc-specific
+		std::experimental::sample(std::begin(currentPass), std::end(currentPass), std::inserter(previousPass, previousPass.end()), 100, rg); //gcc-specific
 		currentPass.clear();
 //		//prevPass.clear();
 //		//prevPass.swap(curPass); //move all (= overflow)
@@ -366,7 +366,9 @@ void minimizer::minimizePencilmarks(bm128 *forbiddenValuePositions) {
 void minimizer::reduceM2P1(const char* p) {
 	complementaryPencilmarksX src;
 	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
-	reduceM2P1(src.forbiddenValuePositions); //do the job
+	//reduceM2P1(src.forbiddenValuePositions); //do the job
+	//reduceM2P1v2(src.forbiddenValuePositions); //do the job
+	reduceM2P1v3(src.forbiddenValuePositions); //do the job
 }
 void minimizer::transformM1P1(const char* p) {
 	complementaryPencilmarksX src;
@@ -377,6 +379,11 @@ void minimizer::solRowMinLex(const char* p) {
 	complementaryPencilmarksX src;
 	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
 	solRowMinLex(src.forbiddenValuePositions); //do the job
+}
+void minimizer::tryReduceM1(const char* p) {
+	complementaryPencilmarksX src;
+	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
+	tryReduceM1(src.forbiddenValuePositions); //do the job
 }
 
 //void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) {
@@ -589,10 +596,24 @@ void minimizer::solRowMinLex(const char* p) {
 //		} //c1
 //	} //d1
 //}
+
 #ifdef COUNT_TRIALS
 	extern int nTrials;
 #endif
-void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzzle
+
+//	int numSolverCalls = 0;
+//
+//	extern int knownNoLockedCandidatesHits;
+//	extern int knownNoLockedCandidatesMisses;
+//	extern int knownNoHiddenHits;
+//	extern int knownNoHiddenMisses;
+
+void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { // ~1 second/puzzle
+//	numSolverCalls = 0;
+//	knownNoLockedCandidatesHits = 0;
+//	knownNoLockedCandidatesMisses = 0;
+//	knownNoHiddenHits = 0;
+//	knownNoHiddenMisses = 0;
 	fprintf(stderr, ".");
 	bm128 exchangable[9][81][9];
 	getSingleSolution ss;
@@ -622,10 +643,10 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzz
 					nTrials = 0;
 #endif
 					int numSolutions = ss.solve(forbiddenValuePositions, sol);
+					//numSolverCalls++;
 					if(1 == numSolutions) {
 						exchangable[d][c][d1].setBit(c1); // forbidden at {d1, c1} is exchangable with {d2, c2}
-						solRowMinLex(forbiddenValuePositions, sol); // export {-1,+1}
-						//complementaryPencilmarksX::dump2(forbiddenValuePositions); // export {-1,+1}
+						solRowMinLex(forbiddenValuePositions, sol); // export {-1,+1} NOTE: This exports non-minimals!!!
 					}
 #ifdef COUNT_TRIALS
 					if(maxTrialsSoFar < nTrials) {
@@ -676,6 +697,7 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzz
 #ifdef COUNT_TRIALS
 					nTrials = 0;
 #endif
+					//numSolverCalls++;
 					int numSolutions = ss.solve(forbiddenValuePositions, sol);
 #ifdef COUNT_TRIALS
 					if(maxTrialsSoFar < nTrials) {
@@ -697,6 +719,242 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { //1.34 seconds/puzz
 			forbiddenValuePositions[dDest].clearBit(cDest); //restore
 		} //cDest
 	} //dDest
+	//fprintf(stderr, "(-+)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
+}
+void minimizer::reduceM2P1v2(bm128 *forbiddenValuePositions) { // ~1.5 seconds/puzzle
+	fprintf(stderr, ".");
+//	numSolverCalls = 0;
+//	knownNoLockedCandidatesHits = 0;
+//	knownNoLockedCandidatesMisses = 0;
+//	knownNoHiddenHits = 0;
+//	knownNoHiddenMisses = 0;
+	getSingleSolution ss;
+	struct solution {
+		char sol[88];
+	};
+	solution sol; //pass solution as hint parameter to canonicalizer
+	struct redundantInContext {
+		int digit;
+		int cell;
+		bool skip;
+		solution sol;
+	};
+	redundantInContext redundantsAlone[9*81]; // pair of {digit, cell} for each redundant forbidden in the context
+#ifdef COUNT_TRIALS
+	int maxTrialsSoFar = 0;
+#endif
+	//apply {+1} and check if single-solution is found
+	for(int dForbid = 0; dForbid < 9; dForbid++) {
+		for(int cForbid = 0; cForbid < 81; cForbid++) {
+			if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
+			forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
+			int numRedundantsAlone = 0;
+			//apply {-1} and check if single-solution is found
+			for(int dAllow = 0; dAllow < 9; dAllow++) {
+				for(int cAllow = 0; cAllow < 81; cAllow++) {
+					if(!forbiddenValuePositions[dAllow].isBitSet(cAllow)) continue; //skip allowed placements
+					if(dForbid == dAllow && cForbid == cAllow) continue; //note that dForbid at cForbid is temporary set
+					forbiddenValuePositions[dAllow].clearBit(cAllow); //allow
+#ifdef COUNT_TRIALS
+					nTrials = 0;
+#endif
+					//numSolverCalls++;
+					int numSolutions = ss.solve(forbiddenValuePositions, redundantsAlone[numRedundantsAlone].sol.sol);
+					if(1 == numSolutions) {
+						redundantsAlone[numRedundantsAlone].digit = dAllow;
+						redundantsAlone[numRedundantsAlone].cell = cAllow;
+						redundantsAlone[numRedundantsAlone].skip = false;
+						numRedundantsAlone++;
+					}
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+						//fprintf(stderr, "\n%d", maxTrialsSoFar);
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),+(%d,%d)}\t%d", nTrials, dAllow, cAllow, dForbid, cForbid, numSolutions);
+#endif
+					forbiddenValuePositions[dAllow].setBit(cAllow); //restore
+				} //cAllow
+			} //dAllow
+			//apply {-2} and check if single-solution is found
+			for(int allow1 = 0; allow1 < numRedundantsAlone - 1; allow1++) {
+				forbiddenValuePositions[redundantsAlone[allow1].digit].clearBit(redundantsAlone[allow1].cell); //allow
+				for(int allow2 = allow1 + 1; allow2 < numRedundantsAlone; allow2++) {
+					forbiddenValuePositions[redundantsAlone[allow2].digit].clearBit(redundantsAlone[allow2].cell); //allow
+#ifdef COUNT_TRIALS
+					nTrials = 0;
+#endif
+					//numSolverCalls++;
+					int numSolutions = ss.solve(forbiddenValuePositions, sol.sol);
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),(%d,%d),+(%d,%d)}\t%d", nTrials, redundantsAlone[allow1].digit, redundantsAlone[allow1].cell, redundantsAlone[allow2].digit, redundantsAlone[allow2].cell, dForbid, cForbid, numSolutions);
+#endif
+					if(1 == numSolutions) {
+						//lucky
+						redundantsAlone[allow1].skip = true; //don't export {-1,+1} later because it has redundant
+						redundantsAlone[allow2].skip = true; //don't export {-1,+1} later because it has redundant
+						solRowMinLex(forbiddenValuePositions, sol.sol); // export {-2,+1}
+						fprintf(stderr, "+");
+					}
+					forbiddenValuePositions[redundantsAlone[allow2].digit].setBit(redundantsAlone[allow2].cell); //forbid
+				} //allow2
+				forbiddenValuePositions[redundantsAlone[allow1].digit].setBit(redundantsAlone[allow1].cell); //forbid
+			} //allow1
+			//export {-1,+1}
+			for(int allow1 = 0; allow1 < numRedundantsAlone; allow1++) {
+				if(redundantsAlone[allow1].skip) continue; //part of {-2,+1}
+				forbiddenValuePositions[redundantsAlone[allow1].digit].clearBit(redundantsAlone[allow1].cell); //allow
+				solRowMinLex(forbiddenValuePositions, redundantsAlone[allow1].sol.sol); // export {-1,+1}
+				forbiddenValuePositions[redundantsAlone[allow1].digit].setBit(redundantsAlone[allow1].cell); //forbid
+			}
+			forbiddenValuePositions[dForbid].clearBit(cForbid); // restore
+		} //cForbid
+	} //dForbid
+	//fprintf(stderr, "(+-)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
+}
+void minimizer::reduceM2P1v3(bm128 *forbiddenValuePositions) { // ~1.5 seconds/puzzle
+	fprintf(stderr, ".");
+//	numSolverCalls = 0;
+//	knownNoLockedCandidatesHits = 0;
+//	knownNoLockedCandidatesMisses = 0;
+//	knownNoHiddenHits = 0;
+//	knownNoHiddenMisses = 0;
+	getSingleSolution ss;
+	struct solution {
+		char sol[88];
+	};
+	solution sol; //pass solution as hint parameter to canonicalizer
+	struct redundantInContext {
+		int digit;
+		int cell;
+		bool skip;
+		solution sol;
+	};
+	struct redundantsInContext {
+		redundantInContext rc[9*81];
+		int size;
+	};
+	//redundantsInContext redundantsAlone[9][81]; //causes problems in stack allocation
+	typedef redundantsInContext (redundantsInContext81_t)[81];
+	redundantsInContext81_t* redundantsAlone = new redundantsInContext81_t[9]; //do heap allocation
+#ifdef COUNT_TRIALS
+	int maxTrialsSoFar = 0;
+#endif
+	for(int dForbid = 0; dForbid < 9; dForbid++) {
+		for(int cForbid = 0; cForbid < 81; cForbid++) {
+			//if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
+			redundantsAlone[dForbid][cForbid].size = 0;
+		}
+	}
+	//pass 1: collect single-solution puzzles at {-1,+1}
+	//apply {+1} and check if single-solution is found
+	for(int dAllow = 0; dAllow < 9; dAllow++) {
+		for(int cAllow = 0; cAllow < 81; cAllow++) {
+			if(!forbiddenValuePositions[dAllow].isBitSet(cAllow)) continue; //skip allowed placements
+			forbiddenValuePositions[dAllow].clearBit(cAllow); //allow
+			for(int dForbid = 0; dForbid < 9; dForbid++) {
+				for(int cForbid = 0; cForbid < 81; cForbid++) {
+					if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
+					if(dForbid == dAllow && cForbid == cAllow) continue; //note that dForbid at cForbid is temporary set
+					forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
+					//apply {-1} and check if single-solution is found
+#ifdef COUNT_TRIALS
+							nTrials = 0;
+#endif
+					//numSolverCalls++;
+					int numSolutions = ss.solve(forbiddenValuePositions, redundantsAlone[dForbid][cForbid].rc[redundantsAlone[dForbid][cForbid].size].sol.sol);
+					if(1 == numSolutions) {
+						redundantsAlone[dForbid][cForbid].rc[redundantsAlone[dForbid][cForbid].size].digit = dAllow;
+						redundantsAlone[dForbid][cForbid].rc[redundantsAlone[dForbid][cForbid].size].cell = cAllow;
+						redundantsAlone[dForbid][cForbid].rc[redundantsAlone[dForbid][cForbid].size].skip = false;
+						redundantsAlone[dForbid][cForbid].size++;
+					}
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+						//fprintf(stderr, "\n%d", maxTrialsSoFar);
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),+(%d,%d)}\t%d", nTrials, dAllow, cAllow, dForbid, cForbid, numSolutions);
+#endif
+					forbiddenValuePositions[dForbid].clearBit(cForbid); // restore
+				} //cForbid
+			} //dForbid
+			forbiddenValuePositions[dAllow].setBit(cAllow); //restore
+		} //cAllow
+	} //dAllow
+	//pass 2: test for {-2,+1}
+	for(int dForbid = 0; dForbid < 9; dForbid++) {
+		for(int cForbid = 0; cForbid < 81; cForbid++) {
+			if(redundantsAlone[dForbid][cForbid].size < 2) continue;
+			//if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
+			forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
+			//apply {-2} and check if single-solution is found
+			for(int allow1 = 0; allow1 < redundantsAlone[dForbid][cForbid].size - 1; allow1++) {
+				forbiddenValuePositions[redundantsAlone[dForbid][cForbid].rc[allow1].digit].clearBit(redundantsAlone[dForbid][cForbid].rc[allow1].cell); //allow
+				for(int allow2 = allow1 + 1; allow2 < redundantsAlone[dForbid][cForbid].size; allow2++) {
+					forbiddenValuePositions[redundantsAlone[dForbid][cForbid].rc[allow2].digit].clearBit(redundantsAlone[dForbid][cForbid].rc[allow2].cell); //allow
+#ifdef COUNT_TRIALS
+					nTrials = 0;
+#endif
+					//numSolverCalls++;
+					int numSolutions = ss.solve(forbiddenValuePositions, sol.sol);
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),(%d,%d),+(%d,%d)}\t%d", nTrials, redundantsAlone[dForbid][cForbid].rc[allow1].digit, redundantsAlone[dForbid][cForbid].rc[allow1].cell, redundantsAlone[dForbid][cForbid].rc[allow2].digit, redundantsAlone[dForbid][cForbid].rc[allow2].cell, dForbid, cForbid, numSolutions);
+#endif
+					if(1 == numSolutions) {
+						//lucky
+						redundantsAlone[dForbid][cForbid].rc[allow1].skip = true; //don't export {-1,+1} later because it has redundant
+						redundantsAlone[dForbid][cForbid].rc[allow2].skip = true; //don't export {-1,+1} later because it has redundant
+						solRowMinLex(forbiddenValuePositions, sol.sol); // export {-2,+1}
+						fprintf(stderr, "+");
+					}
+					forbiddenValuePositions[redundantsAlone[dForbid][cForbid].rc[allow2].digit].setBit(redundantsAlone[dForbid][cForbid].rc[allow2].cell); //restore
+				} //allow2
+				forbiddenValuePositions[redundantsAlone[dForbid][cForbid].rc[allow1].digit].setBit(redundantsAlone[dForbid][cForbid].rc[allow1].cell); //restore
+			} //allow1
+			//export {-1,+1}
+			for(int allow1 = 0; allow1 < redundantsAlone[dForbid][cForbid].size; allow1++) {
+				if(redundantsAlone[dForbid][cForbid].rc[allow1].skip) continue; //part of {-2,+1}
+				forbiddenValuePositions[redundantsAlone[dForbid][cForbid].rc[allow1].digit].clearBit(redundantsAlone[dForbid][cForbid].rc[allow1].cell); //allow
+				solRowMinLex(forbiddenValuePositions, redundantsAlone[dForbid][cForbid].rc[allow1].sol.sol); // export {-1,+1}
+				forbiddenValuePositions[redundantsAlone[dForbid][cForbid].rc[allow1].digit].setBit(redundantsAlone[dForbid][cForbid].rc[allow1].cell); //restore
+			}
+			forbiddenValuePositions[dForbid].clearBit(cForbid); // restore
+		} //cForbid
+	} //dForbid
+	//fprintf(stderr, "(+-)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
+	delete[] redundantsAlone;
+}
+void minimizer::tryReduceM1(bm128 *forbiddenValuePositions) { //output all unique {-1} if exist, else output original
+	//fprintf(stderr, ".");
+	getSingleSolution ss;
+	isRedundant redundantTester;
+	char sol[88]; //pass solution as hint parameter to canonicalizer
+	if(1 != ss.solve(forbiddenValuePositions, sol)) return; //silently ignore invalid and miltiple-solution puzzles
+	bool hasReduced = false;
+	for(int d1 = 0; d1 < 9; d1++) {
+		for(int c1 = 0; c1 < 81; c1++) {
+			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
+			if(redundantTester.solve(forbiddenValuePositions, d1, c1)) {
+				forbiddenValuePositions[d1].clearBit(c1); //allow
+				solRowMinLex(forbiddenValuePositions, sol); // export {-1,+1}
+				forbiddenValuePositions[d1].setBit(c1); //restore
+				hasReduced = true;
+			}
+		} //c1
+	} //d1
+	if(hasReduced) {
+		fprintf(stderr, "+");
+	}
+	else {
+		solRowMinLex(forbiddenValuePositions, sol); // export original
+	}
 }
 void minimizer::transformM1P1(bm128 *forbiddenValuePositions) {
 	fprintf(stderr, ".");

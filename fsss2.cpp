@@ -19,6 +19,11 @@
 extern int nTrials;
 #endif
 
+//int knownNoLockedCandidatesHits;
+//int knownNoLockedCandidatesMisses;
+//int knownNoHiddenHits;
+//int knownNoHiddenMisses;
+
 template <class X> fsss2<X>::fsss2(X &theCollector) : mode(0), guessDepth(0), collector(theCollector) {}
 
 //only first 81 bits set
@@ -676,8 +681,10 @@ nakedAgain:
 			found = 0;
 			for(int d = 0; d < 9; d++) { //for each digit
 				if(knownNoHiddenSingles[d] == grid[d]) {
+					//knownNoHiddenHits++;
 					continue;
 				}
+				//knownNoHiddenMisses++;
 againSameHidden:
 				//for each unsolved house
 				for(uint32_t houses = grid[d].toInt32_3(); houses; houses &= (houses - 1)) {
@@ -732,8 +739,11 @@ single_found:
 		//if a digit in a row is within a single triplet, then remove digit from the other two box triplets and vice versa
 		for (int d = 0; d < 9; d++) {
 #ifdef LOCKED_CANDIDATES_USE_CACHE
-			if(knownNoLockedCandidates[d] == grid[d])
+			if(knownNoLockedCandidates[d] == grid[d]) {
+				//knownNoLockedCandidatesHits++;
 				continue;
+			}
+			//knownNoLockedCandidatesMisses++;
 			if(doLockedCandidatesForDigit(grid[d])) {
 				found = true;
 			}
@@ -870,6 +880,7 @@ nextGuess:
 			//strategy 1: least value, then least cell index //234.922 seconds. Trials = 737 680 539
 			//if(solved.popcount_128() > 50)
 			if(solved.popcount_128() < 10)
+			//if(1)
 			{
 				for(optDigit = 0; optDigit < 7; optDigit++) { //prefer the least value
 					if(!all.isDisjoint(grid[optDigit])) {

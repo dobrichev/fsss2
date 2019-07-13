@@ -185,10 +185,18 @@ struct minimizer {
 	void minimizeVanilla(char *puz);
 	void minimizePencilmarks(char *puz); //expand the pencilmarks for single-solution puzzle
 	void minimizePencilmarks(bm128 *puz); //expand the pencilmarks for single-solution puzzle
+
 	void reduceM2P1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1v2(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1v3(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
 	void reduceM2P1(const char* p); //string as input
+
+	void tryReduceM1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
+	void tryReduceM1(const char* p); //string as input
+
 	void transformM1P1(bm128 *forbiddenValuePositions); //transform single-solution puzzle
 	void transformM1P1(const char* p); //string as input
+
 	void solRowMinLex(const bm128 *src, bm128 *res, const char* sol);
 	bool solRowMinLex(const bm128 *src, bm128 *res); //transform single-solution puzzle to row-min-lex by solution grid
 	void solRowMinLex(const bm128 *src); //transform single-solution puzzle to row-min-lex by solution grid
