@@ -1,6 +1,8 @@
 #if 1
 #include <vector>
 #include <set>
+#include <list>
+#include <map>
 #include <algorithm>
 #include <stdio.h>
 #include <random>
@@ -368,7 +370,8 @@ void minimizer::reduceM2P1(const char* p) {
 	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
 	//reduceM2P1(src.forbiddenValuePositions); //do the job
 	//reduceM2P1v2(src.forbiddenValuePositions); //do the job
-	reduceM2P1v3(src.forbiddenValuePositions); //do the job
+	//reduceM2P1v3(src.forbiddenValuePositions); //do the job
+	reduceM2P1v4(src.forbiddenValuePositions); //do the job
 }
 void minimizer::transformM1P1(const char* p) {
 	complementaryPencilmarksX src;
@@ -888,8 +891,8 @@ void minimizer::reduceM2P1v3(bm128 *forbiddenValuePositions) { // ~1.5 seconds/p
 	//pass 2: test for {-2,+1}
 	for(int dForbid = 0; dForbid < 9; dForbid++) {
 		for(int cForbid = 0; cForbid < 81; cForbid++) {
-			if(redundantsAlone[dForbid][cForbid].size < 2) continue;
-			//if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
+			//if(redundantsAlone[dForbid][cForbid].size < 2) continue; <--- doesn't export {-1,+1}
+			if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
 			forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
 			//apply {-2} and check if single-solution is found
 			for(int allow1 = 0; allow1 < redundantsAlone[dForbid][cForbid].size - 1; allow1++) {
@@ -930,6 +933,138 @@ void minimizer::reduceM2P1v3(bm128 *forbiddenValuePositions) { // ~1.5 seconds/p
 	} //dForbid
 	//fprintf(stderr, "(+-)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
 	delete[] redundantsAlone;
+}
+void minimizer::reduceM2P1v4(bm128 *forbiddenValuePositions) { // ~1.5 seconds/puzzle
+	fprintf(stderr, ".");
+//	numSolverCalls = 0;
+//	knownNoLockedCandidatesHits = 0;
+//	knownNoLockedCandidatesMisses = 0;
+//	knownNoHiddenHits = 0;
+//	knownNoHiddenMisses = 0;
+	getSingleSolution ss;
+	struct solution {
+		char sol[88];
+	};
+	solution sol; //pass solution as hint parameter to canonicalizer
+	solution originalSol;
+	if(1 != ss.solve(forbiddenValuePositions, originalSol.sol)) return; //silently ignore invalid puzzles
+	struct redundantInContext {
+		int digit;
+		int cell;
+		bool skip;
+		solution sol;
+	};
+	std::map<std::pair<int,int>,std::list<redundantInContext>> redundantsAlone;
+#ifdef COUNT_TRIALS
+	int maxTrialsSoFar = 0;
+#endif
+	//pass 1: collect single-solution puzzles at {-1,+1}
+	//apply {+1} and check if single-solution is found
+	for(int dAllow = 0; dAllow < 9; dAllow++) {
+		for(int cAllow = 0; cAllow < 81; cAllow++) {
+			if(!forbiddenValuePositions[dAllow].isBitSet(cAllow)) continue; //skip allowed placements
+			forbiddenValuePositions[dAllow].clearBit(cAllow); //allow
+			for(int dForbid = 0; dForbid < 9; dForbid++) {
+				for(int cForbid = 0; cForbid < 81; cForbid++) {
+					if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
+					if(dForbid == dAllow && cForbid == cAllow) continue; //note that dForbid at cForbid is temporary set
+					forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
+					//apply {-1} and check if single-solution is found
+#ifdef COUNT_TRIALS
+							nTrials = 0;
+#endif
+					//numSolverCalls++;
+					int numSolutions = ss.solve(forbiddenValuePositions, sol.sol);
+					if(1 == numSolutions) {
+						std::pair<int,int> key(dForbid, cForbid);
+						redundantInContext value{dAllow, cAllow, false, sol};
+						redundantsAlone[key].push_back(value);
+					}
+//					else if(dForbid == originalSol.sol[cForbid] - 1 && 0 == numSolutions) { //same solution
+//						std::pair<int,int> key(dForbid, cForbid);
+//						redundantInContext value{dAllow, cAllow, true, {}};
+//						redundantsAlone[key].push_back(value);
+//					}
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+						//fprintf(stderr, "\n%d", maxTrialsSoFar);
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),+(%d,%d)}\t%d", nTrials, dAllow, cAllow, dForbid, cForbid, numSolutions);
+#endif
+					forbiddenValuePositions[dForbid].clearBit(cForbid); // restore
+				} //cForbid
+			} //dForbid
+			forbiddenValuePositions[dAllow].setBit(cAllow); //restore
+		} //cAllow
+	} //dAllow
+	//pass 2: test for {-2,+1}
+	for(auto&& m1p1 : redundantsAlone) {
+		auto&& m1p1Val = m1p1.second;
+		if(m1p1Val.size() < 2) continue;
+		auto&& m1p1Key = m1p1.first;
+		int dForbid = m1p1Key.first;
+		int cForbid = m1p1Key.second;
+		forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
+		for(auto&& a1 = m1p1Val.begin(); a1 != m1p1Val.end(); a1++) {
+			int dAllow1 = a1->digit;
+			int cAllow1 = a1->cell;
+			forbiddenValuePositions[dAllow1].clearBit(cAllow1); // allow
+			auto a2start = a1;
+			a2start++;
+			for(auto&& a2 = a2start; a2 != m1p1Val.end(); a2++) {
+				int dAllow2 = a2->digit;
+				int cAllow2 = a2->cell;
+				forbiddenValuePositions[dAllow2].clearBit(cAllow2); // allow
+#ifdef COUNT_TRIALS
+					nTrials = 0;
+#endif
+					//numSolverCalls++;
+					int numSolutions = ss.solve(forbiddenValuePositions, sol.sol);
+#ifdef COUNT_TRIALS
+					if(maxTrialsSoFar < nTrials) {
+						maxTrialsSoFar = nTrials;
+					}
+					fprintf(stderr, "\n%d\t{-(%d,%d),(%d,%d),+(%d,%d)}\t%d", nTrials, redundantsAlone[dForbid][cForbid].rc[allow1].digit, redundantsAlone[dForbid][cForbid].rc[allow1].cell, redundantsAlone[dForbid][cForbid].rc[allow2].digit, redundantsAlone[dForbid][cForbid].rc[allow2].cell, dForbid, cForbid, numSolutions);
+#endif
+					if(1 == numSolutions) {
+						//lucky
+						a1->skip = true;
+						a2->skip = true;
+						solRowMinLex(forbiddenValuePositions, sol.sol); // export {-2,+1}
+						fprintf(stderr, "+");
+					}
+				forbiddenValuePositions[dAllow2].setBit(cAllow2); // restore
+			}
+			forbiddenValuePositions[dAllow1].setBit(cAllow1); // restore
+		}
+		forbiddenValuePositions[dForbid].clearBit(cForbid); // restore
+	}
+	//pass 3: export minimal {-1,+1}
+	for(auto&& m1p1 : redundantsAlone) {
+		auto&& m1p1Val = m1p1.second;
+		auto&& m1p1Key = m1p1.first;
+		int dForbid = m1p1Key.first;
+		int cForbid = m1p1Key.second;
+		bool sameSolution = dForbid != originalSol.sol[cForbid] - 1;
+		forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
+		for(auto&& a1 = m1p1Val.begin(); a1 != m1p1Val.end(); a1++) {
+			if(a1->skip) continue; //skip non-minimals
+			int dAllow1 = a1->digit;
+			int cAllow1 = a1->cell;
+			forbiddenValuePositions[dAllow1].clearBit(cAllow1); // allow
+			if(sameSolution) {
+				solRowMinLex(forbiddenValuePositions, a1->sol.sol); // export {-1,+1}
+			}
+			else {
+				//different solution grid can cause non-minimals here
+				tryReduceM1(forbiddenValuePositions); // export either {-1,+1} or {-2,+1}
+			}
+			forbiddenValuePositions[dAllow1].setBit(cAllow1); // restore
+		}
+		forbiddenValuePositions[dForbid].clearBit(cForbid); // restore
+	}
+	//fprintf(stderr, "(+-)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
 }
 void minimizer::tryReduceM1(bm128 *forbiddenValuePositions) { //output all unique {-1} if exist, else output original
 	//fprintf(stderr, ".");

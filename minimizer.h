@@ -189,6 +189,7 @@ struct minimizer {
 	void reduceM2P1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
 	void reduceM2P1v2(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
 	void reduceM2P1v3(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1v4(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
 	void reduceM2P1(const char* p); //string as input
 
 	void tryReduceM1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
