@@ -198,6 +198,9 @@ struct minimizer {
 	void transformM1P1(bm128 *forbiddenValuePositions); //transform single-solution puzzle
 	void transformM1P1(const char* p); //string as input
 
+	void transformM2P2(bm128 *forbiddenValuePositions); //transform single-solution puzzle
+	void transformM2P2(const char* p); //string as input
+
 	void solRowMinLex(const bm128 *src, bm128 *res, const char* sol);
 	bool solRowMinLex(const bm128 *src, bm128 *res); //transform single-solution puzzle to row-min-lex by solution grid
 	void solRowMinLex(const bm128 *src); //transform single-solution puzzle to row-min-lex by solution grid

@@ -16,10 +16,12 @@
 
 //#define COUNT_TRIALS
 
+//for low-clue pencilmark-only sudoku
+#define GUESS_STRATEGY_2
+
 #define USE_LOCKED_CANDIDATES
 #define LOCKED_CANDIDATES_ALWAYS
 #define LOCKED_CANDIDATES_USE_CACHE
-
 
 //#define USE_SUBSETS
 
@@ -102,7 +104,7 @@ public:
 	X &collector; //the object instance that receives notifications for solved cells and solutions found
 
 	//clear the context
-	void inline initEmpty();
+	constexpr void inline initEmpty();
 
 	//resolves cells with a single candidate for a cell
 	void inline doNakedSingles();
@@ -138,7 +140,7 @@ public:
 };
 
 //test whether a given puzzle has at least one solution
-class hasAnySolution : public nullCollector {
+class hasAnySolution final : public nullCollector {
 	//fsss2<hasAnySolution> solver;
 	int nsol;
 public:
@@ -149,7 +151,7 @@ public:
 };
 
 //test whether a given puzzle has exactly one solution
-class hasSingleSolution : public nullCollector {
+class hasSingleSolution final : public nullCollector {
 	//fsss2<hasSingleSolution> solver;
 	int nsol;
 public:
@@ -160,7 +162,7 @@ public:
 };
 
 //test whether a given subgrid has at least one redundant given, works for single-solution puzzles only
-class isRedundant : public nullCollector {
+class isRedundant final : public nullCollector {
 public:
 	int nsol;
 	//char sol[81]; //debug
@@ -171,7 +173,7 @@ public:
 };
 
 //test whether a given subgrid has at least one redundant given, works for single-solution puzzles only
-class isIrreducible : public nullCollector {
+class isIrreducible final : public nullCollector {
 public:
 	int nsol;
 	bool solutionFound();
@@ -190,14 +192,25 @@ public:
 	int solve(const bm128* forbiddenValuePositions, char* res);
 };
 
+//test whether a given puzzle has 2+ solutions and returns two of them
+class getTwoSolutions final : public getSingleSolution {
+public:
+	inline void setCellValue(int cell, int val);
+	bool solutionFound();
+	int solve(const char* p, char* res);
+	int solve(const bm128* forbiddenValuePositions, char* res);
+};
+
 //test whether a given puzzle has at least one solution and returns it
-class getAnySolution : public getSingleSolution {
+class getAnySolution final : public getSingleSolution {
 public:
 	bool solutionFound();
+	int solve(const char* p, char* res);
+	int solve(const bm128* forbiddenValuePositions, char* res);
 };
 
 //compose pencilmarks from all solutions
-class multiSolutionPM : public nullCollector {
+class multiSolutionPM final : public nullCollector {
 	int nsol;
 	bm128 *resPM; //solutionFound sets bits from sol[] here
 	char sol[81]; //setCellValue accumulates the solution here
@@ -210,7 +223,7 @@ public:
 };
 
 //get only the positions of givens and find all minimal unique puzzles within the pattern
-class patEnum : public nullCollector {
+class patEnum final : public nullCollector {
 	bm128 unsetCells[81]; //for each guess
 	uint32_t cellCandidates[82]; //for each guess
 	uint32_t chosenGuessCell[82]; //for each guess

@@ -378,6 +378,11 @@ void minimizer::transformM1P1(const char* p) {
 	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
 	transformM1P1(src.forbiddenValuePositions); //do the job
 }
+void minimizer::transformM2P2(const char* p) {
+	complementaryPencilmarksX src;
+	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
+	transformM2P2(src.forbiddenValuePositions); //do the job
+}
 void minimizer::solRowMinLex(const char* p) {
 	complementaryPencilmarksX src;
 	if(!src.fromChars2(p)) return; //silently ignore invalid inputs
@@ -966,6 +971,7 @@ void minimizer::reduceM2P1v4(bm128 *forbiddenValuePositions) { // ~1.5 seconds/p
 			forbiddenValuePositions[dAllow].clearBit(cAllow); //allow
 			for(int dForbid = 0; dForbid < 9; dForbid++) {
 				for(int cForbid = 0; cForbid < 81; cForbid++) {
+					//if(originalSol.sol[cForbid] != dForbid) continue; //experimental: enforce solution changing
 					if(forbiddenValuePositions[dForbid].isBitSet(cForbid)) continue; //skip already forbidden placements
 					if(dForbid == dAllow && cForbid == cAllow) continue; //note that dForbid at cForbid is temporary set
 					forbiddenValuePositions[dForbid].setBit(cForbid); // forbid dForbid in cForbid
@@ -1085,7 +1091,7 @@ void minimizer::tryReduceM1(bm128 *forbiddenValuePositions) { //output all uniqu
 		} //c1
 	} //d1
 	if(hasReduced) {
-		fprintf(stderr, "+");
+		fprintf(stderr, "-");
 	}
 	else {
 		solRowMinLex(forbiddenValuePositions, sol); // export original
@@ -1107,11 +1113,87 @@ void minimizer::transformM1P1(bm128 *forbiddenValuePositions) {
 					forbiddenValuePositions[d].setBit(c); // forbid d in c
 					if(1 == ss.solve(forbiddenValuePositions)) {
 						//lucky
-						complementaryPencilmarksX::dump2(forbiddenValuePositions);
+						tryReduceM1(forbiddenValuePositions);
+						//complementaryPencilmarksX::dump2(forbiddenValuePositions);
 					}
 					forbiddenValuePositions[d].clearBit(c); // restore
 				}
 			}
+			forbiddenValuePositions[d1].setBit(c1); //restore
+		} //c1
+	} //d1
+}
+void minimizer::transformM2P2(bm128 *forbiddenValuePositions) {
+	fprintf(stderr, "\n");
+	hasSingleSolution ss;
+	getTwoSolutions ts;
+	char sol2[2][81];
+	//apply {-1} and get multiple-solution puzzle
+	for(int d1 = 0; d1 < 9; d1++) {
+		for(int c1 = 0; c1 < 81; c1++) {
+			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
+			forbiddenValuePositions[d1].clearBit(c1); //allow
+			//fprintf(stderr, "(-%d,%d)", d1 + 1, c1);
+			//apply {-1} for second time
+			for(int d2 = d1; d2 < 9; d2++) {
+				for(int c2 = d1 == d2 ? c1 + 1 : 0; c2 < 81; c2++) {
+					if(!forbiddenValuePositions[d2].isBitSet(c2)) continue; //skip allowed placements
+					forbiddenValuePositions[d2].clearBit(c2); //allow
+					//fprintf(stderr, "(--%d,%d)", d2 + 1, c2);
+					//apply {+1} and get unavoidable set or single solution
+					for(int dd1 = 0; dd1 < 9; dd1++) {
+						for(int cc1 = 0; cc1 < 81; cc1++) {
+							if(forbiddenValuePositions[dd1].isBitSet(cc1)) continue; //skip already forbidden placements
+							if(dd1 == d1 && cc1 == c1) continue; //don't turn d1 back
+							if(dd1 == d2 && cc1 == c2) continue; //don't turn d2 back
+							forbiddenValuePositions[dd1].setBit(cc1); // forbid dd1 in cc1
+							//fprintf(stderr, "(+%d,%d)", dd1 + 1, cc1);
+							int numSolP1 = ts.solve(forbiddenValuePositions, sol2[0]);
+							if(1 == numSolP1) {
+								//lucky, {-2,+1}
+								fprintf(stderr, "+");
+								tryReduceM1(forbiddenValuePositions);
+								//complementaryPencilmarksX::dump2(forbiddenValuePositions);
+							}
+							else if(2 == numSolP1) {
+								//apply {+1} for second time only on the cells in UA
+//								fprintf(stderr, "\n");
+//								for(int cc2 = 0; cc2 < 81; cc2++) {
+//									int dd2 = sol2[0][cc2] - 1;
+//									fprintf(stderr, "%d", dd2 + 1);
+//								}
+//								fprintf(stderr, "\n");
+//								for(int cc2 = 0; cc2 < 81; cc2++) {
+//									int dd2 = sol2[1][cc2] - 1;
+//									fprintf(stderr, "%d", dd2 + 1);
+//								}
+//								fprintf(stderr, "\n");
+								for(int cc2 = 0; cc2 < 81; cc2++) {
+									if(sol2[0][cc2] == sol2[1][cc2]) continue; //skip the cells outside the UA
+									//check both solutions
+									for(int s = 0; s < 2; s++) {
+										int dd2 = sol2[s][cc2] - 1;
+										if(dd2 == d1 && cc2 == c1) continue; //don't turn d1 back
+										if(dd2 == d2 && cc2 == c2) continue; //don't turn d2 back
+										forbiddenValuePositions[dd2].setBit(cc2); // forbid dd2 in cc2
+										//fprintf(stderr, "(++%d,%d)", dd2 + 1, cc2);
+										int numSolP2 = ss.solve(forbiddenValuePositions);
+										if(1 == numSolP2) {
+											//lucky, {-2,+2}
+											//complementaryPencilmarksX::dump2(forbiddenValuePositions);
+											fprintf(stderr, "=");
+											tryReduceM1(forbiddenValuePositions);
+										}
+										forbiddenValuePositions[dd2].clearBit(cc2); // restore
+									}
+								}
+							}
+							forbiddenValuePositions[dd1].clearBit(cc1); // restore
+						} //cc1
+					} //dd1
+					forbiddenValuePositions[d2].setBit(c2); //restore
+				} //c2
+			} //d2
 			forbiddenValuePositions[d1].setBit(c1); //restore
 		} //c1
 	} //d1

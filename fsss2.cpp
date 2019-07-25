@@ -24,21 +24,27 @@ extern int nTrials;
 //int knownNoHiddenHits;
 //int knownNoHiddenMisses;
 
-template <class X> fsss2<X>::fsss2(X &theCollector) : mode(0), guessDepth(0), collector(theCollector) {}
+template <class X> fsss2<X>::fsss2(X &theCollector) : mode(0), guessDepth(0), collector(theCollector)
+#ifdef USE_LOCKED_CANDIDATES
+#ifndef LOCKED_CANDIDATES_ALWAYS
+		, lockedDone(0)
+#endif
+#endif
+{}
 
 //only first 81 bits set
-const t_128 constraints::mask81 = {0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
+constexpr t_128 constraints::mask81 = {0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
 
 //only first 81 + 27 = 108 bits set
 //template <class X> const t_128 fsss2<X>::mask108 = {0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFF};
 
 //the first 81 bits for the cells and the 27 bits from position 96+
-const t_128 constraints::mask108 = {0xFFFFFFFFFFFFFFFF,0x07FFFFFF0001FFFF};
+constexpr t_128 constraints::mask108 = {0xFFFFFFFFFFFFFFFF,0x07FFFFFF0001FFFF};
 
 //the 27 bits from position 96+
 //const t_128 constraints::mask27 = {0x0,0x07FFFFFF00000000};
 
-const t_128 constraints::visibleCells[81] = { //1 for all 20 visible cells, 1 for the cell itself, 1 for the three houses
+constexpr t_128 constraints::visibleCells[81] = { //1 for all 20 visible cells, 1 for the cell itself, 1 for the three houses
 	{0x80402010081C0FFF,0x0004020100000100},
 	{0x00804020101C0FFF,0x0004040100000201},
 	{0x01008040201C0FFF,0x0004080100000402},
@@ -122,7 +128,7 @@ const t_128 constraints::visibleCells[81] = { //1 for all 20 visible cells, 1 fo
 	{0x7020100804020100,0x040201000001FFE0}
 }; //bm128 visibleCells[81]
 
-const t_128 constraints::bitsForHouse[27] = { //1 for the 9 cells in the house
+constexpr t_128 constraints::bitsForHouse[27] = { //1 for the 9 cells in the house
 	{0x00000000000001FF,0x0000000000000000},
 	{0x000000000003FE00,0x0000000000000000},
 	{0x0000000007FC0000,0x0000000000000000},
@@ -155,7 +161,7 @@ const t_128 constraints::bitsForHouse[27] = { //1 for the 9 cells in the house
 //const uint32 constraints::topCellsHouses = 0x00FC007F; //000111111000000000001111111
 
 #ifdef USE_LOCKED_CANDIDATES
-const tripletMask constraints::tripletMasks[54] = {
+constexpr tripletMask constraints::tripletMasks[54] = {
 	{{0x0000000000000007,0x0000000000000000}, {0x00000000000001F8,0x0000000000000000}, {0x00000000001C0E00,0x0000000000000000}, },
 	{{0x0000000000000038,0x0000000000000000}, {0x00000000000001C7,0x0000000000000000}, {0x0000000000E07000,0x0000000000000000}, },
 	{{0x00000000000001C0,0x0000000000000000}, {0x000000000000003F,0x0000000000000000}, {0x0000000007038000,0x0000000000000000}, },
@@ -213,7 +219,7 @@ const tripletMask constraints::tripletMasks[54] = {
 }; //tripletMasks
 #endif
 
-template <class X> void fsss2<X>::initEmpty() {
+template <class X> constexpr void fsss2<X>::initEmpty() {
 	//set all cells and houses as "unsolved"
 	grid[0] = constraints::mask108;
 	grid[1] = constraints::mask108;
@@ -247,7 +253,9 @@ template <class X> void fsss2<X>::initEmpty() {
 	knownNoLockedCandidates[7] = constraints::mask108;
 	knownNoLockedCandidates[8] = constraints::mask108;
 #endif
+#ifndef LOCKED_CANDIDATES_ALWAYS
 	lockedDone = 0;
+#endif
 #endif
 #ifdef USE_SUBSETS
 	subsetsDone = 0;
@@ -734,7 +742,10 @@ single_found:
 
 	//locked candidates
 #ifdef USE_LOCKED_CANDIDATES
-	if(lockedDone == 0) {
+#ifndef LOCKED_CANDIDATES_ALWAYS
+	if(lockedDone == 0)
+#endif
+	{
 		bool found = false;
 		//if a digit in a row is within a single triplet, then remove digit from the other two box triplets and vice versa
 		for (int d = 0; d < 9; d++) {
@@ -877,10 +888,12 @@ nextGuess:
 //					}
 //				}
 			}
+#ifdef GUESS_STRATEGY_2
 			//strategy 1: least value, then least cell index //234.922 seconds. Trials = 737 680 539
 			//if(solved.popcount_128() > 50)
 			if(solved.popcount_128() < 10)
 			//if(1)
+#endif
 			{
 				for(optDigit = 0; optDigit < 7; optDigit++) { //prefer the least value
 					if(!all.isDisjoint(grid[optDigit])) {
@@ -893,6 +906,7 @@ nextGuess:
 				all &= grid[7];
 				optCell = all.getFirstBit1Index96();
 			}
+#ifdef GUESS_STRATEGY_2
 			else
 			//strategy 2 (experimental): most direct eliminations value/cell //9.271 seconds. Trials = 23 355 791
 			{
@@ -927,6 +941,7 @@ nextGuess:
 					}
 				}
 			}
+#endif
 //			//strategy 3 (experimental, for completeness): least direct eliminations value/cell //439.740 seconds. Trials = 1 219 276 128
 //			{
 //				bm128 uncheckedCells(all);
@@ -1201,16 +1216,10 @@ template < class X > void fsss2 < X > ::solve(const uint16_t* const in) {
 	return;
 }
 
-//template class fsss2<getSingleSolution>;
-//template class fsss2<hasSingleSolution>;
-
 bool nullCollector::solutionFound() {return false;} //continue
 void nullCollector::setCellValue(int cell, int val) {}
 bool nullCollector::beforeGuess(int guessDepth, int &optCell, int &optDigit) {return true;} //guess Auto
 
-//hasSingleSolution::hasSingleSolution() :
-//	solver(fsss2<hasSingleSolution>(*this))
-//{}
 int hasSingleSolution::solve(const char* p) {
 	nsol = 0;
 	fsss2<hasSingleSolution> solver(*this);
@@ -1231,9 +1240,6 @@ bool hasSingleSolution::solutionFound() {
 	return (++nsol == 2);
 }
 
-//hasAnySolution::hasAnySolution() :
-//	solver(fsss2<hasAnySolution>(*this))
-//	{}
 int hasAnySolution::solve(const bm128* p) {
 	fsss2<hasAnySolution> solver(*this);
 	nsol = 0;
@@ -1360,8 +1366,60 @@ int getSingleSolution::solve(const bm128* forbiddenValuePositions, char* res) {
 	return nsol;
 }
 
+void getTwoSolutions::setCellValue(int cell, int val) {
+	resChar[cell] = val;
+}
+bool getTwoSolutions::solutionFound() {
+	if(nsol == 0) {
+		for(int i = 0; i < 81; i++) {
+			resChar[i + 81] = resChar[i];
+		}
+		resChar += 81;
+		nsol++;
+		return false;
+	}
+	nsol++;
+	return true; //stop after possible second solution
+}
+int getTwoSolutions::solve(const char* p, char* res) {
+	fsss2<getTwoSolutions> solver(*this);
+	nsol = 0;
+	resChar = res;
+	solver.solve(p);
+	return nsol;
+}
+int getTwoSolutions::solve(const bm128* forbiddenValuePositions, char* res) {
+	fsss2<getTwoSolutions> solver(*this);
+	nsol = 0;
+	resChar = res;
+	solver.initEmpty();
+	for(int g = 0; g < 9; g++) {
+		solver.grid[g].clearBits(forbiddenValuePositions[g]);
+	}
+	solver.doEliminations();
+	return nsol;
+}
+
 bool getAnySolution::solutionFound() {
 	return (++nsol == 1); //stop after first solution
+}
+int getAnySolution::solve(const char* p, char* res) {
+	fsss2<getAnySolution> solver(*this);
+	nsol = 0;
+	resChar = res;
+	solver.solve(p);
+	return nsol;
+}
+int getAnySolution::solve(const bm128* forbiddenValuePositions, char* res) {
+	fsss2<getAnySolution> solver(*this);
+	nsol = 0;
+	resChar = res;
+	solver.initEmpty();
+	for(int g = 0; g < 9; g++) {
+		solver.grid[g].clearBits(forbiddenValuePositions[g]);
+	}
+	solver.doEliminations();
+	return nsol;
 }
 
 void multiSolutionPM::setCellValue(int cell, int val) {
