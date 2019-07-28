@@ -508,7 +508,7 @@ next:
 	map[0] = 0;
 }
 
-void transformer::transform(const bm128 *in, bm128 *out) const {
+void transformer::transform(const pencilmarks& in, pencilmarks& out) const {
 	for(int d = 0; d < 9; d++) {
 		out[d].clear();
 	}
@@ -524,10 +524,10 @@ void transformer::transform(const bm128 *in, bm128 *out) const {
 	}
 	if(next) {
 		//transforming a puzzle of automorphic grid
-		bm128 aout[9];
+		pencilmarks aout;
 		next->transform(in, aout); //minimal of the rest of the transformations
-		if(memcmp(out, aout, 9 * sizeof(bm128)) > 0) {
-			memcpy(out, aout, 9 * sizeof(bm128));
+		if(memcmp(&out, &aout, sizeof(pencilmarks)) > 0) {
+			memcpy(&out, &aout, sizeof(pencilmarks));
 		}
 	}
 }

@@ -269,7 +269,7 @@ void minimizer::minimizePencilmarks(char *puz) {
 	} while(!previousPass.empty());
 	printf("\nMinimals found = %lu\n", numMinimals);
 }
-void minimizer::minimizePencilmarks(bm128 *forbiddenValuePositions) {
+void minimizer::minimizePencilmarks(pencilmarks& forbiddenValuePositions) {
 	char sol[88];
 	{
 		getSingleSolution ss;
@@ -616,7 +616,7 @@ void minimizer::tryReduceM1(const char* p) {
 //	extern int knownNoHiddenHits;
 //	extern int knownNoHiddenMisses;
 
-void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { // ~1 second/puzzle
+void minimizer::reduceM2P1(pencilmarks& forbiddenValuePositions) { // ~1 second/puzzle
 //	numSolverCalls = 0;
 //	knownNoLockedCandidatesHits = 0;
 //	knownNoLockedCandidatesMisses = 0;
@@ -729,7 +729,7 @@ void minimizer::reduceM2P1(bm128 *forbiddenValuePositions) { // ~1 second/puzzle
 	} //dDest
 	//fprintf(stderr, "(-+)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
 }
-void minimizer::reduceM2P1v2(bm128 *forbiddenValuePositions) { // ~1.5 seconds/puzzle
+void minimizer::reduceM2P1v2(pencilmarks& forbiddenValuePositions) { // ~1.5 seconds/puzzle
 	fprintf(stderr, ".");
 //	numSolverCalls = 0;
 //	knownNoLockedCandidatesHits = 0;
@@ -823,7 +823,7 @@ void minimizer::reduceM2P1v2(bm128 *forbiddenValuePositions) { // ~1.5 seconds/p
 	} //dForbid
 	//fprintf(stderr, "(+-)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
 }
-void minimizer::reduceM2P1v3(bm128 *forbiddenValuePositions) { // ~1.5 seconds/puzzle
+void minimizer::reduceM2P1v3(pencilmarks& forbiddenValuePositions) { // ~1.5 seconds/puzzle
 	fprintf(stderr, ".");
 //	numSolverCalls = 0;
 //	knownNoLockedCandidatesHits = 0;
@@ -939,7 +939,7 @@ void minimizer::reduceM2P1v3(bm128 *forbiddenValuePositions) { // ~1.5 seconds/p
 	//fprintf(stderr, "(+-)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
 	delete[] redundantsAlone;
 }
-void minimizer::reduceM2P1v4(bm128 *forbiddenValuePositions) { // ~1.5 seconds/puzzle
+void minimizer::reduceM2P1v4(pencilmarks& forbiddenValuePositions) { // ~1.5 seconds/puzzle
 	fprintf(stderr, ".");
 //	numSolverCalls = 0;
 //	knownNoLockedCandidatesHits = 0;
@@ -1072,7 +1072,7 @@ void minimizer::reduceM2P1v4(bm128 *forbiddenValuePositions) { // ~1.5 seconds/p
 	}
 	//fprintf(stderr, "(+-)\t%d\t%d\t%d\t%d\t%d\n", numSolverCalls, knownNoLockedCandidatesHits, knownNoLockedCandidatesMisses, knownNoHiddenHits, knownNoHiddenMisses);
 }
-void minimizer::tryReduceM1(bm128 *forbiddenValuePositions) { //output all unique {-1} if exist, else output original
+void minimizer::tryReduceM1(pencilmarks& forbiddenValuePositions) { //output all unique {-1} if exist, else output original
 	//fprintf(stderr, ".");
 	getSingleSolution ss;
 	isRedundant redundantTester;
@@ -1097,7 +1097,7 @@ void minimizer::tryReduceM1(bm128 *forbiddenValuePositions) { //output all uniqu
 		solRowMinLex(forbiddenValuePositions, sol); // export original
 	}
 }
-void minimizer::transformM1P1(bm128 *forbiddenValuePositions) {
+void minimizer::transformM1P1(pencilmarks& forbiddenValuePositions) {
 	fprintf(stderr, ".");
 	hasSingleSolution ss;
 	//apply {-1} and get multiple-solution puzzle
@@ -1123,11 +1123,11 @@ void minimizer::transformM1P1(bm128 *forbiddenValuePositions) {
 		} //c1
 	} //d1
 }
-void minimizer::transformM2P2(bm128 *forbiddenValuePositions) {
-	fprintf(stderr, "\n");
+void minimizer::transformM2P2v1(pencilmarks& forbiddenValuePositions) { //full scan
 	hasSingleSolution ss;
-	getTwoSolutions ts;
-	char sol2[2][81];
+	int numSolverCalls = 0;
+	clock_t start, finish;
+	start = clock();
 	//apply {-1} and get multiple-solution puzzle
 	for(int d1 = 0; d1 < 9; d1++) {
 		for(int c1 = 0; c1 < 81; c1++) {
@@ -1148,7 +1148,8 @@ void minimizer::transformM2P2(bm128 *forbiddenValuePositions) {
 							if(dd1 == d2 && cc1 == c2) continue; //don't turn d2 back
 							forbiddenValuePositions[dd1].setBit(cc1); // forbid dd1 in cc1
 							//fprintf(stderr, "(+%d,%d)", dd1 + 1, cc1);
-							int numSolP1 = ts.solve(forbiddenValuePositions, sol2[0]);
+							int numSolP1 = ss.solve(forbiddenValuePositions);
+							numSolverCalls++;
 							if(1 == numSolP1) {
 								//lucky, {-2,+1}
 								fprintf(stderr, "+");
@@ -1157,27 +1158,14 @@ void minimizer::transformM2P2(bm128 *forbiddenValuePositions) {
 							}
 							else if(2 == numSolP1) {
 								//apply {+1} for second time only on the cells in UA
-//								fprintf(stderr, "\n");
-//								for(int cc2 = 0; cc2 < 81; cc2++) {
-//									int dd2 = sol2[0][cc2] - 1;
-//									fprintf(stderr, "%d", dd2 + 1);
-//								}
-//								fprintf(stderr, "\n");
-//								for(int cc2 = 0; cc2 < 81; cc2++) {
-//									int dd2 = sol2[1][cc2] - 1;
-//									fprintf(stderr, "%d", dd2 + 1);
-//								}
-//								fprintf(stderr, "\n");
-								for(int cc2 = 0; cc2 < 81; cc2++) {
-									if(sol2[0][cc2] == sol2[1][cc2]) continue; //skip the cells outside the UA
-									//check both solutions
-									for(int s = 0; s < 2; s++) {
-										int dd2 = sol2[s][cc2] - 1;
+								for(int dd2 = dd1; dd2 < 9; dd2++) {
+									for(int cc2 = dd2 == dd1 ? cc1 + 1 : 0; cc2 < 81; cc2++) {
 										if(dd2 == d1 && cc2 == c1) continue; //don't turn d1 back
 										if(dd2 == d2 && cc2 == c2) continue; //don't turn d2 back
 										forbiddenValuePositions[dd2].setBit(cc2); // forbid dd2 in cc2
 										//fprintf(stderr, "(++%d,%d)", dd2 + 1, cc2);
 										int numSolP2 = ss.solve(forbiddenValuePositions);
+										numSolverCalls++;
 										if(1 == numSolP2) {
 											//lucky, {-2,+2}
 											//complementaryPencilmarksX::dump2(forbiddenValuePositions);
@@ -1185,8 +1173,8 @@ void minimizer::transformM2P2(bm128 *forbiddenValuePositions) {
 											tryReduceM1(forbiddenValuePositions);
 										}
 										forbiddenValuePositions[dd2].clearBit(cc2); // restore
-									}
-								}
+									} //cc2
+								} //dd2
 							}
 							forbiddenValuePositions[dd1].clearBit(cc1); // restore
 						} //cc1
@@ -1197,30 +1185,471 @@ void minimizer::transformM2P2(bm128 *forbiddenValuePositions) {
 			forbiddenValuePositions[d1].setBit(c1); //restore
 		} //c1
 	} //d1
+	finish = clock();
+	double tt = ((double)(finish - start)) / CLOCKS_PER_SEC;
+	fprintf(stderr, "\t%d,%2.3fs,%dK/s\n", numSolverCalls, tt, (int)(numSolverCalls / tt / 1000));
 }
-void minimizer::solRowMinLex(const bm128 *src) { //transform single-solution puzzle to row-min-lex by solution grid
-	bm128 res[9];
+void minimizer::transformM2P2v2(pencilmarks& forbiddenValuePositions) { //partial scan
+	hasSingleSolution ss;
+	getTwoSolutions ts;
+	char sol1[2][81];
+	char sol2[2][81];
+	int numSolverCalls = 0;
+	clock_t start, finish;
+	start = clock();
+	//apply {-1} and get multiple-solution puzzle
+	for(int d1 = 0; d1 < 9; d1++) {
+		for(int c1 = 0; c1 < 81; c1++) {
+			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
+			forbiddenValuePositions[d1].clearBit(c1); //allow
+			//fprintf(stderr, "(-%d,%d)", d1 + 1, c1);
+			//apply {-1} for second time
+			for(int d2 = d1; d2 < 9; d2++) {
+				for(int c2 = d1 == d2 ? c1 + 1 : 0; c2 < 81; c2++) {
+					if(!forbiddenValuePositions[d2].isBitSet(c2)) continue; //skip allowed placements
+					forbiddenValuePositions[d2].clearBit(c2); //allow
+					//fprintf(stderr, "(--%d,%d)", d2 + 1, c2);
+					pencilmarks deadClues;
+					deadClues.clear();
+					int numSolP0 = ts.solve(forbiddenValuePositions, sol1[0]); //get one deadly pattern
+					if(numSolP0 == 2) {
+						//apply {+1} and get unavoidable set or single solution
+						for(int dd1 = 0; dd1 < 9; dd1++) {
+							for(int cc1 = 0; cc1 < 81; cc1++) {
+								if(sol1[0][cc1] == sol1[1][cc1]) continue; //skip the cells outside the UA
+								if(sol1[0][cc1] != (dd1 + 1) && sol1[1][cc1] != (dd1 + 1)) continue; //skip the values not in the solutions
+								if(forbiddenValuePositions[dd1].isBitSet(cc1)) continue; //skip already forbidden placements
+								if(dd1 == d1 && cc1 == c1) continue; //don't turn d1 back
+								if(dd1 == d2 && cc1 == c2) continue; //don't turn d2 back
+								forbiddenValuePositions[dd1].setBit(cc1); // forbid dd1 in cc1
+								//fprintf(stderr, "(+%d,%d)", dd1 + 1, cc1);
+								int numSolP1 = ts.solve(forbiddenValuePositions, sol2[0]);
+								numSolverCalls++;
+								if(1 == numSolP1) {
+									//lucky, {-2,+1}
+									fprintf(stderr, "+");
+									tryReduceM1(forbiddenValuePositions);
+									//complementaryPencilmarksX::dump2(forbiddenValuePositions);
+								}
+								else if(2 == numSolP1) {
+									//apply {+1} for second time only on the cells in UA
+	//								fprintf(stderr, "\n");
+	//								for(int cc2 = 0; cc2 < 81; cc2++) {
+	//									int dd2 = sol2[0][cc2] - 1;
+	//									fprintf(stderr, "%d", dd2 + 1);
+	//								}
+	//								fprintf(stderr, "\n");
+	//								for(int cc2 = 0; cc2 < 81; cc2++) {
+	//									int dd2 = sol2[1][cc2] - 1;
+	//									fprintf(stderr, "%d", dd2 + 1);
+	//								}
+	//								fprintf(stderr, "\n");
+									for(int cc2 = 0; cc2 < 81; cc2++) {
+									//for(int cc2 = cc1; cc2 < 81; cc2++) {
+										if(sol2[0][cc2] == sol2[1][cc2]) continue; //skip the cells outside the UA
+										//check both solutions
+										for(int s = 0; s < 2; s++) {
+											int dd2 = sol2[s][cc2] - 1;
+											if(dd2 == d1 && cc2 == c1) continue; //don't turn d1 back
+											if(dd2 == d2 && cc2 == c2) continue; //don't turn d2 back
+											if(deadClues[dd2].isBitSet(cc2)) continue; //it was entirely processed on first {+1} stage
+											forbiddenValuePositions[dd2].setBit(cc2); // forbid dd2 in cc2
+											//fprintf(stderr, "(++%d,%d)", dd2 + 1, cc2);
+											int numSolP2 = ss.solve(forbiddenValuePositions);
+											numSolverCalls++;
+											if(1 == numSolP2) {
+												//lucky, {-2,+2}
+												//complementaryPencilmarksX::dump2(forbiddenValuePositions);
+												fprintf(stderr, "=");
+												tryReduceM1(forbiddenValuePositions);
+											}
+											forbiddenValuePositions[dd2].clearBit(cc2); // restore
+										}
+									}
+								}
+								deadClues[dd1].setBit(cc1); //mark as processed
+								forbiddenValuePositions[dd1].clearBit(cc1); // restore
+							} //cc1
+						} //dd1
+					}
+					else if(numSolP0 == 1) {
+						//{-2,+0} give unique puzzle?
+						fprintf(stderr, "!");
+						tryReduceM1(forbiddenValuePositions);
+					}
+					forbiddenValuePositions[d2].setBit(c2); //restore
+				} //c2
+			} //d2
+			forbiddenValuePositions[d1].setBit(c1); //restore
+		} //c1
+	} //d1
+	finish = clock();
+	double tt = ((double)(finish - start)) / CLOCKS_PER_SEC;
+	fprintf(stderr, "\t%d,%2.3fs,%dK/s\n", numSolverCalls, tt, (int)(numSolverCalls / tt / 1000));
+}
+void minimizer::transformM2P2v3(pencilmarks& forbiddenValuePositions) { //full scan
+	hasSingleSolution ss;
+	multiSolutionPM as;
+	pencilmarks pm1, pm2;
+	int numSolverCalls = 0;
+	clock_t start, finish;
+	start = clock();
+	//apply {-1} and get multiple-solution puzzle
+	for(int d1 = 0; d1 < 9; d1++) {
+		for(int c1 = 0; c1 < 81; c1++) {
+			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
+			forbiddenValuePositions[d1].clearBit(c1); //allow
+			//fprintf(stderr, "(-%d,%d)", d1 + 1, c1);
+			//apply {-1} for second time
+			for(int d2 = d1; d2 < 9; d2++) {
+				for(int c2 = d1 == d2 ? c1 + 1 : 0; c2 < 81; c2++) {
+					if(!forbiddenValuePositions[d2].isBitSet(c2)) continue; //skip allowed placements
+					forbiddenValuePositions[d2].clearBit(c2); //allow
+					//fprintf(stderr, "(--%d,%d)", d2 + 1, c2);
+					//int numSolP0 = as.solve(forbiddenValuePositions, pm1); //get unsolved pencilmarks
+					//if(numSolP0 > 1) {
+						//apply {+1} and get pm2 set or single solution
+						for(int dd1 = 0; dd1 < 9; dd1++) {
+							for(int cc1 = 0; cc1 < 81; cc1++) {
+								if(dd1 == d1 && cc1 == c1) continue; //don't turn d1 back
+								if(dd1 == d2 && cc1 == c2) continue; //don't turn d2 back
+								if(forbiddenValuePositions[dd1].isBitSet(cc1)) continue; //skip already forbidden placements
+								//if(!pm1[dd1].isBitSet(cc1)) continue; //skip the eliminated pencilmarks
+								forbiddenValuePositions[dd1].setBit(cc1); // forbid dd1 in cc1
+								//fprintf(stderr, "(+%d,%d)", dd1 + 1, cc1);
+								int numSolP1 = as.solve(forbiddenValuePositions, pm2);
+								numSolverCalls++;
+								if(1 == numSolP1) {
+									//lucky, {-2,+1}
+									fprintf(stderr, "+");
+									tryReduceM1(forbiddenValuePositions);
+									//complementaryPencilmarksX::dump2(forbiddenValuePositions);
+								}
+								else if(numSolP1 > 1) {
+									//apply {+1} for second time only on unsolved pm2
+									for(int dd2 = dd1; dd2 < 9; dd2++) {
+										for(int cc2 = dd2 == dd1 ? cc1 + 1 : 0; cc2 < 81; cc2++) {
+											if(dd2 == d1 && cc2 == c1) continue; //don't turn d1 back
+											if(dd2 == d2 && cc2 == c2) continue; //don't turn d2 back
+											if(!pm2[dd1].isBitSet(cc1)) continue; //skip the eliminated pencilmarks
+											forbiddenValuePositions[dd2].setBit(cc2); // forbid dd2 in cc2
+											//fprintf(stderr, "(++%d,%d)", dd2 + 1, cc2);
+											int numSolP2 = ss.solve(forbiddenValuePositions);
+											numSolverCalls++;
+											if(1 == numSolP2) {
+												//lucky, {-2,+2}
+												//complementaryPencilmarksX::dump2(forbiddenValuePositions);
+												fprintf(stderr, "=");
+												tryReduceM1(forbiddenValuePositions);
+											}
+											forbiddenValuePositions[dd2].clearBit(cc2); // restore
+										} //cc2
+									} //dd2
+								}
+								forbiddenValuePositions[dd1].clearBit(cc1); // restore
+							} //cc1
+						} //dd1
+					//}
+					//else if(numSolP0 == 1) {
+					//	//{-2,+0} give unique puzzle?
+					//	fprintf(stderr, "!");
+					//	tryReduceM1(forbiddenValuePositions);
+					//}
+					forbiddenValuePositions[d2].setBit(c2); //restore
+				} //c2
+			} //d2
+			forbiddenValuePositions[d1].setBit(c1); //restore
+		} //c1
+	} //d1
+	finish = clock();
+	double tt = ((double)(finish - start)) / CLOCKS_PER_SEC;
+	fprintf(stderr, "\t%d,%2.3fs,%dK/s\n", numSolverCalls, tt, (int)(numSolverCalls / tt / 1000));
+}
+void minimizer::transformM2P2(pencilmarks& forbiddenValuePositions) { //full scan
+	//hasAnySolution sss;
+	hasSingleSolution ss;
+	int numSolverCalls = 0;
+	int p1valid = 0;
+	int p1invalid = 0;
+	clock_t start, finish;
+	start = clock();
+	//apply {-1} and get multiple-solution puzzle
+	for(int d1 = 0; d1 < 9; d1++) {
+		for(int c1 = 0; c1 < 81; c1++) {
+			if(!forbiddenValuePositions[d1].isBitSet(c1)) continue; //skip allowed placements
+			forbiddenValuePositions[d1].clearBit(c1); //allow
+			//fprintf(stderr, "(-%d,%d)", d1 + 1, c1);
+			//apply {-1} for second time
+			for(int d2 = d1; d2 < 9; d2++) {
+				for(int c2 = d1 == d2 ? c1 + 1 : 0; c2 < 81; c2++) {
+					if(!forbiddenValuePositions[d2].isBitSet(c2)) continue; //skip allowed placements
+					forbiddenValuePositions[d2].clearBit(c2); //allow
+					//apply {+1} and get pm2 set or single solution
+					for(int dd1 = 0; dd1 < 9; dd1++) {
+						for(int cc1 = 0; cc1 < 81; cc1++) {
+							if(forbiddenValuePositions[dd1].isBitSet(cc1)) continue; //skip already forbidden placements
+							if(dd1 == d1 && cc1 == c1) continue; //don't turn d1 back
+							if(dd1 == d2 && cc1 == c2) continue; //don't turn d2 back
+							forbiddenValuePositions[dd1].setBit(cc1); // forbid dd1 in cc1
+							//fprintf(stderr, "(+%d,%d)", dd1 + 1, cc1);
+							int numSolP1 = ss.solve(forbiddenValuePositions);
+							numSolverCalls++;
+							if(numSolP1 == 2) {
+								p1valid++;
+								//apply {+1} for second time only on unsolved pm2
+//								for(int dd2 = dd1; dd2 < 9; dd2++) {
+//									for(int cc2 = dd2 == dd1 ? cc1 + 1 : 0; cc2 < 81; cc2++) {
+//										if(dd2 == d1 && cc2 == c1) continue; //don't turn d1 back
+//										if(dd2 == d2 && cc2 == c2) continue; //don't turn d2 back
+//										if(forbiddenValuePositions[dd2].isBitSet(cc2)) continue; //skip already forbidden placements
+//										forbiddenValuePositions[dd2].setBit(cc2); // forbid dd2 in cc2
+//										//fprintf(stderr, "(++%d,%d)", dd2 + 1, cc2);
+//										int numSolP2 = ss.solve(forbiddenValuePositions);
+//										numSolverCalls++;
+//										if(1 == numSolP2) {
+//											//lucky, {-2,+2}
+//											//complementaryPencilmarksX::dump2(forbiddenValuePositions);
+//											fprintf(stderr, "=");
+//											tryReduceM1(forbiddenValuePositions);
+//										}
+//										forbiddenValuePositions[dd2].clearBit(cc2); // restore
+//									} //cc2
+//								} //dd2
+							} //any solution
+							else {
+								p1invalid++;
+							}
+							forbiddenValuePositions[dd1].clearBit(cc1); // restore
+						} //cc1
+					} //dd1
+					forbiddenValuePositions[d2].setBit(c2); //restore
+				} //c2
+			} //d2
+			forbiddenValuePositions[d1].setBit(c1); //restore
+		} //c1
+	} //d1
+	finish = clock();
+	double tt = ((double)(finish - start)) / CLOCKS_PER_SEC;
+	fprintf(stderr, "\t%d,%2.3fs,%dK/s(%d/%d)\n", numSolverCalls, tt, (int)(numSolverCalls / tt / 1000), p1valid, p1invalid);
+}
+void minimizer::solRowMinLex(const pencilmarks& src) { //transform single-solution puzzle to row-min-lex by solution grid
+	pencilmarks res;
 	if(solRowMinLex(src, res)) {
 		complementaryPencilmarksX::dump2(res);
 	}
 }
-bool minimizer::solRowMinLex(const bm128 *src, bm128 *res) { //transform single-solution puzzle to row-min-lex by solution grid
+bool minimizer::solRowMinLex(const pencilmarks& src, pencilmarks& res) { //transform single-solution puzzle to row-min-lex by solution grid
 	getAnySolution solver;
 	char sol[88];
 	if(0 == solver.solve(src, sol)) return false; //ignore invalid puzzles
 	solRowMinLex(src, res, sol);
 	return true;
 }
-void minimizer::solRowMinLex(const bm128 *src, bm128 *res, const char* sol) { //transform single-solution puzzle to row-min-lex by solution grid
+void minimizer::solRowMinLex(const pencilmarks& src, pencilmarks& res, const char* sol) { //transform single-solution puzzle to row-min-lex by solution grid
 	transformer tr;
 	tr.byGrid(sol);
 	tr.transform(src, res);
 }
-void minimizer::solRowMinLex(const bm128 *src, const char* sol) { //transform single-solution puzzle to row-min-lex by solution grid
-	bm128 res[9];
+void minimizer::solRowMinLex(const pencilmarks& src, const char* sol) { //transform single-solution puzzle to row-min-lex by solution grid
+	pencilmarks res;
 	transformer tr;
 	tr.byGrid(sol);
 	tr.transform(src, res);
 	complementaryPencilmarksX::dump2(res);
+}
+void minimizer::guessCounters(const char* p) { //puzzle in 729-columns format, solution, totalNumGuesses, numGuesses[0] ...
+	pencilmarks pm;
+	singleSolutionGuesses ssg;
+	int guessStat[81];
+	char sol[88];
+	char outPuz[729];
+	if(!complementaryPencilmarksX::fromChars2(p, pm)) return;
+	//if(!complementaryPencilmarksX::fromChars3(p, pm)) return;
+	if(1 == ssg.solve(pm, sol, guessStat)) { //2105 puz/sec no-locked, guess_2
+		complementaryPencilmarksX::dump3(pm, outPuz);
+		int guessTotal = 0;
+		for(int i = 0; i < 81; i++) {
+			sol[i] += '0';
+			guessTotal += guessStat[i];
+		}
+		printf("%729.729s\t%81.81s\t%d", outPuz, sol, guessTotal);
+		for(int i = 0; i < 81 && guessStat[i]; i++) {
+			printf("\t%d", guessStat[i]);
+		}
+		printf("\n");
+	}
+}
+void minimizer::backdoorSize(const char* p) { //puzzle in 729-columns format, backdoorSize
+	pencilmarks pm;
+	pencilmarks pmExemplar;
+	getSingleSolution ss;
+	noGuess ng;
+	char sol[88];
+	char outPuz[729];
+	char outPuz2[729];
+	bm128 givens{};
+	for(int c = 0; c < 81; c++) {
+		int numAllowed = 0;
+		for(int d = 0; d < 9; d++) {
+			if(!pm[d].isBitSet(c)) {
+				if(numAllowed) goto nextCell;
+				numAllowed++;
+			}
+		}
+		givens.setBit(c);
+		nextCell:;
+	}
+	//if(!complementaryPencilmarksX::fromChars2(p, pm)) return;
+	if(!complementaryPencilmarksX::fromChars3(p, pm)) return;
+	if(1 != ss.solve(pm, sol)) return;
+	int minBD = 0;
+	pmExemplar = pm;
+	if(!ng.solve(pm)) {
+		minBD = 1;
+		for(int c1 = 0; c1 < 81; c1++) {
+			if(givens.isBitSet(c1)) continue;
+			pencilmarks pm1(pm);
+			pm1.forceCell(c1, sol[c1] - 1);
+			if(ng.solve(pm1)) {
+				pmExemplar = pm1;
+				goto done;
+			}
+		}
+		minBD = 2;
+		for(int c1 = 0; c1 < 81 - 1; c1++) {
+			if(givens.isBitSet(c1)) continue;
+			pencilmarks pm1(pm);
+			pm1.forceCell(c1, sol[c1] - 1);
+			for(int c2 = c1 + 1; c2 < 81 - 0; c2++) {
+				if(givens.isBitSet(c2)) continue;
+				pencilmarks pm2(pm1);
+				pm2.forceCell(c2, sol[c2] - 1);
+				if(ng.solve(pm2)) {
+					pmExemplar = pm2;
+					goto done;
+				}
+			}
+		}
+		minBD = 3;
+		for(int c1 = 0; c1 < 81 - 2; c1++) {
+			if(givens.isBitSet(c1)) continue;
+			pencilmarks pm1(pm);
+			pm1.forceCell(c1, sol[c1] - 1);
+			for(int c2 = c1 + 1; c2 < 81 - 1; c2++) {
+				if(givens.isBitSet(c2)) continue;
+				pencilmarks pm2(pm1);
+				pm2.forceCell(c2, sol[c2] - 1);
+				for(int c3 = c2 + 1; c3 < 81 - 0; c3++) {
+					if(givens.isBitSet(c3)) continue;
+					pencilmarks pm3(pm2);
+					pm3.forceCell(c3, sol[c3] - 1);
+					if(ng.solve(pm3)) {
+						pmExemplar = pm3;
+						goto done;
+					}
+				}
+			}
+		}
+		minBD = 4;
+		for(int c1 = 0; c1 < 81 - 3; c1++) {
+			if(givens.isBitSet(c1)) continue;
+			pencilmarks pm1(pm);
+			pm1.forceCell(c1, sol[c1] - 1);
+			for(int c2 = c1 + 1; c2 < 81 - 2; c2++) {
+				if(givens.isBitSet(c2)) continue;
+				pencilmarks pm2(pm1);
+				pm2.forceCell(c2, sol[c2] - 1);
+				for(int c3 = c2 + 1; c3 < 81 - 1; c3++) {
+					if(givens.isBitSet(c3)) continue;
+					pencilmarks pm3(pm2);
+					pm3.forceCell(c3, sol[c3] - 1);
+					for(int c4 = c3 + 1; c4 < 81 - 0; c4++) {
+						if(givens.isBitSet(c4)) continue;
+						pencilmarks pm4(pm3);
+						pm4.forceCell(c4, sol[c4] - 1);
+						if(ng.solve(pm4)) {
+							pmExemplar = pm4;
+							goto done;
+						}
+					}
+				}
+			}
+		}
+		minBD = 5;
+		for(int c1 = 0; c1 < 81 - 4; c1++) {
+			if(givens.isBitSet(c1)) continue;
+			pencilmarks pm1(pm);
+			pm1.forceCell(c1, sol[c1] - 1);
+			for(int c2 = c1 + 1; c2 < 81 - 3; c2++) {
+				if(givens.isBitSet(c2)) continue;
+				pencilmarks pm2(pm1);
+				pm2.forceCell(c2, sol[c2] - 1);
+				for(int c3 = c2 + 1; c3 < 81 - 2; c3++) {
+					if(givens.isBitSet(c3)) continue;
+					pencilmarks pm3(pm2);
+					pm3.forceCell(c3, sol[c3] - 1);
+					for(int c4 = c3 + 1; c4 < 81 - 1; c4++) {
+						if(givens.isBitSet(c4)) continue;
+						pencilmarks pm4(pm3);
+						pm4.forceCell(c4, sol[c4] - 1);
+						for(int c5 = c4 + 1; c5 < 81 - 0; c5++) {
+							if(givens.isBitSet(c5)) continue;
+							pencilmarks pm5(pm4);
+							pm5.forceCell(c5, sol[c5] - 1);
+							if(ng.solve(pm5)) {
+								pmExemplar = pm5;
+								goto done;
+							}
+						}
+					}
+				}
+			}
+		}
+		minBD = 6;
+		for(int c1 = 0; c1 < 81 - 5; c1++) {
+			if(givens.isBitSet(c1)) continue;
+			pencilmarks pm1(pm);
+			pm1.forceCell(c1, sol[c1] - 1);
+			for(int c2 = c1 + 1; c2 < 81 - 4; c2++) {
+				if(givens.isBitSet(c2)) continue;
+				pencilmarks pm2(pm1);
+				pm2.forceCell(c2, sol[c2] - 1);
+				for(int c3 = c2 + 1; c3 < 81 - 3; c3++) {
+					if(givens.isBitSet(c3)) continue;
+					pencilmarks pm3(pm2);
+					pm3.forceCell(c3, sol[c3] - 1);
+					for(int c4 = c3 + 1; c4 < 81 - 2; c4++) {
+						if(givens.isBitSet(c4)) continue;
+						pencilmarks pm4(pm3);
+						pm4.forceCell(c4, sol[c4] - 1);
+						for(int c5 = c4 + 1; c5 < 81 - 1; c5++) {
+							if(givens.isBitSet(c4)) continue;
+							pencilmarks pm5(pm4);
+							pm5.forceCell(c5, sol[c5] - 1);
+							for(int c6 = c5 + 1; c6 < 81 - 0; c6++) {
+								if(givens.isBitSet(c6)) continue;
+								pencilmarks pm6(pm5);
+								pm5.forceCell(c6, sol[c6] - 1);
+								if(ng.solve(pm6)) {
+									pmExemplar = pm6;
+									goto done;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		minBD = 99;
+	}
+	done:
+	complementaryPencilmarksX::dump3(pm, outPuz);
+	complementaryPencilmarksX::dump3(pmExemplar, outPuz2);
+//	for(int i = 0; i < 81; i++) {
+//		sol[i] += '0';
+//	}
+//	printf("%729.729s\t%81.81s\t%d\n", outPuz, sol, minBD);
+	printf("%729.729s\t%d\t%729.729s\n", outPuz, minBD, outPuz2);
+	fflush(NULL);
 }
 #endif

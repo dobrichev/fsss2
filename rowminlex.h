@@ -25,6 +25,7 @@
 
 #include <memory.h>
 #include "t_128.h"
+#include "fsss2.h"
 
 #if defined(__GNUC__)
 #define NOINLINE __attribute__((noinline))
@@ -55,7 +56,7 @@ struct transformer
 	void byGrid(const char* sol);
 	//void byPuzzle(const char* sol);
 	void transform(const char *in, char *out) const;
-	void transform(const bm128 *in, bm128 *out) const;
+	void transform(const pencilmarks& in, pencilmarks& out) const;
 	void reverseTransform(const char *in, char *out) const;
 	//void toString(char *buf) const;
 	transformer() : box(0), aut(0) {

@@ -890,9 +890,9 @@ nextGuess:
 			}
 #ifdef GUESS_STRATEGY_2
 			//strategy 1: least value, then least cell index //234.922 seconds. Trials = 737 680 539
+			//if((guessDepth & 1) == 0) //flip-flop
 			//if(solved.popcount_128() > 50)
-			if(solved.popcount_128() < 10)
-			//if(1)
+			if(0 && solved.popcount_128() < 10) //low-clue pencilmark-only puzzles
 #endif
 			{
 				for(optDigit = 0; optDigit < 7; optDigit++) { //prefer the least value
@@ -1120,6 +1120,14 @@ template < class X > void fsss2 < X > ::solve(const char* const in) {
 	return;
 }
 
+template < class X > void fsss2 < X > ::solve(const pencilmarks& forbidden) {
+	initEmpty();
+	for(int g = 0; g < 9; g++) {
+		grid[g].clearBits(forbidden[g]);
+	}
+	doEliminations();
+}
+
 template < class X > void fsss2 < X > ::solve(const uint16_t* const in) {
 	//start from clean solver context
 	initEmpty();
@@ -1226,28 +1234,20 @@ int hasSingleSolution::solve(const char* p) {
 	solver.solve(p);
 	return nsol;
 }
-int hasSingleSolution::solve(const bm128* p) {
+int hasSingleSolution::solve(const pencilmarks& p) {
 	nsol = 0;
 	fsss2<hasSingleSolution> solver(*this);
-	solver.initEmpty();
-	for(int g = 0; g < 9; g++) {
-		solver.grid[g].clearBits(p[g]);
-	}
-	solver.doEliminations();
+	solver.solve(p);
 	return nsol;
 }
 bool hasSingleSolution::solutionFound() {
 	return (++nsol == 2);
 }
 
-int hasAnySolution::solve(const bm128* p) {
+int hasAnySolution::solve(const pencilmarks& p) {
 	fsss2<hasAnySolution> solver(*this);
 	nsol = 0;
-	solver.initEmpty();
-	for(int g = 0; g < 9; g++) {
-		solver.grid[g].clearBits(p[g]);
-	}
-	solver.doEliminations();
+	solver.solve(p);
 	return nsol;
 }
 int hasAnySolution::solve(const char* p) {
@@ -1259,6 +1259,29 @@ int hasAnySolution::solve(const char* p) {
 bool hasAnySolution::solutionFound() {
 	nsol = 1;
 	return true;
+}
+
+int noGuess::solve(const pencilmarks& p) {
+	fsss2<noGuess> solverInstance(*this);
+	solverPtr = &solverInstance;
+	nsol = 0;
+	solverInstance.solve(p);
+	return nsol;
+}
+int noGuess::solve(const char* p) {
+	fsss2<noGuess> solverInstance(*this);
+	solverPtr = &solverInstance;
+	nsol = 0;
+	solverInstance.solve(p);
+	return nsol;
+}
+bool noGuess::solutionFound() {
+	nsol = 1;
+	return true;
+}
+bool noGuess::beforeGuess(int guessDepth, int &optCell, int &optDigit) {
+	solverPtr->mode = MODE_STOP_PROCESSING | MODE_STOP_GUESSING; //exit (actually MODE_STOP_GUESSING is redundant here)
+	return false;
 }
 
 //void isRedundant::setCellValue(int cell, int val) { //debug
@@ -1289,7 +1312,7 @@ bool isRedundant::solve(const char* p, int testPosition) {
 	solver.doEliminations();
 	return (nsol == 0);
 }
-bool isRedundant::solve(const bm128* forbiddenValuePositions, int testValue, int testPosition) {
+bool isRedundant::solve(const pencilmarks& forbiddenValuePositions, int testValue, int testPosition) {
 	fsss2<isRedundant> solver(*this);
 	nsol = 0;
 	solver.initEmpty(); //all values are allowed everywhere
@@ -1354,15 +1377,45 @@ int getSingleSolution::solve(const char* p, char* res) {
 	solver.solve(p);
 	return nsol;
 }
-int getSingleSolution::solve(const bm128* forbiddenValuePositions, char* res) {
+int getSingleSolution::solve(const pencilmarks& forbiddenValuePositions, char* res) {
 	fsss2<getSingleSolution> solver(*this);
 	nsol = 0;
 	resChar = res;
-	solver.initEmpty();
-	for(int g = 0; g < 9; g++) {
-		solver.grid[g].clearBits(forbiddenValuePositions[g]);
+	solver.solve(forbiddenValuePositions);
+	return nsol;
+}
+
+bool singleSolutionGuesses::beforeGuess(int guessDepth, int &optCell, int &optDigit) {
+	numGuesses[guessDepth]++;
+	return true;
+}
+void singleSolutionGuesses::setCellValue(int cell, int val) {
+	if(nsol) return; //store only the first solution
+	resChar[cell] = val;
+}
+bool singleSolutionGuesses::solutionFound() {
+	return (++nsol == 2); //stop after possible second solution
+}
+int singleSolutionGuesses::solve(const char* p, char* res, int* numGuessesByDepth) {
+	fsss2<singleSolutionGuesses> solver(*this);
+	nsol = 0;
+	resChar = res;
+	numGuesses = numGuessesByDepth;
+	for(int i = 0; i < 81; i++) {
+		numGuesses[i] = 0;
 	}
-	solver.doEliminations();
+	solver.solve(p);
+	return nsol;
+}
+int singleSolutionGuesses::solve(const pencilmarks& forbiddenValuePositions, char* res, int* numGuessesByDepth) {
+	fsss2<singleSolutionGuesses> solver(*this);
+	nsol = 0;
+	resChar = res;
+	numGuesses = numGuessesByDepth;
+	for(int i = 0; i < 81; i++) {
+		numGuesses[i] = 0;
+	}
+	solver.solve(forbiddenValuePositions);
 	return nsol;
 }
 
@@ -1388,15 +1441,11 @@ int getTwoSolutions::solve(const char* p, char* res) {
 	solver.solve(p);
 	return nsol;
 }
-int getTwoSolutions::solve(const bm128* forbiddenValuePositions, char* res) {
+int getTwoSolutions::solve(const pencilmarks& forbiddenValuePositions, char* res) {
 	fsss2<getTwoSolutions> solver(*this);
 	nsol = 0;
 	resChar = res;
-	solver.initEmpty();
-	for(int g = 0; g < 9; g++) {
-		solver.grid[g].clearBits(forbiddenValuePositions[g]);
-	}
-	solver.doEliminations();
+	solver.solve(forbiddenValuePositions);
 	return nsol;
 }
 
@@ -1410,15 +1459,11 @@ int getAnySolution::solve(const char* p, char* res) {
 	solver.solve(p);
 	return nsol;
 }
-int getAnySolution::solve(const bm128* forbiddenValuePositions, char* res) {
+int getAnySolution::solve(const pencilmarks& forbiddenValuePositions, char* res) {
 	fsss2<getAnySolution> solver(*this);
 	nsol = 0;
 	resChar = res;
-	solver.initEmpty();
-	for(int g = 0; g < 9; g++) {
-		solver.grid[g].clearBits(forbiddenValuePositions[g]);
-	}
-	solver.doEliminations();
+	solver.solve(forbiddenValuePositions);
 	return nsol;
 }
 
@@ -1432,29 +1477,38 @@ bool multiSolutionPM::solutionFound() {
 	++nsol;
 	return nsol == solutionsLimit;
 }
-int multiSolutionPM::solve(const char* p, bm128* res, int maxSolutions = 0) {
+int multiSolutionPM::solve(const char* p, pencilmarks& res, int maxSolutions) {
 	fsss2<multiSolutionPM> solver(*this);
 	nsol = 0;
 	resPM = res;
 	solutionsLimit = maxSolutions;
-	for(int g = 0; g < 9; g++) {
-		resPM[g].clear();
-	}
+	resPM.clear();
 	solver.solve(p);
 	return nsol == solutionsLimit ? 0 : nsol;
 }
-int multiSolutionPM::solve(const bm128* forbiddenValuePositions, bm128* res, int maxSolutions = 0) {
+int multiSolutionPM::solve(const pencilmarks& forbiddenValuePositions, pencilmarks& res, int maxSolutions) {
 	fsss2<multiSolutionPM> solver(*this);
 	nsol = 0;
 	resPM = res;
 	solutionsLimit = maxSolutions;
-	solver.initEmpty();
-	for(int g = 0; g < 9; g++) {
-		resPM[g].clear();
-		solver.grid[g].clearBits(forbiddenValuePositions[g]);
-	}
-	solver.doEliminations();
+	resPM.clear();
+	solver.solve(forbiddenValuePositions);
 	return nsol == solutionsLimit ? 0 : nsol;
+}
+int multiSolutionPM::solve(const pencilmarks& forbiddenValuePositions, pencilmarks& res) {
+	isRedundant rt;
+	res.clear();
+	int ret = 0;
+	for(int d = 0; d < 9; d++) {
+		for(int c = 0; c < 81; c++) {
+			if(forbiddenValuePositions[d].isBitSet(c)) continue; //test only allowed
+			if(rt.solve(forbiddenValuePositions, d, c)) {
+				res[d].setBit(c);
+				ret++;
+			}
+		}
+	}
+	return ret;
 }
 
 patEnum::patEnum() :

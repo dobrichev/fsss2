@@ -12,8 +12,8 @@ struct knownNonRedundantGivens {
     void getReducedGivensFrom(const knownNonRedundantGivens &src, int pos) {aliveGivensMask = src.aliveGivensMask & (~((uint64_t)1 << pos));}
 };
 struct complementaryPencilmarksX {
-    bm128 forbiddenValuePositions[9];
-    bm128 fixedValuePositions[9];
+	pencilmarks forbiddenValuePositions;
+	pencilmarks fixedValuePositions;
     bool operator< (const complementaryPencilmarksX& other) const {
     	//return memcmp(forbiddenValuePositions, other.aliveConstrainsMask, sizeof(forbiddenValuePositions) * sizeof(forbiddenValuePositions[0])) > 0;
     	for(int g = 8; g >= 0; g--) {
@@ -25,7 +25,7 @@ struct complementaryPencilmarksX {
     	return false;
    }
    bool operator== (const complementaryPencilmarksX& constraintsMask) const {
-       return memcmp(forbiddenValuePositions, constraintsMask.forbiddenValuePositions, sizeof(forbiddenValuePositions) * sizeof(forbiddenValuePositions[0])) == 0;
+       return memcmp(&forbiddenValuePositions, &constraintsMask.forbiddenValuePositions, sizeof(forbiddenValuePositions)) == 0;
    }
     void markAsFixed(int given, int cell) {fixedValuePositions[given].setBit(cell);}
     bool isForRemoval(int given, int cell) const {return (forbiddenValuePositions[given].isBitSet(cell) & !fixedValuePositions[given].isBitSet(cell));}
@@ -101,7 +101,7 @@ struct complementaryPencilmarksX {
 		printf("\nfixed\n");
     	dump1(fixedValuePositions);
     }
-    static void dump1(const bm128* what, bool invert = false) {
+    static void dump1(const pencilmarks& what, bool invert = false) {
 		for(int c = 0; c < 81; c++) {
 			if((c + 0) % 9 == 0) {
 				printf("|");
@@ -129,7 +129,7 @@ struct complementaryPencilmarksX {
     void dump2() const {
     	dump2(forbiddenValuePositions);
     }
-    static void dump2(const bm128* what) {
+    static void dump2(const pencilmarks& what) {
 		printf("http://www.dailysudoku.com/sudoku/play.shtml?p=");
 		for(int c = 0; c < 81; c++) {
 			for(int d = 0; d < 9; d++) {
@@ -145,24 +145,30 @@ struct complementaryPencilmarksX {
     void dump3() const { //729 symbols/line
     	dump3(forbiddenValuePositions);
     }
-    static void dump3(const bm128* what) {
+    static void dump3(const pencilmarks& what) {
+    	char res[729];
+    	dump3(what, res);
+		printf("%729.729s\n", res);
+		fflush(NULL);
+    }
+    static void dump3(const pencilmarks& what, char* where) {
+    	char* res = where;
 		for(int c = 0; c < 81; c++) {
 			for(int d = 0; d < 9; d++) {
-				if(!what[d].isBitSet(c)) {
-					printf("%d", d + 1);
-				}
-				else {
-					printf(".");
-				}
+				*res = what[d].isBitSet(c) ? '.' : d + '1';
+				res++;
 			}
 		}
-		printf("\n");
-		fflush(NULL);
     }
     bool fromChars2(const char *src) {
 		for(int d = 0; d < 9; d++) {
-			forbiddenValuePositions[d] = constraints::mask81; //all forbidden
 			fixedValuePositions[d].clear();
+		}
+		return fromChars2(src, forbiddenValuePositions);
+    }
+    static bool fromChars2(const char *src, pencilmarks& result) {
+		for(int d = 0; d < 9; d++) {
+			result[d] = constraints::mask81; //all forbidden
 		}
     	const char* x = src;
     	const char* theEnd = src + 1000;
@@ -174,9 +180,21 @@ struct complementaryPencilmarksX {
             	if(x >= theEnd) return false;
             	int d = (*x) - '0' - 1;
             	if(d < 0 || d > 8) return false;
-        		forbiddenValuePositions[d].clearBit(c); //mark as allowed
+            	result[d].clearBit(c); //mark as allowed
         	}
     	}
+    	return true;
+    }
+    static bool fromChars3(const char *src, pencilmarks& result) {
+    	result.clear();
+    	const char* s = src;
+		for(int c = 0; c < 81; c++) {
+			for(int d = 0; d < 9; d++) {
+				if(*s == '.' || *s == '0') result[d].setBit(c);
+				else if(*s != d + '1') return false;
+				s++;
+			}
+		}
     	return true;
     }
 };
@@ -184,26 +202,32 @@ struct complementaryPencilmarksX {
 struct minimizer {
 	void minimizeVanilla(char *puz);
 	void minimizePencilmarks(char *puz); //expand the pencilmarks for single-solution puzzle
-	void minimizePencilmarks(bm128 *puz); //expand the pencilmarks for single-solution puzzle
+	void minimizePencilmarks(pencilmarks& puz); //expand the pencilmarks for single-solution puzzle
 
-	void reduceM2P1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
-	void reduceM2P1v2(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
-	void reduceM2P1v3(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
-	void reduceM2P1v4(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1(pencilmarks& puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1v2(pencilmarks& puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1v3(pencilmarks& puz); //reduce forbidden placements for single-solution minimized puzzle
+	void reduceM2P1v4(pencilmarks& puz); //reduce forbidden placements for single-solution minimized puzzle
 	void reduceM2P1(const char* p); //string as input
 
-	void tryReduceM1(bm128 *puz); //reduce forbidden placements for single-solution minimized puzzle
+	void tryReduceM1(pencilmarks& puz); //reduce forbidden placements for single-solution minimized puzzle
 	void tryReduceM1(const char* p); //string as input
 
-	void transformM1P1(bm128 *forbiddenValuePositions); //transform single-solution puzzle
+	void transformM1P1(pencilmarks& forbiddenValuePositions); //transform single-solution puzzle
 	void transformM1P1(const char* p); //string as input
 
-	void transformM2P2(bm128 *forbiddenValuePositions); //transform single-solution puzzle
+	void transformM2P2v1(pencilmarks& forbiddenValuePositions); //transform single-solution puzzle
+	void transformM2P2v2(pencilmarks& forbiddenValuePositions); //transform single-solution puzzle
+	void transformM2P2v3(pencilmarks& forbiddenValuePositions); //transform single-solution puzzle
+	void transformM2P2(pencilmarks& forbiddenValuePositions); //transform single-solution puzzle
 	void transformM2P2(const char* p); //string as input
 
-	void solRowMinLex(const bm128 *src, bm128 *res, const char* sol);
-	bool solRowMinLex(const bm128 *src, bm128 *res); //transform single-solution puzzle to row-min-lex by solution grid
-	void solRowMinLex(const bm128 *src); //transform single-solution puzzle to row-min-lex by solution grid
+	void solRowMinLex(const pencilmarks& src, pencilmarks& res, const char* sol);
+	bool solRowMinLex(const pencilmarks& src, pencilmarks& res); //transform single-solution puzzle to row-min-lex by solution grid
+	void solRowMinLex(const pencilmarks& src); //transform single-solution puzzle to row-min-lex by solution grid
 	void solRowMinLex(const char *p); //string as input
-	void solRowMinLex(const bm128 *src, const char* sol);
+	void solRowMinLex(const pencilmarks& src, const char* sol);
+
+	void guessCounters(const char *p); //string as input
+	void backdoorSize(const char *p); //string as input
 };
