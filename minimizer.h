@@ -230,4 +230,6 @@ struct minimizer {
 
 	void guessCounters(const char *p); //string as input
 	void backdoorSize(const char *p); //string as input
+	void backdoorSizePm(const char *p); //string as input
+	void solve(const char *p); //string as input
 };

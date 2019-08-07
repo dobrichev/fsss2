@@ -44,17 +44,23 @@ int main(int argc, char* argv[])
 	start = clock();
 
 	char p[5000];
-	char curPuz[96];
 	int num[3] = {0,0,0};
+
+//#define VANILLA
+#define PM_ONLY
+
+#ifdef VANILLA
+	char curPuz[96];
 	//bm128 pm[9];
 	//isIrreducible ss;
-	//hasSingleSolution ss;
+	hasSingleSolution ss;
 	//hasAnySolution ss;
-//	while(fgets(p, sizeof(p), stdin)) {
-//		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
-//		num[ss.solve(curPuz)]++; //test hasAnySolution, hasSingleSolution
-//		//num[ss.solve(curPuz) ? 0 : 1]++; // test isIrreducible
-//	}
+	while(fgets(p, sizeof(p), stdin)) {
+		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
+		num[ss.solve(curPuz)]++; //test hasAnySolution, hasSingleSolution
+		//num[ss.solve(curPuz) ? 0 : 1]++; // test isIrreducible
+	}
+#endif
 
 //	//for pattern enumeration with fixed clues
 //	bm128 fixedClues;
@@ -76,13 +82,16 @@ int main(int argc, char* argv[])
 //		num[ss.solve(curPuz, &fixedClues)]++; //test patEnum
 //	}
 
+#ifdef PM_ONLY
 	//for pencilmarks-only puzzles
 	minimizer mm;
 	while(fgets(p, sizeof(p), stdin)) {
 //		mm.tryReduceM1(p);
 //		mm.reduceM2P1(p);
 //		mm.guessCounters(p);
-		mm.backdoorSize(p);
+//		mm.backdoorSize(p);
+		mm.backdoorSizePm(p);
+//		mm.solve(p);
 //		mm.transformM2P2(p);
 //		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
 //		mm.solRowMinLex(curPuz);
@@ -91,6 +100,7 @@ int main(int argc, char* argv[])
 //		//mm.minimizeVanilla(curPuz);
 		num[0]++;
 	}
+#endif
 
 	finish = clock();
 	fflush(NULL);

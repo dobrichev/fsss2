@@ -24,12 +24,13 @@ extern int nTrials;
 //int knownNoHiddenHits;
 //int knownNoHiddenMisses;
 
-template <class X> fsss2<X>::fsss2(X &theCollector) : mode(0), guessDepth(0), collector(theCollector)
+template <class X> fsss2<X>::fsss2(X &theCollector) : mode(0), guessDepth(0)
 #ifdef USE_LOCKED_CANDIDATES
 #ifndef LOCKED_CANDIDATES_ALWAYS
 		, lockedDone(0)
 #endif
 #endif
+, collector(theCollector)
 {}
 
 //only first 81 bits set
@@ -278,37 +279,89 @@ template <class X> void fsss2<X>::eliminateCellValue(int pos, int value) {
 }
 
 #ifdef USE_LOCKED_CANDIDATES
+//template <class X> bool fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
+//	bool found = false;
+//	for(uint32_t lines = 0x03FFFF & (tmp.toInt32_3()); lines; lines &= (lines - 1)) {
+//		unsigned int line = 3U * bm128::FindLSBIndex32(lines); //unsolved row or column
+//		//process the 3 triplets in the line (row or column)
+//		for(unsigned int t = 0; t < 3; t++) {
+//			//if(tmp.isDisjoint(constraints::tripletMasks[line + t].self)) continue; //no candidates, possibly resolved box
+//			bool dl = tmp.isDisjoint(constraints::tripletMasks[line + t].adjacentLine);
+//			bool db = tmp.isDisjoint(constraints::tripletMasks[line + t].adjacentBox);
+//			if(dl) {
+//				//unsolved line with candidates located only within this triplet
+//				if(!db) {
+//					tmp.clearBits(constraints::tripletMasks[line + t].adjacentBox);
+//					found = true;
+//					//goto next_line;
+//					return true;
+//				}
+//			}
+//			if(db) {
+//				//the other two triplets within this box have no candidates
+//				if(!dl) {
+//					//other two triplets for this line have candidates, but the box is possibly solved
+//					if(!tmp.isDisjoint(constraints::tripletMasks[line + t].self)) { //unsolved box
+//						tmp.clearBits(constraints::tripletMasks[line + t].adjacentLine);
+//						found = true;
+//						//goto next_line;
+//						return true;
+//					}
+//				}
+//			}
+//		} //triplets in a line
+////next_line:
+//		;
+//	} //lines
+//	return found;
+//	//return false;
+//}
 template <class X> bool fsss2<X>::doLockedCandidatesForDigit(bm128& tmp) {
+	static constexpr int boxNum[18][3] = {
+			{0,1,2},{0,1,2},{0,1,2},{3,4,5},{3,4,5},{3,4,5},{6,7,8},{6,7,8},{6,7,8},
+			{0,3,6},{0,3,6},{0,3,6},{1,4,7},{1,4,7},{1,4,7},{2,5,8},{2,5,8},{2,5,8}
+	};
 	bool found = false;
-	for(uint32_t lines = 0x03FFFF & (tmp.toInt32_3()); lines; lines &= (lines - 1)) {
-		unsigned int line = 3U * bm128::FindLSBIndex32(lines); //unsolved row or column
+	uint32_t unsolvedHouses = tmp.toInt32_3();
+	if(unsolvedHouses == 0) return false;
+	uint32_t unsolvedBoxes = unsolvedHouses >> 18;
+	//if(unsolvedBoxes == 0) return false; //never happens
+	for(uint32_t lines = 0x03FFFF & unsolvedHouses; lines; lines &= (lines - 1)) {
+		unsigned int line = bm128::FindLSBIndex32(lines); //unsolved row or column
+		unsigned int lineBase = 3U * line;
 		//process the 3 triplets in the line (row or column)
 		for(unsigned int t = 0; t < 3; t++) {
-			bool dl = tmp.isDisjoint(constraints::tripletMasks[line + t].adjacentLine);
-			bool db = tmp.isDisjoint(constraints::tripletMasks[line + t].adjacentBox);
+			if(0 == (unsolvedBoxes & ((uint32_t) 1) << (boxNum[line][t]))) continue; //resolved box
+			//if(tmp.isDisjoint(constraints::tripletMasks[lineBase + t].self)) continue; //resolved box
+//				fprintf(stderr, "?");
+//				continue; //no candidates, possibly resolved box
+//			}
+			bool dl = tmp.isDisjoint(constraints::tripletMasks[lineBase + t].adjacentLine); //all line candidates are within this triplet
+			bool db = tmp.isDisjoint(constraints::tripletMasks[lineBase + t].adjacentBox); //all box candidates are within this triplet
 			if(dl) {
 				//unsolved line with candidates located only within this triplet
 				if(!db) {
-					tmp.clearBits(constraints::tripletMasks[line + t].adjacentBox);
+					tmp.clearBits(constraints::tripletMasks[lineBase + t].adjacentBox);
 					found = true;
-					goto next_line;
-					//return true;
+					//goto next_line;
+					return true;
 				}
 			}
 			if(db) {
 				//the other two triplets within this box have no candidates
 				if(!dl) {
 					//other two triplets for this line have candidates, but the box is possibly solved
-					if(!tmp.isDisjoint(constraints::tripletMasks[line + t].self)) { //unsolved box
-						tmp.clearBits(constraints::tripletMasks[line + t].adjacentLine);
+					//if(!tmp.isDisjoint(constraints::tripletMasks[lineBase + t].self)) { //unsolved box
+					//if(1 || 0 != (unsolvedBoxes & (((uint32_t) 1) << (boxNum[line][t])))) {
+						tmp.clearBits(constraints::tripletMasks[lineBase + t].adjacentLine);
 						found = true;
-						goto next_line;
-						//return true;
-					}
+						//goto next_line;
+						return true;
+					//}
 				}
 			}
 		} //triplets in a line
-next_line:
+//next_line:
 		;
 	} //lines
 	return found;
@@ -700,6 +753,8 @@ againSameHidden:
 					bm128 tmp = grid[d];
 					tmp &= constraints::bitsForHouse[house]; //mask other candidates and leave only these from the current house
 
+					//if(tmp.isZero()) goto contradiction;
+
 					//find whether the house has a single candidate and obtain its position
 					//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bits set
 					if(tmp.hasMin2Bits())
@@ -780,17 +835,17 @@ single_found:
 
 #ifdef USE_SUBSETS
 	//subsets
-	if(subsetsDone == 0) {
-	//if(subsetsDone < 5) {
+	//if(subsetsDone == 0) {
+	if(subsetsDone < 5) {
 		bool eliminationFound = false;
 		//int subsetIndex = 0; //01,02,03,04,05,06,07,08,12,13,14,15,16,17,18,23,24,25,26,27,28,34,35,36,37,38,45,46,47,48,56,57,58,67,68,78
 		for(int d1 = 0; d1 < 8; d1++) {
-			//for(int d2 = d1 + 1; d2 < 9; d2++, subsetIndex++) {
-			for(int d2 = d1 + 1; d2 < 9; d2++) {
+			for(int d2 = d1 + 1, subsetIndex = 0; d2 < 9; d2++, subsetIndex++) {
+			//for(int d2 = d1 + 1; d2 < 9; d2++) {
 				bm128 any = grid[d1];
 				any |= grid[d2];
-//				if(any == knownNoSubsets[subsetIndex])
-//					continue;
+				if(any == knownNoSubsets[subsetIndex])
+					continue;
 				bool pairFound = false;
 				bm128 ss;
 				ss.clear();
@@ -821,13 +876,13 @@ single_found:
 						}
 					}
 				}
-//				else {
-//					knownNoSubsets[subsetIndex] = any;
-//				}
+				else {
+					knownNoSubsets[subsetIndex] = any;
+				}
 			}
 		}
-		subsetsDone = 1;
-		//subsetsDone++;
+		//subsetsDone = 1;
+		subsetsDone++;
 		if(eliminationFound) {
 #ifdef USE_LOCKED_CANDIDATES
 			lockedDone = 0;
@@ -846,7 +901,7 @@ nextGuess:
 		//Find an unsolved cell with less possibilities
 		int optDigit;
 		int optCell;
-		int minCellValues = 0;
+		int minCellValues = 2;
 		guessAuto = collector.beforeGuess(guessDepth, optCell, optDigit);
 
 		//find first of the best-to-guess candidates
@@ -858,7 +913,7 @@ nextGuess:
 			if(all.isZero()) {
 				//find new candidates
 				minCellValues = findLeastPopulatedCells(all);
-				if(minCellValues <= 2) {
+				if(minCellValues == 2) {
 					trialCandidates = all; //reuse them on next guess only if they are bi-values
 				}
 //				else if(minCellValues > 3) {
@@ -891,8 +946,11 @@ nextGuess:
 #ifdef GUESS_STRATEGY_2
 			//strategy 1: least value, then least cell index //234.922 seconds. Trials = 737 680 539
 			//if((guessDepth & 1) == 0) //flip-flop
-			//if(solved.popcount_128() > 50)
-			if(0 && solved.popcount_128() < 10) //low-clue pencilmark-only puzzles
+			//if(solved.popcount_128() > 18)
+			//if(solved.popcount_128() < 10) //low-clue pencilmark-only puzzles
+			if(minCellValues == 2 && solved.popcount_128() > 22)
+			//if(minCellValues == 2)
+			//if(0)
 #endif
 			{
 				for(optDigit = 0; optDigit < 7; optDigit++) { //prefer the least value
@@ -908,7 +966,7 @@ nextGuess:
 			}
 #ifdef GUESS_STRATEGY_2
 			else
-			//strategy 2 (experimental): most direct eliminations value/cell //9.271 seconds. Trials = 23 355 791
+			//strategy 2a (experimental): most direct eliminations for the GUESSED value
 			{
 				bm128 uncheckedCells(all);
 				int maxEliminations = 0;
@@ -918,10 +976,12 @@ nextGuess:
 						if(!grid[d].isBitSet(cell)) continue;
 						bm128 eliminations(grid[d]);
 						eliminations &= constraints::visibleCells[cell];
+						eliminations &= constraints::mask81;
 						int numEliminations = eliminations.popcount_128();
 						if(maxEliminations < numEliminations) {
 							optDigit = d;
 							optCell = cell;
+							if(numEliminations >= 20) goto bestCellFound;
 							maxEliminations = numEliminations;
 						}
 					}
@@ -932,15 +992,71 @@ nextGuess:
 						if(!grid[d].isBitSet(cell)) continue;
 						bm128 eliminations(grid[d]);
 						eliminations &= constraints::visibleCells[cell];
+						eliminations &= constraints::mask81;
 						int numEliminations = eliminations.popcount_128();
 						if(maxEliminations < numEliminations) {
 							optDigit = d;
 							optCell = cell;
+							if(numEliminations >= 20) goto bestCellFound;
 							maxEliminations = numEliminations;
 						}
 					}
 				}
 			}
+//			{ //strategy 3: most direct eliminations for all values;  slower than 2a alternative
+//				bm128 uncheckedCells(all);
+//				int maxEliminations = 0;
+//				for(uint64_t cells = uncheckedCells.toInt64(); cells; cells &= (cells - 1)) {
+//					uint32_t cell = (uint32_t) bm128::FindLSBIndex64(cells); //get the rightmost bit index
+//					bm128 eliminations(constraints::visibleCells[cell]);
+//					eliminations.clearBits(solved);
+//					int numEliminations = eliminations.popcount_128();
+//					if(maxEliminations < numEliminations) {
+//						optCell = cell;
+//						maxEliminations = numEliminations;
+//					}
+//				} //for lower 64 cells
+//				for(uint32_t cells = uncheckedCells.toInt32_2(); cells; cells &= (cells - 1)) {
+//					uint32_t cell = 64 + bm128::FindLSBIndex32(cells); //get the rightmost bit index
+//					bm128 eliminations(constraints::visibleCells[cell]);
+//					eliminations.clearBits(solved);
+//					int numEliminations = eliminations.popcount_128();
+//					if(maxEliminations < numEliminations) {
+//						optCell = cell;
+//						maxEliminations = numEliminations;
+//					}
+//				}
+//				for(int d = 0; d < 9; d++) {
+//					if(!grid[d].isBitSet(optCell)) continue;
+//					optDigit = d;
+//					break;
+//				}
+//			}
+//			{ //strategy 4: guess within the house with least solved cells
+//				//determine best house
+//				int minSolvedInHouse = 100;
+//				int bestHouse = 0;
+//				for(int h = 0; h < 27; h++) {
+//					if(all.isDisjoint(constraints::bitsForHouse[h])) continue;
+//					bm128 solvedInHouse(solved);
+//					solvedInHouse &= constraints::bitsForHouse[h];
+//					int numSolvedInHouse = solvedInHouse.popcount_128();
+//					if(minSolvedInHouse > numSolvedInHouse) {
+//						bestHouse = h;
+//						if(numSolvedInHouse == 0) break;
+//						minSolvedInHouse = numSolvedInHouse;
+//					}
+//				}
+//				//choose a candidate from the best house
+//				bm128 candidateCells(all);
+//				candidateCells &= constraints::bitsForHouse[bestHouse];
+//				optCell = candidateCells.getFirstBit1Index96();
+//				for(int d = 0; d < 9; d++) {
+//					if(!grid[d].isBitSet(optCell)) continue;
+//					optDigit = d;
+//					break;
+//				}
+//			}
 #endif
 //			//strategy 3 (experimental, for completeness): least direct eliminations value/cell //439.740 seconds. Trials = 1 219 276 128
 //			{
@@ -1266,6 +1382,14 @@ int noGuess::solve(const pencilmarks& p) {
 	solverPtr = &solverInstance;
 	nsol = 0;
 	solverInstance.solve(p);
+	return nsol;
+}
+int noGuess::reduce(pencilmarks& p) {
+	fsss2<noGuess> solverInstance(*this);
+	solverPtr = &solverInstance;
+	nsol = 0;
+	solverInstance.solve(p);
+	p.fromSolver(solverInstance.grid);
 	return nsol;
 }
 int noGuess::solve(const char* p) {

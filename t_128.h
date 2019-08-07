@@ -121,8 +121,9 @@ struct bm128 {
 	}
 	inline bool hasMin2Bits() const {
 		//exploit the fact that when (x & (x-1)) == 0 then x has 0 or 1 bits set
-		static const t_128 minus1 = {0xffffffffffffffff,0xffffffffffffffff}; //pcmpeqw, __m128i _mm_cmpeq_epi8(xmm0, xmm0)
-		return 0 == _mm_testz_si128(bitmap128.m128i_m128i, _mm_add_epi64(bitmap128.m128i_m128i, minus1.m128i_m128i));
+		return 0 == _mm_testz_si128(bitmap128.m128i_m128i, _mm_add_epi64(bitmap128.m128i_m128i, _mm_cmpeq_epi64(bitmap128.m128i_m128i, bitmap128.m128i_m128i)));
+		//static const t_128 minus1 = {0xffffffffffffffff,0xffffffffffffffff}; //pcmpeqw, __m128i _mm_cmpeq_epi8(xmm0, xmm0)
+		//return 0 == _mm_testz_si128(bitmap128.m128i_m128i, _mm_add_epi64(bitmap128.m128i_m128i, minus1.m128i_m128i));
 	}
     inline static uint64_t FindLSBIndex64(const uint64_t Mask) {
 #ifdef   _MSC_VER

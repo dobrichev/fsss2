@@ -52,6 +52,20 @@ struct pencilmarks {
 			pm[d].setBit(cell);
 		}
 	}
+	pencilmarks& allowSolution(char* sol) {
+		for(int c = 0; c < 81; c++) {
+			pm[sol[c] - 1].clearBit(c);
+		}
+		return *this;
+	}
+	pencilmarks& fromSolver(const bm128* solverPM) {
+		for(int d = 0; d < 9; d++) {
+			//pm[d] = constraints::mask81;
+			pm[d] = (t_128){0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
+			pm[d].clearBits(solverPM[d]); //allow all active pencilmarks
+		}
+		return *this; //solution pencilmarks must be allowed at some point, see allowSolution(char* sol)
+	}
 };
 
 struct constraints {
@@ -119,7 +133,7 @@ public:
 
 #ifdef USE_SUBSETS
 	int subsetsDone;
-	//bm128 knownNoSubsets[36];
+	bm128 knownNoSubsets[36];
 #endif
 
 	X &collector; //the object instance that receives notifications for solved cells and solutions found
@@ -181,6 +195,7 @@ public:
 	bool solutionFound();
 	int solve(const char* p);
 	int solve(const pencilmarks& p);
+	int reduce(pencilmarks& p);
 };
 
 //test whether a given puzzle has exactly one solution

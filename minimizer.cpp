@@ -1652,4 +1652,251 @@ void minimizer::backdoorSize(const char* p) { //puzzle in 729-columns format, ba
 	printf("%729.729s\t%d\t%729.729s\n", outPuz, minBD, outPuz2);
 	fflush(NULL);
 }
+void minimizer::backdoorSizePm(const char* p) { //puzzle in 729-columns format, backdoorSizePm
+	struct pmIter {
+		int d = 0;
+		int c = 0;
+		int index = 0;
+		pmIter(int index_) : d(index_ / 81), c(index_ % 81), index(index_) {}
+		pmIter& operator++() {
+			index++;
+			if(c == 80) {
+				d++;
+				c = 0;
+			}
+			else {
+				c++;
+			}
+			return *this;
+		}
+		bool operator< (int i) const {
+			return index < i;
+		}
+	};
+//	struct s {
+//		int trySolving(int depth, pencilmarks& pm, const bm128& givens, int start, pencilmarks& exemplar, const char* solution) {
+//			noGuess ng;
+//			if(ng.reduce(pm)) {
+//				pm.allowSolution(solution);
+//				exemplar = pm;
+//				return depth;
+//			}
+//			pencilmarks reducedPm[729];
+//			for(pmIter f(start); f < 729; ++f) {
+//				if(givens.isBitSet(f.c)) continue; //initial given
+//				if(pm[f.d].isBitSet(f.c)) continue; //already forbidden
+//				pencilmarks pm1(pm);
+//				pm1[f1.d].setBit(f1.c); //forbid
+//				if(ng.solve(pm1)) {
+//					pm1.allowSolution(solution);
+//					exemplar = pm1;
+//					return depth + 1;
+//				}
+//				pm1.allowSolution(solution);
+//				reducedPm[f.index] = pm1;
+//			}
+//			return trySolving(depth + 1, pm1, givens, f.index + 1, exemplar, solution);
+//		}
+//	};
+	pencilmarks pm;
+	pencilmarks pmExemplar;
+	getSingleSolution ss;
+	noGuess ng;
+	char sol[88];
+	char outPuz[729];
+	char outPuz2[729];
+//	bm128 givens{};
+//	for(int c = 0; c < 81; c++) {
+//		int numAllowed = 0;
+//		for(int d = 0; d < 9; d++) {
+//			if(!pm[d].isBitSet(c)) {
+//				if(numAllowed) goto nextCell;
+//				numAllowed++;
+//			}
+//		}
+//		givens.setBit(c);
+//		nextCell:;
+//	}
+	//if(!complementaryPencilmarksX::fromChars2(p, pm)) return;
+	if(!complementaryPencilmarksX::fromChars3(p, pm)) return;
+	if(1 != ss.solve(pm, sol)) return;
+	complementaryPencilmarksX::dump3(pm, outPuz);
+	int minBD = 0;
+	pmExemplar = pm;
+
+	if(!ng.solve(pm)) {
+		minBD = 1;
+		for(pmIter f1(0); f1 < 729; ++f1) {
+			if(sol[f1.c] - 1 == f1.d) continue;
+			if(pm[f1.d].isBitSet(f1.c)) continue;
+			pencilmarks pm1(pm);
+			pm1[f1.d].setBit(f1.c);
+			if(ng.solve(pm1)) {
+				pmExemplar = pm;
+				pmExemplar[f1.d].setBit(f1.c);
+				goto done;
+			}
+		}
+		minBD = 2;
+		for(pmIter f1(0); f1 < 729 - 1; ++f1) {
+			if(sol[f1.c] - 1 == f1.d) continue;
+			if(pm[f1.d].isBitSet(f1.c)) continue;
+			pencilmarks pm1(pm);
+			pm1[f1.d].setBit(f1.c);
+			ng.reduce(pm1);
+			pm1.allowSolution(sol);
+			for(pmIter f2(f1.index + 1); f2 < 729 - 0; ++f2) {
+				if(sol[f2.c] - 1 == f2.d) continue;
+				if(pm1[f2.d].isBitSet(f2.c)) continue;
+				pencilmarks pm2(pm1);
+				pm2[f2.d].setBit(f2.c);
+				if(ng.solve(pm2)) {
+					pmExemplar = pm;
+					pmExemplar[f1.d].setBit(f1.c);
+					pmExemplar[f2.d].setBit(f2.c);
+					goto done;
+				}
+			}
+		}
+		minBD = 3;
+		for(pmIter f1(0); f1 < 729 - 2; ++f1) {
+			if(sol[f1.c] - 1 == f1.d) continue;
+			if(pm[f1.d].isBitSet(f1.c)) continue;
+			pencilmarks pm1(pm);
+			pm1[f1.d].setBit(f1.c);
+			ng.reduce(pm1);
+			pm1.allowSolution(sol);
+			for(pmIter f2(f1.index + 1); f2 < 729 - 1; ++f2) {
+				if(sol[f2.c] - 1 == f2.d) continue;
+				if(pm1[f2.d].isBitSet(f2.c)) continue;
+				pencilmarks pm2(pm1);
+				pm2[f2.d].setBit(f2.c);
+				ng.reduce(pm2);
+				pm2.allowSolution(sol);
+				for(pmIter f3(f2.index + 1); f3 < 729 - 0; ++f3) {
+					if(sol[f3.c] - 1 == f3.d) continue;
+					if(pm2[f3.d].isBitSet(f3.c)) continue;
+					pencilmarks pm3(pm2);
+					pm3[f3.d].setBit(f3.c);
+					if(ng.solve(pm3)) {
+						pmExemplar = pm;
+						pmExemplar[f1.d].setBit(f1.c);
+						pmExemplar[f2.d].setBit(f2.c);
+						pmExemplar[f3.d].setBit(f3.c);
+						goto done;
+					}
+				}
+			}
+		}
+		minBD = 4;
+		for(pmIter f1(0); f1 < 729 - 3; ++f1) {
+			if(sol[f1.c] - 1 == f1.d) continue;
+			if(pm[f1.d].isBitSet(f1.c)) continue;
+			pencilmarks pm1(pm);
+			pm1[f1.d].setBit(f1.c);
+			ng.reduce(pm1);
+			pm1.allowSolution(sol);
+			for(pmIter f2(f1.index + 1); f2 < 729 - 2; ++f2) {
+				if(sol[f2.c] - 1 == f2.d) continue;
+				if(pm1[f2.d].isBitSet(f2.c)) continue;
+				pencilmarks pm2(pm1);
+				pm2[f2.d].setBit(f2.c);
+				ng.reduce(pm2);
+				pm2.allowSolution(sol);
+				for(pmIter f3(f2.index + 1); f3 < 729 - 1; ++f3) {
+					if(sol[f3.c] - 1 == f3.d) continue;
+					if(pm2[f3.d].isBitSet(f3.c)) continue;
+					pencilmarks pm3(pm2);
+					pm3[f3.d].setBit(f3.c);
+					ng.reduce(pm3);
+					pm3.allowSolution(sol);
+					for(pmIter f4(f3.index + 1); f4 < 729 - 0; ++f4) {
+						if(sol[f4.c] - 1 == f4.d) continue;
+						if(pm3[f4.d].isBitSet(f4.c)) continue;
+						pencilmarks pm4(pm3);
+						pm4[f4.d].setBit(f4.c);
+						if(ng.solve(pm4)) {
+							pmExemplar = pm;
+							pmExemplar[f1.d].setBit(f1.c);
+							pmExemplar[f2.d].setBit(f2.c);
+							pmExemplar[f3.d].setBit(f3.c);
+							pmExemplar[f4.d].setBit(f4.c);
+							goto done;
+						}
+					}
+				}
+			}
+		}
+		minBD = 5;
+		for(pmIter f1(0); f1 < 729 - 4; ++f1) {
+			if(sol[f1.c] - 1 == f1.d) continue;
+			if(pm[f1.d].isBitSet(f1.c)) continue;
+			pencilmarks pm1(pm);
+			pm1[f1.d].setBit(f1.c);
+			ng.reduce(pm1);
+			pm1.allowSolution(sol);
+			for(pmIter f2(f1.index + 1); f2 < 729 - 3; ++f2) {
+				if(sol[f2.c] - 1 == f2.d) continue;
+				if(pm1[f2.d].isBitSet(f2.c)) continue;
+				pencilmarks pm2(pm1);
+				pm2[f2.d].setBit(f2.c);
+				ng.reduce(pm2);
+				pm2.allowSolution(sol);
+				for(pmIter f3(f2.index + 1); f3 < 729 - 2; ++f3) {
+					if(sol[f3.c] - 1 == f3.d) continue;
+					if(pm2[f3.d].isBitSet(f3.c)) continue;
+					pencilmarks pm3(pm2);
+					pm3[f3.d].setBit(f3.c);
+					ng.reduce(pm3);
+					pm3.allowSolution(sol);
+					for(pmIter f4(f3.index + 1); f4 < 729 - 1; ++f4) {
+						if(sol[f4.c] - 1 == f4.d) continue;
+						if(pm3[f4.d].isBitSet(f4.c)) continue;
+						pencilmarks pm4(pm3);
+						pm4[f4.d].setBit(f4.c);
+						ng.reduce(pm4);
+						pm4.allowSolution(sol);
+						for(pmIter f5(f4.index + 1); f5 < 729 - 0; ++f5) {
+							if(sol[f5.c] - 1 == f5.d) continue;
+							if(pm4[f5.d].isBitSet(f5.c)) continue;
+							pencilmarks pm5(pm4);
+							pm5[f5.d].setBit(f5.c);
+							if(ng.solve(pm5)) {
+								pmExemplar = pm;
+								pmExemplar[f1.d].setBit(f1.c);
+								pmExemplar[f2.d].setBit(f2.c);
+								pmExemplar[f3.d].setBit(f3.c);
+								pmExemplar[f4.d].setBit(f4.c);
+								pmExemplar[f5.d].setBit(f5.c);
+								goto done;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		minBD = 999;
+	}
+	done:
+	complementaryPencilmarksX::dump3(pmExemplar, outPuz2);
+	printf("%729.729s\t%d\t%729.729s\n", outPuz, minBD, outPuz2);
+	//debug
+	if(minBD != 999 && ng.solve(pmExemplar) == 0) printf("Bug: above is unsolvable\n");
+	fflush(NULL);
+}
+void minimizer::solve(const char* p) { //puzzle in 729-columns format, solution
+	pencilmarks pm;
+	getSingleSolution ss;
+	char sol[88];
+	char outPuz[729];
+	//if(!complementaryPencilmarksX::fromChars2(p, pm)) return;
+	if(!complementaryPencilmarksX::fromChars3(p, pm)) return;
+	if(1 != ss.solve(pm, sol)) return;
+	complementaryPencilmarksX::dump3(pm, outPuz);
+	for(int i = 0; i < 81; i++) {
+		sol[i] += '0';
+	}
+	printf("%729.729s\t%81.81s\n", outPuz, sol);
+}
 #endif
