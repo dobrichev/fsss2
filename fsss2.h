@@ -16,7 +16,13 @@
 
 //#define COUNT_TRIALS
 
-//#define USE_LOCKED_CANDIDATES
+//for low-clue pencilmark-only sudoku
+//#define GUESS_STRATEGY_2
+
+#define USE_LOCKED_CANDIDATES
+#define LOCKED_CANDIDATES_ALWAYS
+#define LOCKED_CANDIDATES_USE_CACHE
+
 //#define USE_SUBSETS
 
 #ifdef USE_LOCKED_CANDIDATES
@@ -26,6 +32,41 @@ struct tripletMask {
 	t_128 adjacentBox;
 };
 #endif
+
+struct pencilmarks {
+	bm128 pm[9];
+	void clear() {
+		for(int i = 0; i < 9; i++) {
+			pm[i].clear();
+		}
+	}
+	const bm128& operator[](int digit) const {
+		return pm[digit];
+	}
+	bm128& operator[](int digit) {
+		return pm[digit];
+	}
+	void forceCell(int cell, int digit) { //forbid all digits except one
+		for(int d = 0; d < 9; d++) {
+			if(d == digit) continue;
+			pm[d].setBit(cell);
+		}
+	}
+	pencilmarks& allowSolution(char* sol) {
+		for(int c = 0; c < 81; c++) {
+			pm[sol[c] - 1].clearBit(c);
+		}
+		return *this;
+	}
+	pencilmarks& fromSolver(const bm128* solverPM) {
+		for(int d = 0; d < 9; d++) {
+			//pm[d] = constraints::mask81;
+			pm[d] = (t_128){0xFFFFFFFFFFFFFFFF,    0x0001FFFF};
+			pm[d].clearBits(solverPM[d]); //allow all active pencilmarks
+		}
+		return *this; //solution pencilmarks must be allowed at some point, see allowSolution(char* sol)
+	}
+};
 
 struct constraints {
 	//1 for first 81 bits
@@ -71,7 +112,9 @@ public:
 	bm128 knownNoHiddenSingles[9]; //cache for latest known candidates for each value that failed in search for hidden single
 
 #ifdef USE_LOCKED_CANDIDATES
-	//bm128 knownNoLockedCandidates[9];
+#ifdef LOCKED_CANDIDATES_USE_CACHE
+	bm128 knownNoLockedCandidates[9];
+#endif
 #endif
 
 	bm128 trialCandidates; //cache for latest optimal cells to make T&E for
@@ -90,13 +133,13 @@ public:
 
 #ifdef USE_SUBSETS
 	int subsetsDone;
-	//bm128 knownNoSubsets[36];
+	bm128 knownNoSubsets[36];
 #endif
 
 	X &collector; //the object instance that receives notifications for solved cells and solutions found
 
 	//clear the context
-	void inline initEmpty();
+	constexpr void inline initEmpty();
 
 	//resolves cells with a single candidate for a cell
 	void inline doNakedSingles();
@@ -119,6 +162,7 @@ public:
 	//solver's entry points
 	void inline solve(const char* const in); //givens are bytes from 0 to 9
 	void inline solve(const uint16_t* const in); //givens are pencilmarks, bits 0..8 = 1 if the respective value is allowed and 0 otherwise, bits 9..15 are unused and must be 0
+	void inline solve(const pencilmarks& forbidden); //givens are forbidden pencilmarks
 	void setCellValue(int pos, int value);
 	void eliminateCellValue(int pos, int value);
 };
@@ -132,40 +176,52 @@ public:
 };
 
 //test whether a given puzzle has at least one solution
-class hasAnySolution : public nullCollector {
+class hasAnySolution final : public nullCollector {
 	//fsss2<hasAnySolution> solver;
 	int nsol;
 public:
 	//hasAnySolution();
 	bool solutionFound();
 	int solve(const char* p);
-	int solve(const bm128* p);
+	int solve(const pencilmarks& p);
+};
+
+//test whether a solution can be reached without guesses
+class noGuess final : public nullCollector {
+	fsss2<noGuess>* solverPtr;
+	int nsol;
+public:
+	bool beforeGuess(int guessDepth, int &optCell, int &optDigit);
+	bool solutionFound();
+	int solve(const char* p);
+	int solve(const pencilmarks& p);
+	int reduce(pencilmarks& p);
 };
 
 //test whether a given puzzle has exactly one solution
-class hasSingleSolution : public nullCollector {
+class hasSingleSolution final : public nullCollector {
 	//fsss2<hasSingleSolution> solver;
 	int nsol;
 public:
 	//hasSingleSolution();
 	bool solutionFound();
 	int solve(const char* p);
-	//int solve(const bm128* p);
+	int solve(const pencilmarks& p);
 };
 
-//test whether a given subgrid has at least one redundant given, works for multiple-solution puzzles too
-class isRedundant : public nullCollector {
+//test whether a given subgrid has at least one redundant given, works for single-solution puzzles only
+class isRedundant final : public nullCollector {
 public:
 	int nsol;
 	//char sol[81]; //debug
 	bool solutionFound();
-	bool solve(const char* p, int c);
-	bool solve(const bm128* p, int given, int position);
+	bool solve(const char* p, int testPosition);
+	bool solve(const pencilmarks& forbiddenValuePositions, int testValue, int testPosition);
 	//void setCellValue(int cell, int val); //debug
 };
 
-//test whether a given subgrid has at least one redundant given, works for multiple-solution puzzles too
-class isIrreducible : public nullCollector {
+//test whether a given subgrid has at least one redundant given, works for single-solution puzzles only
+class isIrreducible final : public nullCollector {
 public:
 	int nsol;
 	bool solutionFound();
@@ -174,17 +230,62 @@ public:
 
 //test whether a given puzzle has single solution and returns it
 class getSingleSolution : public nullCollector {
+protected:
 	int nsol;
 	char *resChar;
 public:
 	inline void setCellValue(int cell, int val);
 	bool solutionFound();
 	int solve(const char* p, char* res);
-	int solve(const bm128* p, char* res);
+	int solve(const pencilmarks& forbiddenValuePositions, char* res);
+};
+
+//test whether a given puzzle has exactly one solution and return it and guess counters
+class singleSolutionGuesses final : public nullCollector {
+	int nsol;
+	char *resChar;
+	int* numGuesses;
+public:
+	inline void setCellValue(int cell, int val);
+	bool beforeGuess(int guessDepth, int &optCell, int &optDigit);
+	bool solutionFound();
+	int solve(const char* p, char* res, int* numGuessesByDepth);
+	int solve(const pencilmarks& p, char* res, int* numGuessesByDepth);
+};
+
+//test whether a given puzzle has 2+ solutions and returns two of them
+class getTwoSolutions final : public getSingleSolution {
+public:
+	inline void setCellValue(int cell, int val);
+	bool solutionFound();
+	int solve(const char* p, char* res);
+	int solve(const pencilmarks& forbiddenValuePositions, char* res);
+};
+
+//test whether a given puzzle has at least one solution and returns it
+class getAnySolution final : public getSingleSolution {
+public:
+	bool solutionFound();
+	int solve(const char* p, char* res);
+	int solve(const pencilmarks& forbiddenValuePositions, char* res);
+};
+
+//compose pencilmarks from all solutions
+class multiSolutionPM final : public nullCollector {
+	int nsol;
+	pencilmarks resPM; //solutionFound sets bits from sol[] here
+	char sol[81]; //setCellValue accumulates the solution here
+	int solutionsLimit;
+public:
+	inline void setCellValue(int cell, int val);
+	bool solutionFound();
+	int solve(const char* p, pencilmarks& res, int maxSolutions = 0);
+	int solve(const pencilmarks& forbiddenValuePositions, pencilmarks& res, int maxSolutions); //goes trough all solutions when maxSolutions = 0
+	int solve(const pencilmarks& forbiddenValuePositions, pencilmarks& res); //tries cell by cell
 };
 
 //get only the positions of givens and find all minimal unique puzzles within the pattern
-class patEnum : public nullCollector {
+class patEnum final : public nullCollector {
 	bm128 unsetCells[81]; //for each guess
 	uint32_t cellCandidates[82]; //for each guess
 	uint32_t chosenGuessCell[82]; //for each guess

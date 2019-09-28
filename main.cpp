@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #include "fsss2.h"
-#include "minimizer.h"
+//#include "minimizer.h"
 
 //void	printVisibleCells();
 //void	printVisibleCellsX();
