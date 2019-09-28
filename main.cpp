@@ -90,8 +90,15 @@ int main(int argc, char* argv[])
 //		mm.reduceM2P1(p);
 //		mm.guessCounters(p);
 //		mm.backdoorSize(p);
-		mm.backdoorSizePm(p);
-//		mm.solve(p);
+//		mm.backdoorSizePm(p);
+		mm.solve(p);
+		//pencilmarks pm;
+		//if(complementaryPencilmarksX::fromChars2(p, pm)) {
+		//	complementaryPencilmarksX::dump3(pm);
+		//}
+		//else {
+		//	fprintf(stderr, "Bad format: %s\n", p);
+		//}
 //		mm.transformM2P2(p);
 //		for(int i = 0; i < 81; i++) curPuz[i] = (p[i] <= '9' && p[i] > '0' ? p[i] - '0' : 0);
 //		mm.solRowMinLex(curPuz);

@@ -836,11 +836,11 @@ single_found:
 #ifdef USE_SUBSETS
 	//subsets
 	//if(subsetsDone == 0) {
-	if(subsetsDone < 5) {
+	if(1 || subsetsDone < 5) {
 		bool eliminationFound = false;
 		//int subsetIndex = 0; //01,02,03,04,05,06,07,08,12,13,14,15,16,17,18,23,24,25,26,27,28,34,35,36,37,38,45,46,47,48,56,57,58,67,68,78
-		for(int d1 = 0; d1 < 8; d1++) {
-			for(int d2 = d1 + 1, subsetIndex = 0; d2 < 9; d2++, subsetIndex++) {
+		for(int d1 = 0, subsetIndex = 0; d1 < 8; d1++) {
+			for(int d2 = d1 + 1; d2 < 9; d2++, subsetIndex++) {
 			//for(int d2 = d1 + 1; d2 < 9; d2++) {
 				bm128 any = grid[d1];
 				any |= grid[d2];
@@ -882,7 +882,7 @@ single_found:
 			}
 		}
 		//subsetsDone = 1;
-		subsetsDone++;
+		//subsetsDone++;
 		if(eliminationFound) {
 #ifdef USE_LOCKED_CANDIDATES
 			lockedDone = 0;
